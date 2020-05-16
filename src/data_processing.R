@@ -73,4 +73,5 @@ for (i in seq_along(unique(death_dt$publication_date))) {
     }
 }
 
+setkey(death_dt, date, publication_date)
 write_fst(death_dt, file.path("data", "processed", "deaths_dt.fst"))

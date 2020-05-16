@@ -26,5 +26,6 @@ names(dts) <- DT[days_since_publication == 1, max(date)] - 20:0
 
 avg_delay <- rbindlist(dts, idcol = "report_date")
 avg_delay[, report_date := as.Date(report_date)]
+setkey(avg_delay, report_date, days_since_publication)
 
-write_fst(death_dt, file.path("data", "processed", "constant_benchmark.fst"))
+write_fst(avg_delay, file.path("data", "processed", "constant_benchmark.fst"))
