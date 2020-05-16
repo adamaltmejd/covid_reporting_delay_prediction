@@ -30,5 +30,5 @@ d_ <- diag(detected)
 d_[is.na(d_)] <- 0
 diag(detected) <- d_
 result = list(detected = detected, dates = res2[,1]$date, dates_report=unique(death_dt$publication_date))
-save(result, file = paste(path.to.files,"result.RData",sep=""))
+save(result, file = paste(path.to.files,"/result.RData",sep=""))
 

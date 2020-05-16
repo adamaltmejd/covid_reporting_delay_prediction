@@ -17,7 +17,7 @@ unique.days  = 5
 true.day = 5
 start.predict.day = 14# more then unique days
   
-load(paste(path.to.files,"result.RData",sep=""))
+load(paste(path.to.files,"/result.RData",sep=""))
 Reported = result$detected  
 N <- dim(Reported)[1]
 
