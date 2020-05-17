@@ -21,6 +21,9 @@ res <- death_dts %>% dplyr::group_by(date, publication_date)
 death_dt <- data.table(death_dts)
 setkey(death_dt, publication_date, date)
 death_dt <-death_dt[!is.na(date) & publication_date > "2020-04-02" & date > "2020-04-02"]
+##
+#only relevant stuff below
+##
 res2 <- death_dt%>%tidyr::spread(publication_date, N)
 detected <- as.matrix(res2[,2:dim(res2)[2]])
 detected <- cbind(matrix(NA,dim(detected)[1],dim(detected)[1]-dim(detected)[2] ) , detected)
