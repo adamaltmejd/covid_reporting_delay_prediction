@@ -7,14 +7,14 @@ source('util.r')
 source('MH.R')
 source('stolen_function.R')
 source('GPutil.R')
-nclust <- 2
-MCMC_sim <- 200
-burnin_p = 0.1
+nclust <- 4
+MCMC_sim <- 20000
+burnin_p = 0.5
 deaths_sim <- 10
 maxusage.day = 20 #must be less then N
 unique.days  = 5
 true.day = 5
-start.predict.day = 38# more then unique days
+start.predict.day = 16# more then unique days
 
 
 path.to.files <- file.path("..","data")
