@@ -46,5 +46,6 @@ deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.t
 avg_delay <- calculate_average_lags(deaths_dt)
 
 DT <- generate_predictions(deaths_dt, avg_delay)
+setkey(DT, publication_date, date)
 
 write_fst(DT, file.path("data", "processed", "constant_benchmark.fst"))
