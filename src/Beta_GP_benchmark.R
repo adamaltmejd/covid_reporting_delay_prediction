@@ -104,12 +104,15 @@ save(
      result_par,
      file=paste(path.to.files,"/simulation_result/prediction_valdiation.RData",sep="")
      )
-date_predict <- '2020-05-03'
-date_death   <- '2020-05-01'
+#date_predict <- '2020-05-11' '2020-05-12'
+#date_death   <- '2020-05-03'
+date_predict <- '2020-05-10'
+date_death   <- '2020-05-03'
 rbind(result_par[[date_predict]]$CI_low[date_death,],
       result_par[[date_predict]]$med[date_death,],
       result_par[[date_predict]]$Truth[date_death,],
       result_par[[date_predict]]$CI_up[date_death,],
       result_par[[date_predict]]$SCPRS[date_death,])
+plot(result_par[[date_predict]]$SCPRS[date_death,])
 
  
