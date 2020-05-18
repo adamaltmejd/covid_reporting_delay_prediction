@@ -24,6 +24,10 @@ E_CRPS <- function(mu, sigma, mu_hat, sigma_hat)
 
 #####################
 #SCRPS functions
+
+#####################
+
+
 #####################
 ##
 # evalutes the scaled CRPS for a vector y under normal assumption
