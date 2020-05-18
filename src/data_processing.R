@@ -39,9 +39,14 @@ load_fhm_deaths <- function(f) {
         DT[, date := as.Date(date)]
     }
 
+    # Ensure starting point is March 1st, and that all dates have a value
+    publication_date <- get_record_date(f)
+    DT <- merge(DT, data.table(date = seq(as.Date("2020-03-01"), publication_date, by = 1)), all = TRUE)
     DT[is.na(N), N := 0]
 
-    DT[, publication_date := get_record_date(f)]
+    DT[, publication_date := publication_date]
+
+    setkey(DT, publication_date, date)
 
     return(DT)
 }
@@ -49,29 +54,17 @@ load_fhm_deaths <- function(f) {
 files <- list.files(file.path("data", "FHM"), full.names = TRUE)
 dts <- lapply(files, load_fhm_deaths)
 
-death_dt <- rbindlist(dts)
-setkey(death_dt, publication_date, date)
+deaths_dt <- rbindlist(dts)
+setkey(deaths_dt, publication_date, date)
 
-death_dt[!is.na(date) & publication_date > "2020-04-02", days_since_publication := publication_date - date]
-death_dt[date == "2020-04-02" & publication_date == "2020-04-02", days_since_publication := 0]
+deaths_dt[!is.na(date) & publication_date > "2020-04-02", days_since_publication := publication_date - date]
+deaths_dt[date == "2020-04-02" & publication_date == "2020-04-02", days_since_publication := 0]
 
-death_dt[!is.na(date), paste0("n_m", 1) := shift(N, n = 1, type = "lag", fill = 0L), by = date]
-death_dt[!is.na(date), n_diff := N - n_m1]
-death_dt[!is.na(date) & n_m1 > 0 & !is.na(n_m1), n_diff_pct := N/n_m1 - 1]
-death_dt[!is.na(date) & n_m1 == 0 & N == 0, n_diff_pct := 0]
-death_dt[, n_m1 := NULL]
+deaths_dt[!is.na(date), paste0("n_m", 1) := shift(N, n = 1, type = "lag", fill = 0L), by = date]
+deaths_dt[!is.na(date), n_diff := N - n_m1]
+deaths_dt[!is.na(date) & n_m1 > 0 & !is.na(n_m1), n_diff_pct := N/n_m1 - 1]
+deaths_dt[!is.na(date) & n_m1 == 0 & N == 0, n_diff_pct := 0]
+deaths_dt[, n_m1 := NULL]
 
-# If no death reported on publication date
-for (i in seq_along(unique(death_dt$publication_date))) {
-    pub <- unique(death_dt$publication_date)[i]
-    if (death_dt[date == publication_date & publication_date == pub, .N] == 0) {
-        death_dt <- rbind(death_dt,
-                          data.table(date = pub, N = 0,
-                                     publication_date = pub,
-                                     days_since_publication = as.difftime(0, units = "days"),
-                                     n_diff = 0, n_diff_pct = 0))
-    }
-}
-
-setkey(death_dt, date, publication_date)
-write_fst(death_dt, file.path("data", "processed", "deaths_dt.fst"))
+setkey(deaths_dt, date, publication_date)
+write_fst(deaths_dt, file.path("data", "processed", "deaths_dt.fst"))
