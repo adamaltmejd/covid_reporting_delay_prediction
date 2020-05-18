@@ -21,7 +21,7 @@ sample.deaths <- function(samples, deaths, P, Reported, alpha, true.day = 0){
       Reported_i  = Reported[i,i:N]
       index = is.na(Reported_i)==F
       P_i         = P_i[index]
-      Reported_i  = Reported_i[index]  
+      Reported_i  = Reported_i[index]
       lik_i <- loglikDeathsGivenProb(deaths[i], P_i, Reported_i)
       for(j in 1:samples){
         death_star <- sample((deaths[i]-alpha[i]):(deaths[i]+alpha[i]), 1)
@@ -51,7 +51,7 @@ sample.deaths <- function(samples, deaths, P, Reported, alpha, true.day = 0){
 #  prior     - (function) should  return log of prior density (use N and i)
 ##
 sample.deathsBB <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, true.day = 0 , prior=NULL){
-  
+
   N <- length(deaths)
   acc <- rep(0,N)
   for(i in 1:N){
@@ -62,18 +62,18 @@ sample.deathsBB <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, 
       index = is.na(Reported_i)==F
       alpha_i  = alpha_i[index]
       beta_i  = beta_i[index]
-      Reported_i  = Reported_i[index]  
-      
-      lik_i <- loglikDeathsGivenProbBB(deaths[i],alpha_i , beta_i, Reported_i) 
+      Reported_i  = Reported_i[index]
+
+      lik_i <- loglikDeathsGivenProbBB(deaths[i],alpha_i , beta_i, Reported_i)
       if(is.null(prior)==F)
         lik_i <- lik_i + prior(deaths[i], i)
       for(j in 1:samples){
         death_star <- sample((deaths[i]-alpha.MCMC[i]):(deaths[i]+alpha.MCMC[i]), 1)
-        
-        lik_star <- loglikDeathsGivenProbBB(death_star, alpha_i , beta_i, Reported_i) 
+
+        lik_star <- loglikDeathsGivenProbBB(death_star, alpha_i , beta_i, Reported_i)
         if(is.null(prior)==F)
           lik_star <- lik_star + prior(death_star, i)
-        
+
         if(log(runif(1)) < lik_star-lik_i){
           lik_i = lik_star
           deaths[i] <- death_star
@@ -97,10 +97,10 @@ fill.ReportBB <- function(deaths, Alpha, Beta, Reported, maxusage.day){
       Alpha_i         = Alpha[i,i:N_2]
       Beta_i          = Beta[i,i:N_2]
       Reported_i  = Reported[i,i:N_2]
-      index = is.na(Reported_i)==T 
+      index = is.na(Reported_i)==T
       for(j in min(which(index)):length(Reported_i)){
         p <- rbeta(1, Alpha_i[j], Beta_i[j])
-        
+
         if(i> maxusage.day){
           Reported_i[j] <- rbinom(1, size=deaths[i] - Reported_i[j-1], prob = p) + Reported_i[j-1]
         }else{
@@ -123,7 +123,7 @@ fill.Report <- function(deaths, P, Reported){
   for(i in 1:N){
       P_i         = P[i,i:N_2]
       Reported_i  = Reported[i,i:N_2]
-      index = is.na(Reported_i)==T 
+      index = is.na(Reported_i)==T
       for(j in min(which(index)):length(Reported_i)){
         Reported_i[j] <- rbinom(1, size=deaths[i] - Reported_i[j-1], prob =  P_i[j]) + Reported_i[j-1]
       }
@@ -324,7 +324,7 @@ newDeaths <-function(deaths, reports,maxusage.day = -1){
   newreport[death.rem <0 & is.na(death.rem)==F] = 0
   death.rem[death.rem <0& is.na(death.rem)==F] = 0
   index <- (death.rem< newreport) &  is.na(death.rem) ==F
-  newreport[index] =death.rem[index] 
+  newreport[index] =death.rem[index]
   return(list(death.remain = death.rem, report.new = newreport))
 }
 
@@ -342,7 +342,7 @@ newDeaths <-function(deaths, reports,maxusage.day = -1){
 loglikProb <- function(beta, death.remain, report.new, X){
 
   N <- dim(report.new)[1]
-  
+
   index <- upper.tri(death.remain,diag = T)
   y = report.new[index]
   n = death.remain[index]
@@ -393,12 +393,12 @@ loglik <- function(beta,death.remain, report.new, X, sigma){
 #'               $grad    - gradient
 ##
 loglikProbBB <- function(beta, death.remain, report.new, X, calcH=T){
-  
+
   p <- dim(X)[2]
   beta_1 <- beta[1:p]
   beta_2 <- beta[(p+1):(2*p)]
   N <- dim(report.new)[1]
-  
+
   index <- upper.tri(death.remain,diag = T)
   y = report.new[index]
   n = death.remain[index]
@@ -410,11 +410,11 @@ loglikProbBB <- function(beta, death.remain, report.new, X, calcH=T){
     return(list(loglik = -Inf, grad = 0, Hessian = 0))
   y <- y[index]
   n <- n[index]
-  
+
   lik <- sum(dBB(y, size = n, alpha = alpha, beta = beta, log.p=T))
   if(is.na(lik))
     return(list(loglik = -Inf, grad = 0, Hessian = 0))
-  
+
   grad_lik <- grad_dBB(y, size = n, alpha = alpha, beta = beta)
   grad_alpha <- as.vector(t(X)%*%(alpha*grad_lik$grad_alpha))
   grad_beta  <- as.vector(t(X)%*%(beta*grad_lik$grad_beta))
@@ -441,10 +441,10 @@ loglikProbBB <- function(beta, death.remain, report.new, X, calcH=T){
 dBB<- function(x, size, alpha, beta, log.p = F){
   const = lgamma(size + 1) - lgamma(x + 1) -
     lgamma(size - x + 1)
-  ld <- const + 
+  ld <- const +
     lgamma(x + alpha) + lgamma(size - x + beta) -
-    lgamma(size + alpha + beta) + 
-    lgamma(alpha + beta) - 
+    lgamma(size + alpha + beta) +
+    lgamma(alpha + beta) -
     lgamma(alpha) - lgamma(beta)
   if(log.p==F){
     return(exp(ld))
@@ -453,17 +453,17 @@ dBB<- function(x, size, alpha, beta, log.p = F){
 }
 ##
 # gradient of log of probability beta binomial
-# return list, 
+# return list,
 # [[1]] grad alpha
 # [[2]] grad beta
 ##
 grad_dBB<- function(x, size, alpha, beta){
   grad_alpha <- digamma(x + alpha) -
-    digamma(size + alpha + beta) + 
+    digamma(size + alpha + beta) +
     digamma(alpha + beta) -
     digamma(alpha)
   grad_beta <- digamma(size - x + beta) -
-    digamma(size + alpha + beta) + 
+    digamma(size + alpha + beta) +
     digamma(alpha + beta) -
     digamma(beta)
   return(list(grad_alpha = grad_alpha,
@@ -471,22 +471,22 @@ grad_dBB<- function(x, size, alpha, beta){
 }
 ##
 # Hessian of log of probability beta binomial
-# return list, 
+# return list,
 # [[1]] grad alpha
 # [[2]] grad beta
 ##
 Hessian_dBB<- function(x, size, alpha, beta){
   grad_alpha_alpha <- trigamma(x + alpha) -
-    trigamma(size + alpha + beta) + 
+    trigamma(size + alpha + beta) +
     trigamma(alpha + beta) -
     trigamma(alpha)
   grad_beta_beta <- trigamma(size - x + beta) -
-    trigamma(size + alpha + beta) + 
+    trigamma(size + alpha + beta) +
     trigamma(alpha + beta) -
     trigamma(beta)
-  
-  grad_alpha_beta <- -trigamma(size + alpha + beta) + 
-    trigamma(alpha + beta) 
+
+  grad_alpha_beta <- -trigamma(size + alpha + beta) +
+    trigamma(alpha + beta)
   return(list(grad_alpha_alpha = grad_alpha_alpha,
               grad_beta_beta  = grad_beta_beta,
               grad_alpha_beta = grad_alpha_beta))
@@ -501,13 +501,13 @@ Hessian_dBB<- function(x, size, alpha, beta){
 #  report  - (n x 1) reported deaths culmative each date
 ##
 loglikDeathsGivenProbBB <- function(death, alpha, beta, report){
-  
+
   if(death < max(report,na.rm=T))
     return(-Inf)
   n <- length(alpha)
   if(is.na(report[1])){
     #we dont have data from day one
-    
+
     ndeaths <- diff(report[is.na(report)==F])
     report_adj <- report[1:(n-1)]
     report_adj <- report_adj[is.na(report_adj)==F]
@@ -519,12 +519,12 @@ loglikDeathsGivenProbBB <- function(death, alpha, beta, report){
       report_adj <- 0
     }
   }
-  
+
   ndeaths[ndeaths <0 ] = 0
-  
-  return(sum(dBB(x =ndeaths, 
-                 size = death - report_adj, 
-                 alpha = alpha[is.na(alpha)==F], 
+
+  return(sum(dBB(x =ndeaths,
+                 size = death - report_adj,
+                 alpha = alpha[is.na(alpha)==F],
                  beta = beta[is.na(alpha)==F],
                  log.p=T)))
 }
@@ -544,21 +544,21 @@ loglikDeathsGivenProbBB <- function(death, alpha, beta, report){
 #
 ###
 death.givenParamBB <- function(alpha, beta, Reported,Predict.day = Inf,sim=c(2000,10), alpha.MCMC = NULL, prior=NULL){
-  
+
   N <- dim(alpha)[1]
   if(is.null(alpha.MCMC))
     alpha.MCMC <- rep(4, N)
-  
+
   deaths <- matrix(NA, nrow=sim[1], ncol = N)
   deaths_est <- apply(Reported, 1, max, na.rm=T)
-  
+
   burnin = ceiling(0.3*sim[1])
   for(i in 1:(sim[1] + burnin -1)){
     res <- sample.deathsBB(sim[2],
-                           deaths_est, 
+                           deaths_est,
                            alpha,
-                           beta, 
-                           Reported, 
+                           beta,
+                           Reported,
                            alpha.MCMC,
                            rep.day=Predict.day,
                            prior= prior)
@@ -584,18 +584,19 @@ setup_data <- function(N, Predict.day, dates_report, unique.prob=NULL){
   holidays.Sweden <- as.Date(c("2020-04-10","2020-04-13","2020-05-01"))
   X <- buildXdayeffect(N,Predict.day)
   #holidays and weekends
-  
+
   result$dates_report <- as.Date(dates_report)
-  holidays <- weekdays(dates_report)%in%c("Sunday","Saturday") | c(dates_report)%in%c(holidays.Sweden)
-  
-  holidays.tommorow <- weekdays(dates_report + 1)%in%c("Sunday","Saturday") |
-    (result$dates_report+1)%in%c(holidays.Sweden)
-  Xhol <- buildXholiday(N,holidays)
-  #Xhol.tommrow <- buildXholiday(N,holidays.tommorow)
+
   if(is.null(unique.prob)==F)
     X <- cbind(X[,1:unique.prob],rowSums(X[,1:unique.prob])==0)
-  
-  X <- cbind(X, Xhol)
+
+  holidays <- weekdays(dates_report)%in%c("Sunday","Saturday") | c(dates_report)%in%c(holidays.Sweden)
+  holiday.yesterday <- weekdays(dates_report - 1)%in%c("Sunday","Saturday") |
+    (result$dates_report-1)%in%c(holidays.Sweden)
+  Xhol <- buildXholiday(N,holidays)
+  Xhol.yesterday <- buildXholiday(N,holiday.yesterday)
+
+  X <- cbind(X, Xhol, Xhol.yesterday)
   return(X)
 }
 

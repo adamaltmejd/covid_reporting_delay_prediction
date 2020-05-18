@@ -12,9 +12,9 @@ files <- list.files(paste(path.to.files,"/simulation_result",sep=""),
 alpha_CI <- 0.1
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 
-cl <- parallel::makeCluster(nclust)
+cl <- parallel::makeCluster(nclust,setup_strategy = "sequential")
 doParallel::registerDoParallel(cl)
-index_files <-1:(length(files)-1)
+index_files <- 1:(length(files)-1)
 
 #for(i in index_files){
 result_par <- foreach(i = index_files)  %dopar% {
@@ -107,12 +107,48 @@ save(
      result_par,
      file=paste(path.to.files,"/simulation_result/prediction_valdiation.RData",sep="")
      )
-#date_predict <- '2020-05-11' '2020-05-12'
-#date_death   <- '2020-05-03'
-date_predict <- '2020-05-10'
-date_death   <- '2020-05-03'
+nDelay <- 14
+Pred_vec <- matrix(0,nrow=nDelay, ncol=4)
+for(day in names(result_par)){
+  for(Delay in 1:(nDelay)){
+
+    Report_day <- as.Date(day)+Delay
+    Death_day <-  Report_day- nDelay
+    CI_low <- result_par[[day]]$CI_low
+    Row <- which(rownames(CI_low)==Death_day)
+    Col <- which(colnames(CI_low)==Report_day)
+    if(length(Col)*length(Row)>0){
+      CIl <- result_par[[day]]$CI_low[Row,Col]
+      CIu <- result_par[[day]]$CI_up[Row,Col]
+      truth <- result_par[[day]]$Truth[Row,Col]
+      med   <- result_par[[day]]$med[Row,Col]
+      SCPRS   <- result_par[[day]]$SCPRS[Row,Col]
+      if(is.na(SCPRS)==F){
+        Pred_vec[Delay,1] <- Pred_vec[Delay,1] + 1 #number
+        Pred_vec[Delay,2] <- Pred_vec[Delay,2] + (truth >= CIl)*(truth <= CIu) #in CI
+        Pred_vec[Delay,3] <- Pred_vec[Delay,3] + CIu - CIl #interval width
+        Pred_vec[Delay,4] <- Pred_vec[Delay,4] + SCPRS #SCPRS
+      }
+    }
+
+  }
+}
+pdf('Prediction Result.pdf')
+par(mfrow=c(2,2))
+plot(1:(nDelay),Pred_vec[,2]/Pred_vec[,1],
+     xlab='Days left to pred',
+     ylab='90% CI coverage')
+plot(1:(nDelay),Pred_vec[,3]/Pred_vec[,1],
+     xlab='Days left to pred',
+     ylab='mean 90% CI width',
+     type='l')
+plot(1:(nDelay),Pred_vec[,4]/Pred_vec[,1],
+     xlab='Days left to pred',
+     ylab='mean SCPRS',
+     type='l')
+dev.off()
+
 rbind(result_par[[date_predict]]$CI_low[date_death,],
-      result_par[[date_predict]]$med[date_death,],
       result_par[[date_predict]]$Truth[date_death,],
       result_par[[date_predict]]$CI_up[date_death,],
       result_par[[date_predict]]$SCPRS[date_death,])

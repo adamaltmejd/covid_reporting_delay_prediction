@@ -9,7 +9,7 @@ source(file.path("src", "stolen_function.R"))
 source(file.path("src", "GPutil.R"))
 
 path.to.files <- file.path("..","data")
-MCMC_sim <- 4000
+MCMC_sim <- 20000
 burnin_p = 0.5
 deaths_sim <- 10
 maxusage.day = 20 #must be less then N
@@ -172,7 +172,5 @@ print(fig)
 ###
 # mix check
 ###
-x11()
-par(mfrow=c(2,1))
 plot(exp(theta_GP[,N]))
 plot(tau_vec)
