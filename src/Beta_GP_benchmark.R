@@ -99,5 +99,17 @@ result_par <-foreach(i = index_files)  %dopar% {
 }
 
 parallel::stopCluster(cl)
-names(result_par) <- result$dates_report[start.predict.day+index_files]
+names(result_par) <- result$dates_report[start.predict.day+index_files-1]
+save(
+     result_par,
+     file=paste(path.to.files,"/simulation_result/prediction_valdiation.RData",sep="")
+     )
+date_predict <- '2020-05-03'
+date_death   <- '2020-05-01'
+rbind(result_par[[date_predict]]$CI_low[date_death,],
+      result_par[[date_predict]]$med[date_death,],
+      result_par[[date_predict]]$Truth[date_death,],
+      result_par[[date_predict]]$CI_up[date_death,],
+      result_par[[date_predict]]$SCPRS[date_death,])
+
  
