@@ -4,6 +4,8 @@ library(tidyr)
 library(ggplot2)
 source("src/util.scores.R")
 
+alpha <- 0.1
+
 generate_predictions <- function(deaths_dt) {
     # Calculate the average lag from the last 21 days for each report
     # So when calculating the average number of deaths added on day 3,
@@ -89,8 +91,9 @@ out <- DT[, .(state,
               predicted_deaths = predicted_deaths_cum,
               predicted_deaths_SD = predicted_deaths_SD_cum,
               target,
-              ci_upper = predicted_deaths_cum + qnorm(0.05) * predicted_deaths_SD_cum,
-              ci_lower = predicted_deaths_cum - qnorm(0.05) * predicted_deaths_SD_cum,
+              days_left = state-date,
+              ci_upper = predicted_deaths_cum + qnorm(1-alpha/2) * predicted_deaths_SD_cum,
+              ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
               SCRPS = SCRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
 
 write_fst(out, file.path("data", "processed", "constant_benchmark.fst"))
@@ -108,3 +111,9 @@ write_fst(out, file.path("data", "processed", "constant_benchmark.fst"))
 
 
 # print(g)
+#out <- out[state>='2020-04-17' & state <= '2020-05-09']
+distr.estimate <- out[,
+                       list(SCRPS    = mean(SCRPS, na.rm=T),
+                            CIwidth  = mean(ci_upper-ci_lower,na.rm=T),
+                            coverage = mean((target <= ci_upper) * (target >= ci_lower),na.rm=T)),
+                       by = list(days_left)]

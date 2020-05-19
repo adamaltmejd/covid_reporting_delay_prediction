@@ -3,28 +3,33 @@
 #
 ###
 library(foreach)
+library(data.table)
 source("src/util.r")
 nclust <- 4
 path.to.files <- file.path("data")
-files <- list.files(paste(path.to.files,"/simulation_result",sep=""),
+files <- list.files(paste(path.to.files,"/simulation_results",sep=""),
                              pattern = "^param",
                              full.names = TRUE)
 alpha_CI <- 0.1
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 
-cl <- parallel::makeCluster(nclust,setup_strategy = "sequential")
+cl <- parallel::makeCluster(nclust,setup_strategy = "sequential", outfile="")
 doParallel::registerDoParallel(cl)
 index_files <- 1:(length(files)-1)
+
 
 #for(i in index_files){
 result_par <- foreach(i = index_files)  %dopar% {
   library(Matrix)
 
   load(files[i])
+  list2env(res_save, envir = environment())
   result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 
   Reported_T = result$detected
   pred_time = dim(Death_est)[2]
+  cat('i=',i,", ", file=stdout())
+  cat('pred_time=',pred_time,"\n", file=stdout())
   N_T <- dim(Reported_T)[1]
   deaths_est_T <- apply(Reported_T, 1, max, na.rm=T)
   data_T <- newDeaths(deaths_est_T,
@@ -89,6 +94,9 @@ result_par <- foreach(i = index_files)  %dopar% {
       P2 <- predSample[(ceiling(sim/3) + 1):(floor(2*sim/3) )]
       P3 <- predSample[(floor(2*sim/3) + 1):(floor(2*sim/3) + length(P2))]
       EabsXX <- mean(abs(sample(P2)-sample(P3)))
+      if(EabsXX == 0){
+        EabsXX <- 1
+      }
       Y <- predicition_by_reported_day$Truth[k_death,k_report]
       EabsYX <- mean(abs(Y-P1))
       SCPRS[k_death, k_report] <- -EabsYX/EabsXX - 0.5*log(EabsXX)
@@ -108,9 +116,19 @@ save(
      file=paste(path.to.files,"/simulation_result/prediction_valdiation.RData",sep="")
      )
 nDelay <- 14
-Pred_vec <- matrix(0,nrow=nDelay, ncol=4)
+Pred_vec <- matrix(0,nrow=nDelay, ncol=6)
+state=c()
+date=c()
+target = c()
+days_left = c()
+ci_upper = c()
+ci_lower = c()
+predicted_deaths = c()
+SCRPS_out  = c()
 for(day in names(result_par)){
   for(Delay in 1:(nDelay)){
+
+
 
     Report_day <- as.Date(day)+Delay
     Death_day <-  Report_day- nDelay
@@ -123,35 +141,67 @@ for(day in names(result_par)){
       truth <- result_par[[day]]$Truth[Row,Col]
       med   <- result_par[[day]]$med[Row,Col]
       SCPRS   <- result_par[[day]]$SCPRS[Row,Col]
+      state     = c(state,as.Date(Report_day))
+      date      = c(date, as.Date(day))
+      target    = c(target, truth)
+      days_left = c(days_left,Report_day-as.Date(day))
+      ci_upper  = c(ci_upper, CIu)
+      ci_lower  = c(ci_lower, CIl)
+      predicted_deaths = c(predicted_deaths,med)
+      SCRPS_out  = c(SCRPS_out,SCPRS)
       if(is.na(SCPRS)==F){
         Pred_vec[Delay,1] <- Pred_vec[Delay,1] + 1 #number
         Pred_vec[Delay,2] <- Pred_vec[Delay,2] + (truth >= CIl)*(truth <= CIu) #in CI
         Pred_vec[Delay,3] <- Pred_vec[Delay,3] + CIu - CIl #interval width
         Pred_vec[Delay,4] <- Pred_vec[Delay,4] + SCPRS #SCPRS
+        Pred_vec[Delay,5] <- Pred_vec[Delay,5] + CIl - truth #in CI
+        Pred_vec[Delay,6] <- Pred_vec[Delay,6] + CIu - truth  #in CI
       }
     }
 
   }
 }
-pdf('Prediction Result.pdf')
-par(mfrow=c(2,2))
-plot(1:(nDelay),Pred_vec[,2]/Pred_vec[,1],
-     xlab='Days left to pred',
-     ylab='90% CI coverage')
-plot(1:(nDelay),Pred_vec[,3]/Pred_vec[,1],
-     xlab='Days left to pred',
-     ylab='mean 90% CI width',
-     type='l')
-plot(1:(nDelay),Pred_vec[,4]/Pred_vec[,1],
-     xlab='Days left to pred',
-     ylab='mean SCPRS',
-     type='l')
-dev.off()
+out_BGP <- data.table(state     = as.Date(state,origin="1970-01-01"),
+                  date      = as.Date(date, origin="1970-01-01"),
+                  target    = target,
+                  days_left = days_left,
+                  ci_upper  = ci_upper,
+                  ci_lower  = ci_lower,
+                  predicted_deaths = predicted_deaths,
+                  SCRPS   = SCRPS_out)
 
-rbind(result_par[[date_predict]]$CI_low[date_death,],
-      result_par[[date_predict]]$Truth[date_death,],
-      result_par[[date_predict]]$CI_up[date_death,],
-      result_par[[date_predict]]$SCPRS[date_death,])
-plot(result_par[[date_predict]]$SCPRS[date_death,])
+write_fst(out_BGP, file.path("data", "processed", "model_benchmark.fst"))
+if(0){
+  pdf('Prediction Result.pdf')
+  par(mfrow=c(2,2))
+  plot(1:(nDelay),Pred_vec[,2]/Pred_vec[,1],
+       xlab='Days left to pred',
+       ylab='90% CI coverage')
+  plot(1:(nDelay),Pred_vec[,3]/Pred_vec[,1],
+       xlab='Days left to pred',
+       ylab='mean 90% CI width',
+       type='l')
+  plot(1:(nDelay),Pred_vec[,4]/Pred_vec[,1],
+       xlab='Days left to pred',
+       ylab='mean SCPRS',
+       type='l')
+  dev.off()
 
+  plot(1:(nDelay),Pred_vec[,5]/Pred_vec[,1],
+       xlab='days left to obs',
+       ylab='average centered CI',
+       type='l',
+       ylim=c(min(Pred_vec[,5]/Pred_vec[,1]), max(Pred_vec[,6]/Pred_vec[,1])))
+  lines(1:(nDelay),Pred_vec[,6]/Pred_vec[,1])
+  date_predict <- '2020-05-09'
+  date_death   <- '2020-05-03'
+  rbind(result_par[[date_predict]]$CI_low[date_death,],
+        result_par[[date_predict]]$Truth[date_death,],
+        result_par[[date_predict]]$CI_up[date_death,],
+        result_par[[date_predict]]$SCPRS[date_death,])
+  plot(result_par[[date_predict]]$SCPRS[date_death,])
 
+  hist(pred_set[32,3,],breaks=60, main='2020-05-10 sann = 64',xlab='rapport',prob=T)
+  hist(pred_set[32,3,],breaks=60, main='2020-05-10 sann = 64',xlab='rapport')
+
+}

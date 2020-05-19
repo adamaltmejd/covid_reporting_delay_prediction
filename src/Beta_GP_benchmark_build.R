@@ -9,13 +9,13 @@ source(file.path("src", "MH.R"))
 source(file.path("src", "stolen_function.R"))
 source(file.path("src", "GPutil.R"))
 nclust <- 4
-MCMC_sim <- 20000
+MCMC_sim <- 30000
 burnin_p = 0.5
 deaths_sim <- 10
 maxusage.day = 20 #must be less then N
 unique.days  = 5
 true.day = 5
-start.predict.day = 16 # more then unique days
+start.predict.day = 40#16 # more then unique days
 
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 Reported_T = result$detected
@@ -29,7 +29,7 @@ data_T <- newDeaths(deaths_est_T,
 X_T <- setup_data(N_T, maxusage.day, result$dates_report, unique.days)
 predicition.list <-list()
 
-cl <- parallel::makeCluster(nclust)
+cl <- parallel::makeCluster(nclust,setup_strategy = "sequential")
 doParallel::registerDoParallel(cl)
 foreach(j = start.predict.day:N_T)  %dopar% {
   library(Matrix)
@@ -130,12 +130,13 @@ foreach(j = start.predict.day:N_T)  %dopar% {
       theta_GP[i-burnin + 1,] <-  as.vector(MH_obj_GP$theta)
     }
   }
-  save(list(Thetas = Thetas,
-            Death_est = Death_est,
-            theta_GP = theta_GP,
-            true.day = true.day,
-            unique.days = unique.days,
-            maxusage.day = maxusage.day),
+  res_save <- list(Thetas = Thetas,
+                   Death_est = Death_est,
+                   theta_GP = theta_GP,
+                   true.day = true.day,
+                   unique.days = unique.days,
+                   maxusage.day = maxusage.day)
+  save(res_save,
        file = file.path("data", "simulation_results", paste0("param_", dates_report[j], ".rds")))
 }
 
