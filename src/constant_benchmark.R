@@ -2,6 +2,7 @@ library(data.table)
 library(fst)
 library(tidyr)
 library(ggplot2)
+source("src/util.scores.R")
 
 generate_predictions <- function(deaths_dt) {
     # Calculate the average lag from the last 21 days for each report
@@ -83,18 +84,27 @@ DT <- generate_predictions(deaths_dt)
 DT <- DT[prediction_date - date == 14]
 DT[, target := reported_dead[state - date == 14], by = prediction_date]
 
-write_fst(DT, file.path("data", "processed", "constant_benchmark.fst"))
+out <- DT[, .(state,
+              date,
+              predicted_deaths = predicted_deaths_cum,
+              predicted_deaths_SD = predicted_deaths_SD_cum,
+              target,
+              ci_upper = predicted_deaths_cum + qnorm(0.05) * predicted_deaths_SD_cum,
+              ci_lower = predicted_deaths_cum - qnorm(0.05) * predicted_deaths_SD_cum,
+              SCRPS = SCRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
 
-plot_data <- DT[date == "2020-05-01"]
-plot_data[, x := as.numeric(state - date)]
-plot_data[, se := predicted_deaths_SD_cum / sqrt(14)]
+write_fst(out, file.path("data", "processed", "constant_benchmark.fst"))
 
-g <- ggplot(data = plot_data, aes(x = x)) +
-    geom_line(aes(y = target), color = "grey50") +
-    geom_line(aes(y = predicted_deaths_cum)) +
-    geom_point(aes(y = predicted_deaths_cum)) +
-    geom_errorbar(aes(ymin = predicted_deaths_cum - 1.96 * se,
-                      ymax = predicted_deaths_cum + 1.96 * se),
-                  width = 0.1)
+# plot_data <- DT[date == "2020-05-01"]
+# plot_data[, x := as.numeric(state - date)]
 
-print(g)
+# g <- ggplot(data = plot_data, aes(x = x)) +
+#     geom_line(aes(y = target), color = "grey50") +
+#     geom_line(aes(y = predicted_deaths_cum)) +
+#     geom_point(aes(y = predicted_deaths_cum)) +
+#     geom_errorbar(aes(ymin = predicted_deaths_cum + qnorm(0.05) * predicted_deaths_SD_cum,
+#                       ymax = predicted_deaths_cum - qnorm(0.05) * predicted_deaths_SD_cum),
+#                   width = 0.1)
+
+
+# print(g)
