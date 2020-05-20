@@ -6,7 +6,7 @@ library(foreach)
 library(fst)
 library(data.table)
 source("src/util.r")
-nclust <- 4
+nclust <- 6
 path.to.files <- file.path("data")
 files <- list.files(paste(path.to.files,"/simulation_results",sep=""),
                              pattern = "^param",
@@ -17,8 +17,13 @@ result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 cl <- parallel::makeCluster(nclust,setup_strategy = "sequential", outfile="")
 doParallel::registerDoParallel(cl)
 index_files <- 1:(length(files)-1)
+result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 
-
+Reported_T = result$detected
+deaths_est_T <- apply(Reported_T, 1, max, na.rm=T)
+data_T <- newDeaths(deaths_est_T,
+                    Reported_T,
+                    maxusage.day =maxusage.day)
 #for(i in index_files){
 result_par <- foreach(i = index_files)  %dopar% {
   library(Matrix)
@@ -118,7 +123,7 @@ result_par <- foreach(i = index_files)  %dopar% {
 }
 
 parallel::stopCluster(cl)
-
+start.predict.day=16
 names(result_par) <- result$dates_report[start.predict.day+index_files-1]
 save(
      result_par,
@@ -134,11 +139,6 @@ ci_upper = c()
 ci_lower = c()
 predicted_deaths = c()
 SCRPS_out  = c()
-  data_delay <- newDeaths(deaths_est_T,
-                      Reported_T,
-                      maxusage.day =nDelay)
-  rownames(data_delay$report.new) <- format(result$dates_report,"%Y-%m-%d")
-  obs_true <- rowSums(data_delay$report.new,na.rm=T)
 for(day in names(result_par)){
   for(Delay in 1:(nDelay)){
 
