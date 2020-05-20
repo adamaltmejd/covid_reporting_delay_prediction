@@ -6,7 +6,7 @@ library(foreach)
 library(doParallel)
 source(file.path("src", "util.r"))
 source(file.path("src", "MH.R"))
-source(file.path("src", "stolen_function.R"))
+source(file.path("src", "functions.R"))
 source(file.path("src", "GPutil.R"))
 nclust <- 4
 MCMC_sim <- 30000

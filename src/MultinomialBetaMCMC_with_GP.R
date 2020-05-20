@@ -5,7 +5,7 @@
 set.seed(2)
 source(file.path("src", "util.r"))
 source(file.path("src", "MH.R"))
-source(file.path("src", "stolen_function.R"))
+source(file.path("src", "functions.R"))
 source(file.path("src", "GPutil.R"))
 
 path.to.files <- file.path("..","data")
