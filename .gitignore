@@ -6,9 +6,7 @@
 .Rapp.history
 
 # Session Data files
-data/processed/**
 *.RData
-*.fst
 
 # User-specific files
 .Ruserdata
