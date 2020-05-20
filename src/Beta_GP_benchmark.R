@@ -122,7 +122,7 @@ parallel::stopCluster(cl)
 names(result_par) <- result$dates_report[start.predict.day+index_files-1]
 save(
      result_par,
-     file=paste(path.to.files,"/simulation_result/prediction_valdiation.RData",sep="")
+     file=paste(path.to.files,"/simulation_results/prediction_valdiation.RData",sep="")
      )
 nDelay <- 14
 Pred_vec <- matrix(0,nrow=nDelay, ncol=7)
@@ -182,7 +182,7 @@ for(day in names(result_par)){
 out_BGP <- data.table(state     = as.Date(state,origin="1970-01-01"),
                   date      = as.Date(date, origin="1970-01-01"),
                   target    = target,
-                  days_left = days_left,
+                  days_left =  as.Date(state,origin="1970-01-01") - as.Date(date, origin="1970-01-01"),
                   ci_upper  = ci_upper,
                   ci_lower  = ci_lower,
                   predicted_deaths = predicted_deaths,
