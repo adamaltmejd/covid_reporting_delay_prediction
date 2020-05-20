@@ -90,7 +90,7 @@ set_default_theme <- function() {
       legend.margin = margin(5,5,5,5),
       legend.direction = "vertical",
       legend.position = "right",
-      axis.text.x = element_text(angle = 40, hjust = 1, vjust = 1.2),
+      axis.text.x = element_text(angle = 0, hjust = 1, vjust = 1.2),
 
       # Panels
       plot.background = element_rect(fill = "#FFFFFF", color = NA), # bg of the plot
