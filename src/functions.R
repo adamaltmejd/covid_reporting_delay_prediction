@@ -86,11 +86,11 @@ set_default_theme <- function() {
     theme(
       plot.title = element_text(size = rel(2), face = "plain", hjust = 0, margin = margin(0,0,5,0)),
       plot.subtitle = element_text(size = rel(1), face = "plain", hjust = 0, margin = margin(0,0,5,0)),
-      legend.background = element_rect(fill = "grey90", color = "grey80"),
+      legend.background = element_rect(fill = "grey95"),
       legend.margin = margin(5,5,5,5),
-      legend.direction = "vertical",
-      legend.position = "right",
-      axis.text.x = element_text(angle = 0, hjust = 1, vjust = 1.2),
+      legend.direction = "horizontal",
+      legend.position = "bottom",
+      axis.text.x = element_text(angle = 0, hjust = 0, vjust = 1),
 
       # Panels
       plot.background = element_rect(fill = "#FFFFFF", color = NA), # bg of the plot

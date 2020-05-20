@@ -31,23 +31,28 @@ setkey(model, date, state, days_left)
 # Add target as prediction for last day
 model[is.na(target), predicted_deaths := model[!is.na(target), unique(target), by = date][, V1]]
 
+#
+## PLOT 1: Performance on 4 random dates ##
+#
+
 plot_data <- rbindlist(list("Historical Avg." = benchmark, "Capture-Retain" = model), idcol = "type")
 
 # Pick three dates at random to plot
 set.seed(1234)
-example_dates <- sample(seq(as.Date("2020-04-15"), model[days_left == 13, max(date)], 1), 4)
+example_dates <- sample(seq(as.Date("2020-04-15"), model[days_left == 13, max(date)], 1), 6)
 plot_data <- plot_data[date %in% example_dates]
 
 plot <- ggplot(data = plot_data, aes(x = factor(days_left), y = predicted_deaths, color = type, group = type)) +
     geom_hline(data = plot_data[!is.na(target), .(unique(target)), by = .(date)], aes(yintercept = V1), color = "grey50") +
-    geom_line(alpha = 0.7) +
-    geom_point(data = plot_data[days_left != "0"], alpha = 0.7) +
+    geom_line(position = position_dodge(width = 0.6)) +
+    geom_point(data = plot_data[days_left != "0"], position = position_dodge(width = 0.6)) +
     geom_point(data = plot_data[days_left == "0" & type == "Historical Avg."], color = "grey50") +
-    geom_errorbar(data = plot_data[days_left != "0"], aes(ymin = ci_lower, ymax = ci_upper), width = 0.4) +
+    geom_errorbar(data = plot_data[days_left != "0"], aes(ymin = ci_lower, ymax = ci_upper),
+                  width = 0.7, position = position_dodge(width = 0.6)) +
     facet_wrap(~date) +
     set_default_theme() +
     scale_color_manual(values = wes_palette("Darjeeling2")) +
-    labs(title = "Predicting the number of deaths for four dates reported within 14 days.",
+    labs(title = "Predicting the number of deaths for six dates reported within 14 days.",
          subtitle = "",
          caption = "Source: FHM.",
          color = "Model",
@@ -57,6 +62,9 @@ plot <- ggplot(data = plot_data, aes(x = factor(days_left), y = predicted_deaths
 ggsave(filename = file.path("output", "plots", "lag_prediction_by_date.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = h)
 
+#
+## PLOT 2: Statistics ##
+#
 
 plot_data <- rbindlist(
     list("Historical Avg." =
@@ -92,3 +100,37 @@ plot <- ggplot(data = plot_data, aes(x = factor(days_left), color = type, group 
 
 ggsave(filename = file.path("output", "plots", "model_metrics.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = h)
+
+#
+## PLOT 3: Performance over time (as more training data becomes availiable) ##
+#
+# Only include dates for which we have all 14 dates
+states <- as.Date(intersect(
+    benchmark[!is.na(SCRPS), .N, state][N == 14, state],
+    model[!is.na(SCRPS), .N, state][N == 14, state]
+    ), origin = "1970-01-01")
+
+plot_data <- rbindlist(list(
+    "Historical Avg." = benchmark[state %in% states & days_left != "0", mean(SCRPS), by = state],
+    "Capture-Retain" = model[state %in% states & days_left != "0", mean(SCRPS), by = state]
+    ), idcol = "type")
+
+plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
+    geom_line() + geom_point() +
+    set_default_theme() +
+    scale_color_manual(values = wes_palette("Darjeeling2")) +
+    labs(title = "Model metrics",
+         subtitle = "",
+         caption = "Source: FHM.",
+         color = "Model",
+         x = "Last date included in the model",
+         y = "")
+
+ggsave(filename = file.path("output", "plots", "SCRPS_over_states.pdf"),
+       plot = plot, device = cairo_pdf, width = w, height = h)
+
+
+
+#
+## PLOT 4: Performance by day-of-week ##
+#
