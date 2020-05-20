@@ -91,7 +91,7 @@ out <- DT[, .(state,
               predicted_deaths = predicted_deaths_cum,
               predicted_deaths_SD = predicted_deaths_SD_cum,
               target,
-              days_left = state-date,
+              days_left = state - date,
               ci_upper = predicted_deaths_cum + qnorm(1-alpha/2) * predicted_deaths_SD_cum,
               ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
               SCRPS = SCRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
