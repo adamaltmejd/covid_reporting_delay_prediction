@@ -97,23 +97,3 @@ out <- DT[, .(state,
               SCRPS = SCRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
 
 write_fst(out, file.path("data", "processed", "constant_benchmark.fst"))
-
-# plot_data <- DT[date == "2020-05-01"]
-# plot_data[, x := as.numeric(state - date)]
-
-# g <- ggplot(data = plot_data, aes(x = x)) +
-#     geom_line(aes(y = target), color = "grey50") +
-#     geom_line(aes(y = predicted_deaths_cum)) +
-#     geom_point(aes(y = predicted_deaths_cum)) +
-#     geom_errorbar(aes(ymin = predicted_deaths_cum + qnorm(0.05) * predicted_deaths_SD_cum,
-#                       ymax = predicted_deaths_cum - qnorm(0.05) * predicted_deaths_SD_cum),
-#                   width = 0.1)
-
-
-# print(g)
-#out <- out[state>='2020-04-17' & state <= '2020-05-09']
-distr.estimate <- out[,
-                       list(SCRPS    = mean(SCRPS, na.rm=T),
-                            CIwidth  = mean(ci_upper-ci_lower,na.rm=T),
-                            coverage = mean((target <= ci_upper) * (target >= ci_lower),na.rm=T)),
-                       by = list(days_left)]
