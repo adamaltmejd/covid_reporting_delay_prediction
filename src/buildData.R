@@ -6,7 +6,7 @@ library(stringr)
 library(dplyr)
 library(fst)
 
-# source("src/stolen_function.R")
+# source("src/functions.R")
 
 # Sys.setlocale("LC_TIME", 'en_US.UTF-8')
 # #download_latest_fhm()
