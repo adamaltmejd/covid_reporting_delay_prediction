@@ -76,28 +76,34 @@ get_record_date <- function(f) {
 
 
 set_default_theme <- function() {
-  require(hrbrthemes)
+    require(hrbrthemes)
 
-  fam <- "sans"
-  if (font_family_exists(font_family = "Arial")) fam <- "Arial"
-  if (font_family_exists(font_family = "EB Garamond")) fam <- "EB Garamond"
+    theme_ipsum(base_family = "EB Garamond") %+replace%
+        theme(
+            text = element_text(size = 12, color = "#333333", family = "EB Garamond"),
+            plot.title = element_text(size = rel(2), face = "plain", hjust = 0, margin = margin(0,0,5,0)),
+            plot.subtitle = element_text(size = rel(1), face = "plain", hjust = 0, margin = margin(0,0,0,0)),
+            plot.caption = element_text(size = rel(0.7), family = "EB Garamond", face = "italic", hjust = 1, vjust = 1, margin = margin(12,0,0,0)),
 
-  theme_ipsum(base_family = fam) %+replace%
-    theme(
-      plot.title = element_text(size = rel(2), face = "plain", hjust = 0, margin = margin(0,0,5,0)),
-      plot.subtitle = element_text(size = rel(1), face = "plain", hjust = 0, margin = margin(0,0,5,0)),
-      legend.background = element_rect(fill = "grey95"),
-      legend.margin = margin(5,5,5,5),
-      legend.direction = "horizontal",
-      legend.position = "bottom",
-      axis.text.x = element_text(angle = 0, hjust = 0, vjust = 1),
+            legend.text = element_text(size = rel(0.9), family = "EB Garamond", hjust = 0, margin = margin(0, 0, 0, 0)),
+            legend.background = element_rect(fill = "grey95"),
+            legend.margin = margin(3, 3, 3, 3),
+            legend.box.margin = margin(0,0,0,0),
+            legend.direction = "horizontal",
+            legend.position = "bottom",
 
-      # Panels
-      plot.background = element_rect(fill = "#FFFFFF", color = NA), # bg of the plot
-      panel.border = element_blank(),
-      panel.grid.major = element_line(linetype = "dotted", color = "grey60", size = 0.2),
-      panel.grid.minor = element_line(linetype = "dotted", color = "grey80", size = 0.2)
-    )
+            axis.title.y = element_text(size = rel(1.2), face = "bold", angle = 90, hjust = 1, vjust = 1, margin = margin(0, 5, 0, 0)),
+            axis.title.x = element_text(size = rel(1.2), face = "bold", hjust = 1, vjust = 1, margin = margin(5, 0, 0, 0)),
+            axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 0),
+
+            # Panels
+            plot.background = element_rect(fill = "#FFFFFF", color = NA), # bg of the plot
+            # plot.background = element_rect(fill = "#f5f5f5", color = NA), # bg of the plot
+            panel.border = element_blank(),
+            panel.grid.major = element_line(linetype = "dotted", color = "#CCCCCC", size = 0.3),
+            panel.grid.minor = element_line(linetype = "dotted", color = "#CECECE", size = 0.2),
+            panel.spacing = unit(0.5, "lines")
+        )
 }
 
 plot.predReport <- function(result, CI,  true.day=0, ymax = NULL){
