@@ -13,7 +13,7 @@ MCMC_sim <- 20000
 burnin_p = 0.5
 deaths_sim <- 10
 maxusage.day = 20 #must be less then N
-unique.days  = 5
+unique.days  = 7
 true.day = 5
 start.predict.day = 14# more then unique days
 

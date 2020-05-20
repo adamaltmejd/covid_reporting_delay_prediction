@@ -3,6 +3,7 @@
 #
 ###
 library(foreach)
+library(fst)
 library(data.table)
 source("src/util.r")
 nclust <- 4
@@ -21,7 +22,7 @@ index_files <- 1:(length(files)-1)
 #for(i in index_files){
 result_par <- foreach(i = index_files)  %dopar% {
   library(Matrix)
-
+  library(tidyr)
   load(files[i])
   list2env(res_save, envir = environment())
   result <- readRDS(file.path("data", "processed", "processed_data.rds"))
@@ -37,7 +38,15 @@ result_par <- foreach(i = index_files)  %dopar% {
                       maxusage.day =maxusage.day)
   X_T <- setup_data(N_T, maxusage.day, result$dates_report, unique.days)
 
-
+  #handling annoying misstakes
+  data_mod <- newDeaths(deaths_est_T,
+                      Reported_T,
+                      maxusage.day =Inf)
+  detected_mod<- result$detected
+  for(k in 1:dim(data_T$report.new)[1]){
+    detected_mod[i,] <- cumsum(replace_na(data_mod$report.new[i,],0))
+  }
+  detected_mod[is.na(result$detected)] <- NA
 
 
   Reported <- result$detected[1:pred_time,1:pred_time]
@@ -81,7 +90,7 @@ result_par <- foreach(i = index_files)  %dopar% {
   predicition_by_reported_day$CI_low <- CI_low
   predicition_by_reported_day$CI_up <- CI_up
   predicition_by_reported_day$med <- med
-  predicition_by_reported_day$Truth <- as.matrix(result$detected[1:pred_time,(pred_time+1):N_T])
+  predicition_by_reported_day$Truth <- as.matrix(detected_mod[1:pred_time,(pred_time+1):N_T])
 
   colnames( predicition_by_reported_day$Truth)<- format(result$dates_report[(pred_time+1):N_T],"%Y-%m-%d")
   rownames( predicition_by_reported_day$Truth)<- format(result$dates[1:pred_time],"%Y-%m-%d")
@@ -116,7 +125,7 @@ save(
      file=paste(path.to.files,"/simulation_result/prediction_valdiation.RData",sep="")
      )
 nDelay <- 14
-Pred_vec <- matrix(0,nrow=nDelay, ncol=6)
+Pred_vec <- matrix(0,nrow=nDelay, ncol=7)
 state=c()
 date=c()
 target = c()
@@ -125,42 +134,51 @@ ci_upper = c()
 ci_lower = c()
 predicted_deaths = c()
 SCRPS_out  = c()
+  data_delay <- newDeaths(deaths_est_T,
+                      Reported_T,
+                      maxusage.day =nDelay)
+  rownames(data_delay$report.new) <- format(result$dates_report,"%Y-%m-%d")
+  obs_true <- rowSums(data_delay$report.new,na.rm=T)
 for(day in names(result_par)){
   for(Delay in 1:(nDelay)){
 
 
 
     Report_day <- as.Date(day)+Delay
-    Death_day <-  Report_day- nDelay
+    Death_day <-  Report_day - nDelay
+    if(Death_day<=as.Date('2020-04-06'))
+      next
+
     CI_low <- result_par[[day]]$CI_low
     Row <- which(rownames(CI_low)==Death_day)
     Col <- which(colnames(CI_low)==Report_day)
+    truth <- result_par[[day]]$Truth[Row,Col]
     if(length(Col)*length(Row)>0){
       CIl <- result_par[[day]]$CI_low[Row,Col]
       CIu <- result_par[[day]]$CI_up[Row,Col]
-      truth <- result_par[[day]]$Truth[Row,Col]
+
       med   <- result_par[[day]]$med[Row,Col]
       SCPRS   <- result_par[[day]]$SCPRS[Row,Col]
-      state     = c(state,as.Date(Report_day))
-      date      = c(date, as.Date(day))
+      state     = c(state,as.Date(day))
+      date      = c(date, as.Date(Death_day))
       target    = c(target, truth)
       days_left = c(days_left,Report_day-as.Date(day))
       ci_upper  = c(ci_upper, CIu)
       ci_lower  = c(ci_lower, CIl)
       predicted_deaths = c(predicted_deaths,med)
       SCRPS_out  = c(SCRPS_out,SCPRS)
-      if(is.na(SCPRS)==F){
         Pred_vec[Delay,1] <- Pred_vec[Delay,1] + 1 #number
         Pred_vec[Delay,2] <- Pred_vec[Delay,2] + (truth >= CIl)*(truth <= CIu) #in CI
         Pred_vec[Delay,3] <- Pred_vec[Delay,3] + CIu - CIl #interval width
         Pred_vec[Delay,4] <- Pred_vec[Delay,4] + SCPRS #SCPRS
         Pred_vec[Delay,5] <- Pred_vec[Delay,5] + CIl - truth #in CI
         Pred_vec[Delay,6] <- Pred_vec[Delay,6] + CIu - truth  #in CI
-      }
-    }
+        Pred_vec[Delay,7] <- Pred_vec[Delay,7] +  max(truth - CIu,CIl-truth,0)  #in CI
 
+    }
   }
 }
+
 out_BGP <- data.table(state     = as.Date(state,origin="1970-01-01"),
                   date      = as.Date(date, origin="1970-01-01"),
                   target    = target,
@@ -185,6 +203,10 @@ if(0){
        xlab='Days left to pred',
        ylab='mean SCPRS',
        type='l')
+  plot(1:(nDelay),Pred_vec[,7]/(Pred_vec[,1]-Pred_vec[,2]),
+      xlab='Days left to pred',
+      ylab='average error',
+      type='l')
   dev.off()
 
   plot(1:(nDelay),Pred_vec[,5]/Pred_vec[,1],

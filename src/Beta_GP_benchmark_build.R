@@ -8,14 +8,14 @@ source(file.path("src", "util.r"))
 source(file.path("src", "MH.R"))
 source(file.path("src", "stolen_function.R"))
 source(file.path("src", "GPutil.R"))
-nclust <- 4
+nclust <- 6
 MCMC_sim <- 30000
 burnin_p = 0.5
 deaths_sim <- 10
 maxusage.day = 20 #must be less then N
-unique.days  = 5
+unique.days  = 7
 true.day = 5
-start.predict.day = 40#16 # more then unique days
+start.predict.day = 26#16 # more then unique days
 
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 Reported_T = result$detected
