@@ -72,7 +72,7 @@ plot <- ggplot(data = plot_data,
     # scale_color_manual(values = wes_palette("Darjeeling2")) +
     scale_color_manual(values = colors) +
     scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(0, 5))) +
-    labs(title = "Predicting the number of deaths for six dates reported within 14 days.",
+    labs(title = "Predicting the number of deaths in a given day reported within 14 days.",
          subtitle = "",
          caption = "",
          color = "Model",
