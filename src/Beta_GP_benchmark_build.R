@@ -10,7 +10,7 @@ source(file.path("src", "functions.R"))
 source(file.path("src", "GPutil.R"))
 source(file.path("src", "modelbenchmarkutil.R"))
 nclust <- 6
-MCMC_sim <- 2000
+MCMC_sim <- 20000
 burnin_p = 0.3
 deaths_sim <- 5
 maxusage.day = 20 #must be less then N
@@ -42,7 +42,7 @@ foreach(j = start.predict.day:N_T)  %dopar% {
                                MCMC_sim,
                                burnin_p,
                                deaths_sim = deaths_sim,
-                               prior = c(0,0))
+                               prior = c(1,0))
 
   save(res_save,
        file = file.path("data", "simulation_results", paste0("param_", dates_report[j], ".rds")))

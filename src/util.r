@@ -586,7 +586,7 @@ death.givenParamBB <- function(alpha, beta, Reported,Predict.day = Inf,sim=c(200
 # unique.prob - (int) how many of days shall we have unique probabilites
 ##
 setup_data <- function(N, Predict.day, dates_report, unique.prob=NULL){
-  holidays.Sweden <- as.Date(c("2020-04-10","2020-04-13","2020-05-01"))
+  holidays.Sweden <- as.Date(c("2020-04-10","2020-04-13","2020-05-01","2020-05-21"))
   X <- buildXdayeffect(N,Predict.day)
   #holidays and weekends
 

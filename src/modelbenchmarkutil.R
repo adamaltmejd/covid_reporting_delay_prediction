@@ -108,6 +108,16 @@ benchmark_BetaGP_j <- function(j,
     Alpha <- matrix(NA, ncol=N, nrow=N)
     Beta <- matrix(NA, ncol=N, nrow=N)
     for(i in 1:(MCMC_sim+burnin-1)){
+
+        if(i%%100==0){
+            cat('*')
+        }
+        if(i%%1000==0){
+            cat('+')
+        }
+        if(i%%10000==0){
+            cat(' ',i/10000,' ')
+        }
         MH_obj <- MALAiter(MH_obj, TRUE,
                            death.remain = data_$death.remain,
                            report.new   = data_$report.new,
@@ -134,14 +144,13 @@ benchmark_BetaGP_j <- function(j,
         ##
         # build tau sampler
         ##
-        E_Q <- t(EQ$vectors)
-        D_Q <- EQ$values
+
         if(prior[2] == 0){
-            L_theta          <- sqrt(D_Q)*(E_Q%*%MH_obj_GP$theta)
+            L_theta          <- L%*%MH_obj_GP$theta
 
             tau_div   <- 1/rgamma(1, shape= (1 + length(L_theta)-1)/2 + 0.01, rate = sum(L_theta^2)/2 + 0.01)
             tau <- 1/tau_div
-            L_in <- diag(sqrt(tau*D_Q))%*%E_Q
+            L_in <- sqrt(tau) * L
         }else{
             L_theta          <- (E_Q%*%MH_obj_GP$theta)
             MH_obj_tau <- MHiter(MH_obj_tau,
