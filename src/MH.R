@@ -1,3 +1,32 @@
+MHiter <- function(MH_obj, calcLik = F,...)
+{
+  #' one iteration of MH-TE d and stochastic gradient approximation
+  #' @param MH is a list containg
+  #'           $Lik       -> takes theta computes log-likelihood
+  #'           $theta     -> (dx1) vector of parameter
+  #'           $Sigma     -> RH Sigma
+  #'           $sigma     -> multiplicative coeffients
+  #'           $lik_old   -> old likelihood value  d
+  #'           $grad_old  -> the previous gradient
+  #'           $thetaM    -> the estimated mean value
+  #'           $n_SA      -> iteration number of for mean and covariance
+  #'           $n_SA2     -> iteration number of option 2
+  #'           $c_p       -> constant to take power of between takes value between (0,1]
+  #'           $Dacc_prob -> desired accpetence probabilility
+  #' @param  ... arguments to the likelihood and gradient
+  if(calcLik){
+    res <- MH_obj$Lik(MH_obj$theta,...)
+    MH_obj$grad_old <- res$grad
+    MH_obj$lik_old  <- res$loglik
+    MH_obj$res <- res
+  }
+
+  MH_obj <- MH_RW(MH_obj, ...)
+  MH_obj <- MH_SA(MH_obj, option = 1)
+  MH_obj <- MH_SA(MH_obj, option = 2)
+
+  return(MH_obj)
+}
 
 MALAiter <- function(MH_obj, calcLik = F,...)
 {
@@ -63,7 +92,7 @@ MALAHiter <- function(MH_obj, calcLik = F,...)
 LCNiter <- function(MH_obj, calcLik = F,...)
 {
   #' Precond crank nicholson iteration using the Hessian
-  #' model is 
+  #' model is
   #' theta ~ N(0, C)
   #' Y     ~ exp(-\Phi(theta))
   #' @param MH is a list containg
@@ -88,16 +117,16 @@ LCNiter <- function(MH_obj, calcLik = F,...)
     MH_obj$iHessian_old <- chol2inv(R)
     MH_obj$R_old        <- R
   }
-  
+
   MH_obj <- MH_LCN_Hessian(MH_obj, ...)
   MH_obj <- MH_SA(MH_obj, option = 3)
-  
+
   return(MH_obj)
 }
 MH_LCN_Hessian <- function(MH_obj,...)
 {
   #'Precond crank nicholson iteration using the Hessian
-  #' model is 
+  #' model is
   #' theta ~ N(0, C)
   #' Y     ~ exp(-\Phi(theta))
   #' we don't simplification
@@ -113,17 +142,17 @@ MH_LCN_Hessian <- function(MH_obj,...)
 
   MH_obj$accept = 0
   MH_obj$count <- MH_obj$count + 1
-  
+
   MH_obj$beta <- MH_obj$sigma
   sqrtOneBeta2 = 1-sqrt(1-MH_obj$beta^2)
-    
+
   mu_old     <-  (1-sqrtOneBeta2)*MH_obj$theta + sqrtOneBeta2 * ( MH_obj$iHessian_old%*%MH_obj$grad_old)
-  #theta_star <- as.vector(mu_old + MH_obj$beta * SparseM::backsolve(MH_obj$R_old, 
+  #theta_star <- as.vector(mu_old + MH_obj$beta * SparseM::backsolve(MH_obj$R_old,
   #                                                                  rnorm(length(MH_obj$theta)),
   #                                                                  twice=F))
   iL <- chol(MH_obj$iHessian_old)
   theta_star <- as.vector(mu_old + MH_obj$beta * iL%*%rnorm(length(MH_obj$theta)))
-  
+
 
   res <- MH_obj$Lik(theta_star,...)
   lik_star <- res$loglik
@@ -132,7 +161,7 @@ MH_LCN_Hessian <- function(MH_obj,...)
   R = chol(-res$Hessian)
   iHessian <- chol2inv(R)
   mu_star <- (1-sqrtOneBeta2)*theta_star +  sqrtOneBeta2 *(iHessian%*%res$grad)
-  
+
   q_x      <- - (t(MH_obj$theta - mu_star)%*%(-res$Hessian        )%*%(MH_obj$theta - mu_star)) / (2* MH_obj$beta^2)
   q_xstar  <- - (t(theta_star   - mu_old )%*% (-MH_obj$Hessian_old)%*%(theta_star   - mu_old )) / (2* MH_obj$beta^2)
 
@@ -164,20 +193,20 @@ MH_MALA_Hessian <- function(MH_obj,...)
   #'           $lik_old  -> old likelihood value  d
   #'          $grad_old -> the previous gradient
   #' @param  ... arguments to the likelihood and gradient
-  
+
   MH_obj$accept = 0
   MH_obj$count <- MH_obj$count + 1
-  
-  
+
+
   mu_old <-  MH_obj$theta +  MH_obj$sigma^2/2 * ( MH_obj$iHessian_old%*%MH_obj$grad_old)
   #theta_star <- as.vector(mu_old + MH_obj$sigma * forwardsolve(MH_obj$L_old, rnorm(length(MH_obj$theta))))
   iL <- chol(MH_obj$iHessian_old)
   theta_star <- as.vector(mu_old + MH_obj$sigma * iL%*%rnorm(length(MH_obj$theta)))
-  
+
   res <- MH_obj$Lik(theta_star,...)
   lik_star <- res$loglik
   if(lik_star == -Inf) { return(MH_obj) }
-  
+
   R = chol(-res$Hessian)
   iHessian <- chol2inv(R)
   iHessian <- solve(- res$Hessian)
@@ -185,8 +214,8 @@ MH_MALA_Hessian <- function(MH_obj,...)
   Lstar <- t(chol(-res$Hessian))
   q_x      <- - (t(MH_obj$theta - mu_star)%*%(-res$Hessian        )%*%(MH_obj$theta - mu_star)) / (2* MH_obj$sigma^2)
   q_xstar  <- - (t(theta_star   - mu_old )%*% (-MH_obj$Hessian_old)%*%(theta_star   - mu_old )) / (2* MH_obj$sigma^2)
-  
-  
+
+
   if( log(runif(1)) < lik_star - MH_obj$lik_old + as.vector(q_x) - as.vector(q_xstar))
   {
     MH_obj$Hessian_old  <- res$Hessian
@@ -197,7 +226,7 @@ MH_MALA_Hessian <- function(MH_obj,...)
     MH_obj$accept  = 1
     MH_obj$grad_old <- res$grad
     MH_obj$accept_count <- MH_obj$accept_count  +1
-    
+
     return(MH_obj)
   }
   return(MH_obj)
@@ -280,7 +309,7 @@ MH_SA <- function(MH_obj, option = 1)
   if(option == 1)
   {
     w0 <- (MH_obj$n_SA -1)
-    
+
     w1 <- MH_obj$n_SA
     if(length(MH_obj$thetaM) == length(MH_obj$theta)){
       MH_obj$thetaM <- w0/w1 * MH_obj$thetaM + 1/w1 * MH_obj$theta
@@ -408,8 +437,6 @@ MH_RW <- function(MH_obj,...)
   MH_obj$count <- MH_obj$count + 1
 
   Le <-exists('L', where=MH_obj)
-  if(exists('Sigma', where=MH_obj) ==TRUE && Le == FALSE)
-    MH_obj$L <- t(chol(MH_obj$Sigma))
 
   if(Le==FALSE)
   {

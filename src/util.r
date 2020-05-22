@@ -50,7 +50,9 @@ sample.deaths <- function(samples, deaths, P, Reported, alpha, true.day = 0){
 #  true.dat  - (int) how many days after recording should one sample
 #  prior     - (function) should  return log of prior density (use N and i)
 ##
-sample.deathsBB <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, true.day = 0 , prior=NULL){
+sample.deathsBB <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, true.day = 0 ,
+                            use.prior=FALSE,
+                            prior=NULL){
 
   N <- length(deaths)
   acc <- rep(0,N)
@@ -65,13 +67,13 @@ sample.deathsBB <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, 
       Reported_i  = Reported_i[index]
 
       lik_i <- loglikDeathsGivenProbBB(deaths[i],alpha_i , beta_i, Reported_i)
-      if(is.null(prior)==F)
+      if(use.prior==T)
         lik_i <- lik_i + prior(deaths[i], i)
       for(j in 1:samples){
         death_star <- sample((deaths[i]-alpha.MCMC[i]):(deaths[i]+alpha.MCMC[i]), 1)
 
         lik_star <- loglikDeathsGivenProbBB(death_star, alpha_i , beta_i, Reported_i)
-        if(is.null(prior)==F)
+        if(use.prior==T)
           lik_star <- lik_star + prior(death_star, i)
 
         if(log(runif(1)) < lik_star-lik_i){
@@ -406,7 +408,7 @@ loglikProbBB <- function(beta, death.remain, report.new, X, calcH=T){
   X <- X[index,]
   alpha <- exp(X%*%beta_1)
   beta  <- exp(X%*%beta_2) #unfortunate name
-  if(min(1/(alpha+beta)) <0.001)
+  if(min(1/(alpha+beta)) <10^-5)
     return(list(loglik = -Inf, grad = 0, Hessian = 0))
   y <- y[index]
   n <- n[index]
@@ -543,7 +545,9 @@ loglikDeathsGivenProbBB <- function(death, alpha, beta, report){
 # prior       - (function) prior for N (needs use N and i)
 #
 ###
-death.givenParamBB <- function(alpha, beta, Reported,Predict.day = Inf,sim=c(2000,10), alpha.MCMC = NULL, prior=NULL){
+death.givenParamBB <- function(alpha, beta, Reported,Predict.day = Inf,sim=c(2000,10), alpha.MCMC = NULL,
+                               use.prior=F,
+                               prior=NULL){
 
   N <- dim(alpha)[1]
   if(is.null(alpha.MCMC))
@@ -561,6 +565,7 @@ death.givenParamBB <- function(alpha, beta, Reported,Predict.day = Inf,sim=c(200
                            Reported,
                            alpha.MCMC,
                            rep.day=Predict.day,
+                           use.prior=use.prior,
                            prior= prior)
     deaths_est <- res$deaths
     if(i < burnin){
