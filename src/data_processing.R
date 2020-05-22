@@ -62,8 +62,8 @@ deaths_dt[date == "2020-04-02" & publication_date == "2020-04-02", days_since_pu
 
 deaths_dt[!is.na(date), paste0("n_m", 1) := shift(N, n = 1, type = "lag", fill = 0L), by = date]
 deaths_dt[!is.na(date), n_diff := N - n_m1]
-deaths_dt[!is.na(date) & n_m1 > 0 & !is.na(n_m1), n_diff_pct := N/n_m1 - 1]
-deaths_dt[!is.na(date) & n_m1 == 0 & N == 0, n_diff_pct := 0]
+# deaths_dt[!is.na(date) & n_m1 > 0 & !is.na(n_m1), n_diff_pct := N/n_m1 - 1]
+# deaths_dt[!is.na(date) & n_m1 == 0 & N == 0, n_diff_pct := 0]
 deaths_dt[, n_m1 := NULL]
 
 setkey(deaths_dt, date, publication_date)
