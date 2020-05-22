@@ -1,0 +1,578 @@
+%   ##############################
+%   ###    SETUPSCRIPT.sty     ###
+%   ##############################
+%
+% Custom LaTeX preamble and layout for presentations and papers.
+%
+% ### USAGE
+%     - Top lines of document:
+%     - \documentclass[<options>]{memoir/beamer}
+%     - \usepackage[<options>]{setupscript}
+%
+% ### OPTIONS
+%     - REQUIRED: [memoir] or [beamer] document class-specific setups
+%     - [bibliography] loads biblatex and formats bibliography
+%     - [nofonts] to skip loading custom fonts
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{setupscript}[2019/12/05 Adam Altmejd's custom setup script]
+
+%% ##################### CLASS SPECIFIC PACKAGES #############################
+
+\newif\if@memoir\@memoirfalse
+\DeclareOption{memoir}{
+  \@memoirtrue
+}
+\newif\if@beamer\@beamerfalse
+\DeclareOption{beamer}{
+  \@beamertrue
+}
+\newif\if@bibliography\@bibliographyfalse
+\DeclareOption{bibliography}{
+  \@bibliographytrue
+}
+\newif\if@nofonts\@nofontsfalse
+\DeclareOption{nofonts}{
+  \@nofontstrue
+}
+
+\ProcessOptions\relax
+
+\RequirePackage{ifxetex,ifluatex}
+\newif\ifxetexorluatex
+\ifxetex
+  \xetexorluatextrue
+\else
+  \ifluatex
+    \xetexorluatextrue
+  \else
+    \xetexorluatexfalse
+  \fi
+\fi
+
+% Force xetex/luatex for beamer
+\ifxetexorluatex\else\if@beamer
+    \PackageError{setupscript}{Beamer requires xetex or luatex.}{}
+\fi\fi
+
+%% ###########################################################################
+%% ##################### PREAMBLE ############################################
+%% ###########################################################################
+
+%% ##################### Typography ##########################################
+
+% Check if pdflatex or lualatex is used to build document
+\ifxetexorluatex\else
+    \RequirePackage[T1]{fontenc} % Should be loaded before inputenc
+    \RequirePackage[utf8]{inputenc} %utf8x should be avoided, does not work with biblatex
+\fi
+
+\RequirePackage{babel} % Language control
+\RequirePackage[babel]{microtype} %automatically enables protrusion and expansion when possible
+
+\ifxetexorluatex\else
+    \microtypesetup{tracking=true}
+\fi
+
+\RequirePackage[babel]{csquotes} % Better looking quotes
+
+%% ##################### MATH / CODE #########################################
+
+\RequirePackage{amsmath,amssymb,amsfonts}
+
+%% ##################### FONTS #################################################
+
+\ifxetexorluatex
+    \usepackage{fontspec} % should be loaded after amsmath
+    \if@memoir\if@nofonts\else
+        \defaultfontfeatures{Ligatures=TeX}
+        \RequirePackage[math-style=ISO, bold-style=ISO]{unicode-math}
+        \setmainfont{EB Garamond}
+        \setmathfont{Garamond-Math.otf}[StylisticSet={7,9}] %Use StylisticSet that you like
+        \setsansfont{TeX Gyre Adventor}
+    \fi\fi
+    \if@beamer
+        \usefonttheme{professionalfonts} % prohibit beamer from setting fonts
+        \usetheme{metropolis}
+        \defaultfontfeatures{Ligatures=TeX}
+        \RequirePackage[mathrm=sym]{unicode-math}
+        \setmainfont{Fira Sans} % Metropolis uses light, we overwrite so math doesn't look wierd
+        \setsansfont{Fira Sans}
+        \setmathfont{Fira Math} % Not yet available in light mode
+        % \setmonofont{Fira Sans Mono}
+    \fi
+\else
+    \if@memoir\if@nofonts\else
+        \RequirePackage{ebgaramond}
+        \RequirePackage[cmintegrals,cmbraces]{newtxmath}
+        \RequirePackage{ebgaramond-maths} % needs to be loaded after newtxmath,
+        \RequirePackage{tgadventor} % Sansfont - updated version of Avant Gothic
+    \fi\fi
+\fi
+
+\RequirePackage{lipsum} % to add filler text to template. Can remove.
+
+%% ##################### GRAPHICS ##############################################
+
+\RequirePackage{graphicx}
+\DeclareGraphicsExtensions{.pdf,.png,.jpg,.eps}
+
+\if@memoir
+    \RequirePackage{placeins} % Option [section] to create \FloatBarrier automatically at sections
+    \RequirePackage[hyperref,dvipsnames]{xcolor} % Needs to be loaded before listings
+\fi
+
+%% ##################### TABLES ############################################
+
+\RequirePackage{siunitx}
+\sisetup{
+	group-digits = integer, % group integers in groups of 3 (not decimals)
+	input-decimal-markers = {.},
+	table-number-alignment = center, %  requires defining pre post spacing
+	input-open-uncertainty = {},
+	input-close-uncertainty = {},
+	table-align-text-pre = false,
+    table-align-text-post = false,
+    table-format = -2.2, % defaults, can easily be changed for specific table
+    table-space-text-pre ={(},
+    table-space-text-post={)}
+}
+\RequirePackage{booktabs} % Better looking tables
+\RequirePackage{threeparttable}
+
+%% ##################### BIBLIOGRAPHY ########################################
+
+\if@bibliography
+    \if@memoir
+        \usepackage[
+            authordate,
+            backend=biber,%
+            bibencoding=inputenc,
+            short,% always use short format
+            noibid,% never use ibid
+            %strict,% experimental, tries to follow Manual for footnote formatting
+            maxbibnames=5,%
+            minbibnames=3,%
+            maxcitenames=2,%
+            mincitenames=1,%
+            numbermonth=false,%
+            uniquename=init, % Do not add initials if two authors have same name
+            giveninits=true,% Use initials for first and middle names
+            useprefix=true,% print "von" etc (biber only)
+            sortcites=true,% sort citations in text (when separated by comma)
+            date=year,%
+            doi=only,isbn=false,eprint=false%
+        ]{biblatex-chicago}
+
+        \AtEveryBibitem{%
+            \clearlist{language}%
+            \clearfield{month}%
+            \clearfield{day}%
+        }
+
+        \DeclareFieldFormat[legislation]{citetitle}{{#1}} % no italics of title of legislation in text
+        \DeclareFieldFormat[thesis]{title}{\mkbibitalic{#1}}% italics thesis title in bibliography
+
+    \fi
+    \if@beamer
+        \usepackage[
+            style=authoryear-comp,backend=biber,bibencoding=inputenc,sorting=nyt,
+            maxbibnames=5,minbibnames=3,maxcitenames=2,mincitenames=1,
+            date=year,doi=false,isbn=false,eprint=false
+        ]{biblatex}
+        \AtEveryBibitem{%
+            \clearlist{language}%
+            \clearfield{month}%
+            \clearfield{day}%
+        }
+
+        % http://tex.stackexchange.com/questions/202988/beamer-patching-footnotes-warning
+        \RequirePackage{silence}
+        \WarningFilter{biblatex}{Patching footnotes failed}
+    \fi
+\fi
+
+
+%% ##################### OTHER USEFUL STUFF ##################################
+\RequirePackage{etoolbox} % for programming new commands etc
+
+\if@beamer
+    \RequirePackage{appendixnumberbeamer} % To get new numbering for appendix
+\fi
+
+%% ######################### CAPTIONS ##########################################
+
+% Memoir has builting captioning
+
+\if@beamer
+    \usepackage{caption}
+    \usepackage{subcaption}
+    \captionsetup{
+        listformat=empty,
+        tablename=Table,
+        justification=justified,
+        labelsep=colon,
+        position=above,
+        skip=\baselineskip,
+        width=\linewidth,
+        labelfont={small},
+        font={small}
+    }
+\fi
+
+%% ##################### REFERENCES (Loaded last) ############################
+
+% Hyperref should always be loaded in the end.
+% Beamer loads hyperref automatically
+\if@beamer\else
+    \RequirePackage{hyperref}
+    \definecolor{myblue}{RGB}{100,110,150}
+    \hypersetup{
+        colorlinks=true,
+        citecolor=myblue,
+        filecolor=myblue,
+        linkcolor=myblue,
+        linkbordercolor=myblue,
+        urlcolor=myblue
+    }
+\fi
+\hypersetup{
+    unicode=true,
+    pdfauthor={Adam Altmejd},
+    bookmarksnumbered=true,
+    bookmarksopen=true,
+    breaklinks=true
+}
+
+%% #############################################################################
+%% ##################### LAYOUT ################################################
+%% #############################################################################
+
+%% ##################### MEMOIR ################################################
+\if@memoir
+
+    %%%%%%%%%%%%%
+    % PAGE LAYOUT
+
+    \setlrmarginsandblock{30mm}{30mm}{*} % left right margins
+    \setulmarginsandblock{35mm}{40mm}{*} % top bottom margins
+    \setheadfoot{\onelineskip}{2\onelineskip} % {headheight}{footskip}
+    \setheaderspaces{20mm}{*}{*} % {headdrop}{headsep}{ratio}
+
+    % Indent
+    \setlength{\parindent}{2em} % indentation for new paragraphs
+    \setSingleSpace{1.1} % Line spacing
+
+    %%%%%%%%%%%%%%%%
+    % PAGE Breaking
+    % Dealing with widows and orphans
+    \clubpenalty=9996
+    \widowpenalty=9999
+    \brokenpenalty=4991
+    \predisplaypenalty=10000
+    \postdisplaypenalty=1549
+    \displaywidowpenalty=1602
+
+    %\flushbottom % to stretch vboxes to cover full page (won't always work with figures)
+    %\checkandfixthelayout[lines] % use "fixed" with raggedbottom
+
+    % Alternatively:
+    \raggedbottom % allow textheight to vary somewhat between pages
+    \feetatbottom % to ensure footnotes are still at bottom with \raggedbottom
+    \checkandfixthelayout[fixed] % use "fixed" with raggedbottom
+
+    %%%%%%%%%%%%%%%
+    % Figures
+
+    % Figure Captions (and notes)
+    \captionstyle[\centering]{\raggedright} % [short caption]{long caption}
+    \captiondelim{. }
+    \captionnamefont{\normalsize\sffamily} % \sffamily
+    \captiontitlefont{\normalsize\sffamily} % \sffamily
+
+    % To add a note below the figure use \figurenotes{}
+    \newcommand{\figurenotes}[1]{%
+    \captionstyle[\centering]{} % \raggedright
+    \captiontitlefont{\footnotesize\rmfamily}
+    \legend{Notes: #1}}
+
+    \newsubfloat{figure}% Allow subfloats in figure environment
+
+    \setfloatadjustment{figure}{\centering}
+    \setfloatadjustment{table}{\footnotesize\centering}
+
+    %%%%%%%%%%%%%%%%
+    % TITLE
+
+    \pretitle{\begin{center}\huge\sffamily}
+    \posttitle{\par\end{center}\vskip 0.5em}
+    \preauthor{\begin{center}
+                \large \lineskip 0.5em%
+                \begin{tabular}[t]{c}}
+    \postauthor{\end{tabular}\par\end{center}}
+    \predate{\begin{center}\large}
+    \postdate{\par\end{center}}
+
+    \setlength{\droptitle}{30pt}
+    \titlingpageend{\clearforchapter}{\clearforchapter}
+    \aliaspagestyle{titlingpage}{empty}
+
+    %%%%%%%%%%%%%%%%
+    % Abstract
+    \renewcommand{\abstractnamefont}{\sffamily\Large} %\small\normalfont\bfseries
+    \renewcommand{\abstracttextfont}{\normalfont\normalsize\noindent\ignorespaces} %\small
+    \setlength{\absleftindent}{0pt}
+    \setlength{\absrightindent}{0pt}
+    \setlength{\absparindent}{0pt}
+    \setlength{\absparsep}{0pt}
+    \setlength{\abstitleskip}{-4ex}
+
+    %%%%%%%%%%%%%%%%
+    % Page styles and counters
+
+    \makepagestyle{setupscript}
+    %\makeevenhead{setupscript}{}{\normalfont\sffamily\scshape\rightmark}{}
+    %\makeoddhead{setupscript}{}{\normalfont\sffamily\scshape\leftmark}{}
+    \makeevenhead{setupscript}{}{}{}
+    \makeoddhead{setupscript}{}{}{}
+    \makeevenfoot{setupscript}{}{\normalfont\sffamily\thepage}{}
+    \makeoddfoot{setupscript}{}{\normalfont\sffamily\thepage}{}
+    \makepsmarks{setupscript}{%
+        \nouppercaseheads % use smallcaps instead of uppercase
+        \createmark      {chapter}  {both}{nonumber}   {\@chapapp\ }{. \ }
+        %\createmark      {section}  {right}{nonumber}   {}           {. \ }
+        \createplainmark {toc}      {both}              {\contentsname}
+        \createplainmark {lof}      {both}              {\listfigurename}
+        \createplainmark {lot}      {both}              {\listtablename}
+        \createplainmark {bib}      {both}              {\bibname}
+        \createplainmark {index}    {both}              {\indexname}
+        \createplainmark {glossary} {both}              {\glossaryname}
+    }
+
+
+    % Use empty for float-only pages
+    \mergepagefloatstyle{mergedstyle}{setupscript}{empty}
+    \pagestyle{mergedstyle}
+
+    % \aliaspagestyle{chapter}{empty} % no pagestyle on chapter page
+    \counterwithout{footnote}{chapter} % continous numbering of footnotes
+    \setsecnumdepth{subsection}
+
+    %%%%%%%%%%%%%%%%
+    % Chapter Style
+
+    \makechapterstyle{section2}{%
+        \renewcommand*{\chaptitlefont}{\sffamily\LARGE}
+        \renewcommand*{\printchaptername}{}
+        \renewcommand*{\chapternamenum}{}
+        \renewcommand*{\chapnamefont}{}
+        \renewcommand*{\chapnumfont}{\chaptitlefont}
+        \renewcommand*{\printchapternum}{\chapnumfont \thechapter}
+        \renewcommand*{\afterchapternum}{\quad}
+        \setlength{\beforechapskip}{2\onelineskip}
+        \setlength{\midchapskip}{\onelineskip}
+        \setlength{\afterchapskip}{\onelineskip}
+    }
+    \chapterstyle{section2}
+
+    %%%%%%%%%%%%%%%%
+    % Section styles
+    % negative ensures no _indentation_ after
+    \setsecheadstyle{\sffamily\Large}
+    \setbeforesecskip{-4ex plus -1ex minus -0.4ex}
+    \setaftersecskip{2.3ex plus 0.4ex}
+
+    \setsubsecheadstyle{\sffamily\large}
+    \setbeforesubsecskip{-2.8ex plus -1ex minus -0.4ex}
+    \setaftersubsecskip{1.3ex plus 0.3ex}
+
+    \setsubsubsecheadstyle{\sffamily\normalsize}
+    \setbeforesubsubsecskip{-2.8ex plus -1ex minus -0.4ex}
+    \setaftersubsubsecskip{1.3ex plus 0.3ex}
+
+    %%%%%%%%%%%%%%%%
+    % Footnotes
+    \footmarkstyle{\hspace{\parindent}#1.\,} % indent the footmark
+    \setlength{\footmarkwidth} {0em}
+    \setlength{\footmarksep}   {0em}
+    \setlength{\footparindent} {\parindent}
+
+    %%%%%%%%%%%%%%%%
+    % Bibliography
+    \setlength{\bibitemsep}{0.5\baselineskip} % small space between items in bib
+
+\fi
+
+%% ##################### BEAMER ################################################
+\if@beamer
+
+    \metroset{sectionpage=none,
+              subsectionpage=none,
+              numbering=none,%fraction,titleformat=smallcaps,
+              progressbar=none}%foot
+    \useoutertheme[subsection=false]{miniframes}
+
+    % FONTS
+    % (starred version "resets" font)
+    \setbeamerfont*{title}{family=\sffamily,series=\bfseries,size=\Huge,shape=\scshape}
+    \setbeamerfont*{author}{size=\large}
+    \setbeamerfont*{institute}{size=\normalsize}
+    \setbeamerfont*{date}{size=\normalsize}
+    \setbeamerfont*{frametitle}{size=\Large}
+
+    % Colors
+    % \setbeamercolor{section in head/foot}{fg=white, bg=mDarkTeal}
+    \setbeamercolor{section in head/foot}{bg=black!80, fg=black!2}
+    \setbeamercolor{frametitle}{fg=black!80, bg=black!2}
+    \setbeamercolor{item}{fg=black!80}
+    \setbeamercolor{normal text}{fg=black!80}
+    \setbeamercolor{title separator}{fg=black!80}
+
+    %%%
+    % FRAMETITLE
+    \makeatletter
+    \setbeamertemplate{frametitle}{%
+    \nointerlineskip%
+    \begin{beamercolorbox}[%
+        wd=\paperwidth,%
+        sep=0pt,%
+        %leftskip=\metropolis@frametitle@padding,%
+        %rightskip=\metropolis@frametitle@padding,%
+        ht=3ex,%above
+        dp=0ex,%below
+        ]{frametitle}%
+    \metropolis@frametitlestrut@start%
+    \centering\insertframetitle%
+    \nolinebreak%
+    \metropolis@frametitlestrut@end%
+    \end{beamercolorbox}%
+    }
+    \makeatother
+
+    %%%
+    % Miniframes navigation
+
+    \makeatletter
+    \setbeamertemplate{headline}{%
+    \vskip-0.8ex% remove whitespace above
+    \begin{beamercolorbox}{section in head/foot}%
+        \vskip2pt\insertnavigation{\paperwidth}\vskip-0.1ex%
+    \end{beamercolorbox}%
+    }
+    \makeatother
+
+    % This code makes miniframe signs (small black circles) be on same row as sections
+    \makeatletter
+    \patchcmd{\slideentry}{\advance\beamer@tempdim by -.05cm}{\advance\beamer@tempdim by\beamer@vboxoffset\advance\beamer@tempdim by\beamer@boxsize\advance\beamer@tempdim by 0.9\pgflinewidth}{}{}
+    \patchcmd{\slideentry}{\kern\beamer@tempdim}{\advance\beamer@tempdim by 2pt\advance\beamer@tempdim by\wd\beamer@sectionbox\kern\beamer@tempdim}{}{}
+    \makeatother
+
+    %%
+    % Footline
+    \makeatletter
+    \setbeamertemplate{footline}{%
+    \begin{beamercolorbox}[%
+        wd=\paperwidth,%
+        sep=3pt,%
+        ht=0.2ex,
+        dp=0.5ex
+    ]{footline}
+    % \usebeamerfont{page number in head/foot}%
+    % \usebeamertemplate*{frame footer}%
+    % \hfill%
+    % \usebeamertemplate*{frame numbering}
+    \end{beamercolorbox}
+    }
+    \makeatother
+
+    %% FOOTNOTES
+    \renewcommand*\footnoterule{} % remove footnote ruler
+    \setbeamerfont{footnote mark}{size=\tiny}
+    \setbeamerfont{footnote}{size=\scriptsize}
+    \setbeamertemplate{footnote}{%
+        \parindent 0em\noindent%
+        \raggedleft%\raggedright
+        \usebeamercolor{footnote}\hbox to 0.8em{\hfil\insertfootnotemark}\insertfootnotetext\par%
+    }
+
+    %%
+    % TITLE PAGE
+    \setbeamertemplate{title}{\inserttitle\par}
+    \setbeamertemplate{subtitle}{\insertsubtitle\par}
+    \setbeamertemplate{author}{\insertauthor\par}
+    \setbeamertemplate{institute}{\insertinstitute\par}
+    \setbeamertemplate{date}{\insertdate\par}
+    \makeatletter\setlength{\metropolis@titleseparator@linewidth}{4pt}\makeatother
+
+    \setbeamertemplate{title page}{%
+    \begin{minipage}[b][\paperheight]{\textwidth}
+        % \ifx\inserttitlegraphic\@empty\else\usebeamertemplate*{title graphic}\fi
+        \vfill%
+        \begin{center}
+        \ifx\inserttitle\@empty\else\usebeamertemplate*{title}\fi
+        \ifx\insertsubtitle\@empty\else\usebeamertemplate*{subtitle}\fi
+        \vspace*{-0.5ex}
+        \usebeamertemplate*{title separator}
+        % \vspace*{3ex}
+        \ifx\beamer@shortauthor\@empty\else\vspace*{2ex}\usebeamertemplate*{author}\fi
+        \ifx\insertdate\@empty\else\vspace*{2ex}\usebeamertemplate*{date}\fi
+        \ifx\insertinstitute\@empty\else\vspace*{2ex}\usebeamertemplate*{institute}\fi
+        \end{center}
+        \vfill
+        \vspace*{2mm}
+    \end{minipage}
+    }
+
+    % Default to hiding covered items:
+    \setbeamercovered{invisible}
+
+    % Itemize/Enumerate shapes
+    \setbeamertemplate{itemize item}{\scriptsize\raise1.25pt\hbox{\donotcoloroutermaths$\blacksquare$}}
+    \setbeamertemplate{itemize subitem}{\tiny\raise1.5pt\hbox{\donotcoloroutermaths$\blacktriangleright$}}
+    \setbeamertemplate{itemize subsubitem}{\tiny\raise1.5pt\hbox{\donotcoloroutermaths$\blacktriangleright$}}
+    \setbeamertemplate{enumerate item}[square]
+
+    %% Commands
+    % footnote without number
+    \newcommand\blankfootnote[1]{%
+      \begingroup%
+      \renewcommand\thefootnote{}\footnote{#1}%
+      \addtocounter{footnote}{-1}%
+      \endgroup%
+    }%
+
+    % Wider items
+    \newenvironment{wideitemize}{\itemize\addtolength{\itemsep}{1em}}{\enditemize}
+
+\fi
+
+%% ##################### ABBREVIATIONS/COMMANDS ################################
+
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\ubar}[1]{\underaccent{\bar}{#1}}
+\newcommand{\Var}[1]{\mathbb{V}\text{ar}\kern-.2em\left[{#1}\right]}
+\newcommand{\Cov}[1]{\mathbb{C}\text{ov}\kern-.2em\left[{#1}\right]}
+\newcommand{\E}[1]{\mathbb{E}\kern-.2em\left[{#1}\right]}
+\newcommand{\Es}[2]{\mathbb{E}_{{#1}}\kern-.2em\left[{#2}\right]} % Exp operator w. subscript
+\newcommand{\CVar}[2]{\mathbb{V}\text{ar}\kern-.2em\left[{#1}\middle\vert{#2}\right]}
+\newcommand{\CCov}[2]{\mathbb{C}\text{ov}\kern-.2em\left[{#1}\middle\vert{#2}\right]}
+\newcommand{\CE}[2]{\mathbb{E}\kern-.2em\left[{#1}\middle\vert{#2}\right]} % conditional expectations
+\newcommand{\plim}{\mathrm{plim}}
+\newcommand\independent{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern2mu{#1#2}}}
+
+% Add closing mark to square root signs
+% use \oldsqrt for old behavior
+\LetLtxMacro{\oldsqrt}{\sqrt}
+\renewcommand{\sqrt}[1][\ ]{%
+    \def\DHLindex{#1}\mathpalette\DHLhksqrt}
+\def\DHLhksqrt#1#2{%
+    \setbox0=\hbox{$#1\oldsqrt[\DHLindex]{#2\,}$}\dimen0=\ht0
+    \advance\dimen0-0.2\ht0
+    \setbox2=\hbox{\vrule height\ht0 depth -\dimen0}%
+    {\box0\lower0.71pt\box2}}
+
+%% ##################### END #################################################
+
+\endinput

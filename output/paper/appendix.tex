@@ -1,0 +1,213 @@
+% \documentclass[11pt, a4paper]{article}
+
+% \usepackage{upref,amsmath,amssymb,amsthm}
+% \usepackage{amsmath}
+% \usepackage{graphicx}
+% %\usepackage{caption}
+% \usepackage[normalem]{ulem}
+% %\documentclass[12pt,a4paper]{article}
+% %\usepackage{lipsum}
+% \usepackage{amsmath,amssymb,upref,amsthm,eucal}
+% %\usepackage{pstricks-add}
+% %\usepackage{pst-node}
+% %\usepackage[T1]{fontenc}
+% \usepackage{graphics}
+% \usepackage{mathrsfs}
+% \usepackage{natbib}
+
+% %%%ADDED BY KRYS
+% \usepackage{marginnote} %Package helping with margin notes within equations
+%                         %This package works well with ''pdflatex'' but not so well with standard ''latex''
+%                         %It is enough to comment the second line below to get rid of all margin-notes
+
+
+% %The following was added by K.P.
+% \usepackage[usenames, dvipsnames]{xcolor}
+% \definecolor{darkblue}{HTML}{2C326E}
+% %%%
+% %%%
+% \usepackage{marginnote} %Package helping with margin notes
+% %To change the width of paragraph on the margin
+% \setlength{\marginparwidth}{2.2cm}
+% \newcommand\mn[1]{
+% \marginnote{\tiny #1}
+% }
+
+% \newcommand\omn[1]{
+% \reversemarginpar
+% \mn{ #1}
+% \normalmarginpar
+% }
+% %% Label's name on the margin.
+% %% To remove label's names from margin simply comment the third line.
+% %% It is important not to use any 'Latex' meaningful sequences of characters in labeling.
+% %% For example `_` would lead to subscripting in the shown label.
+% \newcommand\labmarg[1]{
+% \label{#1}\mbox{} %\mbox{} is a trick to make it work in subsection environment
+% \mn{#1}
+% }
+
+% %\theoremstyle{plain}
+% \newtheorem{theorem}{Theorem}
+% \newtheorem{lemma}[theorem]{Lemma}
+% \newtheorem{remark}[theorem]{Remark}
+% \newtheorem{proposition}[theorem]{Proposition}
+% %\newtheorem{example}{example}
+
+% %\theoremstyle{definition}
+% \newtheorem{definition}[theorem]{Definition}%[section]
+% %\newtheorem{definition}{Definition}[subsection]
+% \theoremstyle{remark}
+% \newtheorem{example}{Example}
+
+% \DeclareMathOperator{\ran}{Ran}
+% \DeclareMathOperator{\cov}{Cov}
+% \DeclareMathOperator{\vect}{vec}
+% \DeclareMathOperator{\tr}{tr}
+% \DeclareMathOperator{\var}{Var}
+% \DeclareMathOperator{\spant}{Span}
+% \newcommand{\XB}{\mathbf{X}}
+% \newcommand{\YB}{\mathbf{Y}}
+% \newcommand{\UB}{\mathbf{U}}
+% \newcommand{\VB}{\mathbf{V}}
+% \newcommand{\PB}{\mathbf{P}}
+% \newcommand{\PH}{\mathbf{h}}
+% \newcommand{\obsy}{\mathscr{Y}}
+% \newcommand{\eps}{{\epsilon}}
+% \newcommand{\calH}{{\cal H}}
+% %%
+% % JW added
+% %%
+% \newcommand{\jw}[1]{\textcolor{red}{#1}}
+\newcommand{\mv}[1]{{\boldsymbol{\mathrm{#1}}}}
+% \usepackage{cleveref}
+% \newcommand{\Ordo}{\mathcal{O}}
+% \newcommand{\E}{\mathbb{E}}
+% \usepackage{algorithm}
+% \usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
+% \algnewcommand{\ffor}[1]{\State\algorithmicfor\ #1\ \algorithmicdo}
+% \algnewcommand{\Endffor}{\unskip\ \algorithmicend\ \algorithmicfor}
+
+% \newtheorem{thm}{Theorem}[section]
+% \newtheorem{alg}[thm]{Algorithm}
+
+% \usepackage{array,multirow,graphicx}
+% \newtheorem{claim}[theorem]{Claim}
+% \begin{document}
+
+
+% \title{Supp}
+
+%  \maketitle
+
+\section{Model}
+
+\subsection{Notation}
+Before presenting the model we describe some notation used through out the article for a $m \times n$ matrix $r$ we use the following broadcasting notation $\mv{r}_{k,j:l}=[ r_{k,j}, r_{k,j+1}, \ldots, r_{k,l}]$.
+Further $x | y \sim \pi(.)$ implies that the random variable $x$ if we conditioning on $y$ follows distribution $\pi(.)$.
+The relevant variables in the model are the following:
+
+	\begin{tabularx}{\linewidth}{ccL}
+		Variable name & Dimension & Description \\  \hline
+		$\mv{d}$ & $T \times 1$ & $d_i$ is the number of deaths that occurred day $i$. \\
+		$\mv{r}$ & $T \times T$ & $r_{ij}$ is number of death recorded for day $i$ at day $j$.  Note that $r_{ij}$ for $i<j$ is not defined.   \\
+		$\mv{p}$ & $T \times T$ & $p_{ij}$ is the probability of that a death for day $i$ not yet recorded is recorded at day $j$.
+		  Note that $p_{ij}$ for $i<j$ is not defined.  \\
+		$\mv{\alpha}$ & $K \times 1$ & Latent prior parameter for $\mv{p}$ \\
+		$\mv{\beta}$ & $K \times 1$ & Latent prior parameter for $\mv{p}$ \\
+		$\mv{\alpha}^H$ & $2 \times 1$ & parameter for the probability, $\mv{p}$ for holiday adjustment. \\
+		$\mv{\beta}^H$ & $2 \times 1$ & parameter for the probability, $\mv{p}$ for holiday adjustment. \\
+		$\mv{\lambda}$ &  $T \times 1$ &  $\lambda_i$  is the intensity of the expected number of deaths at day $i$. \\
+		$\sigma^2$ & $1\times 1$ & Variation of the random walk prior for the log intensity.
+
+	\end{tabularx}
+\subsection{likelihood}
+The most complex part of our model is the likelihood, i.e. the density of the observations given the parameters. Here the data consist the daily report of recored deaths for the past days. This can conveniently be represented upper triangular matrix, $\mv{r}$, where $r_{i,j}$ represents number of new reported deaths for day $i$ reported at day $j$. This matrix is displayed on the left in Table \ref{tab:Data}.
+
+\begin{table}
+	\centering
+	\begin{tabular}{cccccc}
+		\multicolumn{1}{c}{} & \multicolumn{5}{c}{Reported date}                                             \\
+		\parbox[t]{2mm}{\multirow{5}{*}{\rotatebox[origin=c]{90}{Death date}}}   & $r_{11}$ & $r_{12}$ & $\cdots$ &$\cdots$  &  $r_{1T}$\\
+		& & $r_{22}$ &  $\cdots$ & $\cdots$   &$r_{2T}$ \\
+		& & &$r_{33}$ &  $\cdots$ &  $r_{3T}$ \\
+		& & & &  $\ddots$ & $\vdots$  \\
+		& & & &  &  $r_{TT}$ \\
+
+	\end{tabular}
+
+	\caption{The table describes the observations data.}
+	\label{tab:Data}
+\end{table}
+
+ We assume that given the true number of deaths at day $i$, $d_i$, that each reported day $j$ the remaining death $d_i - \sum_{k=1}^{j-1}r_{i,k}$ each recored with probability $p_{ij}$, i.e. $$r_{i,j}|D_i,r_{1,1:j}.p \sim Bin(d_i - \sum_{k=1}^{j-1}r_{i,k}, p_{i,j}).$$
+
+Typically in removal sampling one let $p_{i,j}:=p$ however for this data this is clearly not realistic-- given delaying in the reporting. Instead we assume that we have $k$ different probabilities. Further to account for overdispertion we assume that each probability instead follows a Beta distribution. The Beta distibution has two parameters $\alpha$ and $\beta$. This resulting the following distribution for the probabilities
+$$
+p_{i,j}| \mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H  \sim Beta(\alpha^H_j\alpha_{min(j-i,k)},\beta^H_j\beta_{min(j-i,k)}).
+$$
+Here, we let $H$ denote holidays and weekends and the parameters above are
+$$
+\alpha^H_j = \begin{cases}
+\alpha_1^H \alpha_2^H & \mbox{if }  \{j\in H \}\cup  \{j-1\in H \},  \\
+\alpha_1^H & \mbox{if }  \{j\in H \}\cup  \{j-1\in H^c \}, \\
+\alpha_2^H & \mbox{if }  \{j\in H^c \}\cup  \{j-1\in H \}, \\
+1 & \mbox{else,}
+\end{cases}
+$$
+and
+$$
+\beta^H_j = \begin{cases}
+\beta_1^H \beta_2^H & \mbox{if }  \{j\in H \}\cup  \{j-1\in H \},  \\
+\beta_1^H & \mbox{if }  \{j\in H \}\cup  \{j-1\in H^c \}, \\
+\beta_2^H & \mbox{if }  \{j\in H^c \}\cup  \{j-1\in H \}, \\
+1 & \mbox{else.}
+\end{cases}
+$$
+These extra parameters are created to account for the under-reporting that occurs during weekend and holidays.
+
+
+\subsection{Priors}
+For the $\mv{\alpha}$ and $\mv{\beta}$ parameters we use an (improper) uniform prior. For the deaths, $\mv{d}$, one could imagine several different prior ideally some sort of epidemiological model. However, here we just assume a log-Gaussian Cox processes \cite{Moller1998_log_gaussian} where the Gaussian processes has a intrinsic random walk distribution \cite{Rue2005_gaussian_markov} i.e.
+\begin{align*}
+\log(\lambda_i) - \log(\lambda_{i-1}) &\sim N(0,\sigma^2),\\
+d_i| \lambda_i  &\sim Po(\lambda_i).
+\end{align*}
+This model is created to create a temporal smoothing between the reported deaths.
+For the hyperparameter $\sigma^2$ we impose a inverse Gamma distribution.
+
+\subsection{Full model}
+Putting the likelihood and priors together we get the following hierarchical Bayesian model
+\begin{align*}
+\sigma^2 &\sim \Gamma^{-1}(0.01,0.01) \\
+\alpha_k &\sim U[0,\infty] \\
+\beta_k &\sim U[0,\infty] \\
+\alpha_k^H &\sim U[0,\infty] \\
+\beta_k^H &\sim U[0,\infty] \\
+\log(\lambda_i) - \log(\lambda_{i-1}) &\sim N(0,\sigma^2)\\
+d_i| \lambda_i  &\sim Po(\lambda_i) \\
+p_{i,j}|  \mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H &\sim Beta(\alpha^H_j\alpha_{min(j-i,k)},\beta^H_j\beta_{min(j-i,k)}) \\
+r_{i,j}|d_i,\mv{r}_{1,1:j},p &\sim Bin(d_i - \sum_{k=1}^{j-1}r_{i,k}, p_{i,j}),
+\end{align*}
+where where and $j\leq i$ and $i=1,\ldots,T$.
+
+\section{Inference}
+As the main goal to generate inference of the number of death $\mv{d}$ is through the posterior distribution of number of deaths $\mv{d}$ given the observations $\mv{r}$.
+In order to generate samples from this distribution we use a Markov Chain Monte Carlo method \cite{Brooks2011_handbook_markov}. In more detail we use a blocked Gibbs sampler, which generates samples in the following sequence:
+\begin{itemize}
+	\item  We sample $\mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H|\mv{d}, \mv{r}$ using the fact that one can integrate out $p$ in the model, and then  $\mv{d}|\mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H,\mv{r},\mv{\lambda}$  follows a Beta-Binomial distribution. Here to we use an adaptive MALA \cite{Atchade2006_adaptive_version} to sample from these parameters.
+	\item  To sample $\mv{d}|\mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H,\mv{r},\mv{\lambda}$, that each death, $d_i$ is conditionally independent, and we just use a Metropolis Hastings random walk to sample each one.
+	\item To sample $\mv{\lambda} | \mv{d},\sigma^2$ we again use an adaptive MALA.
+	\item Finally we sample $\sigma^2|\mv{d}$ directly since this distribution is explicit.
+\end{itemize}
+
+\section{Model Benchmark}
+In this section, we present additional comparison of the model to a simple constant model. The benchmark model is the sum of average reporting lag for the preceding 14 days.
+
+% TODO: Add figures
+
+% \bibliographystyle{chicago}
+% \bibliography{researchplan}
+% \end{document}
+
+
