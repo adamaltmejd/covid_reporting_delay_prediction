@@ -34,54 +34,73 @@ setkey(model, date, state, days_left)
 model[is.na(target), predicted_deaths := model[!is.na(target), unique(target), by = date][, V1]]
 
 #
-## PLOT 1: Performance on 4 random dates ##
+## PLOT 1: Performance per day, PLOT1=4 random dates ##
 #
+
+# Plot a specific day
+day_plot <- function(DT, reported, plot.title) {
+    colors <- c("#ECCBAE", "#046C9A", "gray50")
+    colors <- setNames(colors, c(levels(DT$type), "Reported"))
+
+    plot <- ggplot(data = DT,
+                aes(x = days_left,
+                    y = predicted_deaths,
+                    color = type,
+                    group = type)) +
+        geom_hline(data = DT[!is.na(target), .(unique(target)), by = .(date)],
+                aes(yintercept = V1), color = "grey50") +
+        geom_line(data = reported,
+                aes(y = reported_dead, group = "Reported", color = "Reported"), linetype = "dashed") +
+        geom_point(data = reported,
+                aes(y = reported_dead, group = "Reported", color = "Reported")) +
+        # The actual models
+        geom_line(position = position_dodge(width = 0.6)) +
+        geom_point(data = DT[days_left != "0"], position = position_dodge(width = 0.6)) +
+        geom_errorbar(data = DT[days_left != "0"], aes(ymin = ci_lower, ymax = ci_upper),
+                    width = 0.7, position = position_dodge(width = 0.6)) +
+        # Converging with a grey point on the last day
+        geom_point(data = DT[days_left == "0" & type == "Historical Avg."], color = "grey50") +
+        # Theming
+        set_default_theme() +
+        # scale_fill_manual(values = fill_colors, limits = label_order, drop = FALSE) +
+        # scale_color_manual(values = wes_palette("Darjeeling2")) +
+        scale_color_manual(values = colors) +
+        scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(0, 5))) +
+        labs(title = plot.title,
+            subtitle = "",
+            caption = "",
+            color = "Model",
+            x = "Days of lag to predict",
+            y = "Number of deaths")
+
+    if (DT[, uniqueN(date)] > 1) {
+        # One plot for each day
+        plot <- plot + facet_wrap(~date)
+    }
+    return(plot)
+}
+
 plot_data <- rbindlist(list("Historical Avg." = benchmark, "Capture-Retain" = model), idcol = "type")
 plot_data[, type := factor(type)]
-# Pick three dates at random to plot
+
+# Figure 1 - Pick 4 dates at random to plot
 set.seed(1234)
 example_dates <- sample(seq(as.Date("2020-04-15"), model[days_left == 13, max(date)], 1), 4)
-plot_data <- plot_data[date %in% example_dates]
-
-colors <- c("#ECCBAE", "#046C9A", "gray50")
-colors <- setNames(colors, c(levels(plot_data$type), "Reported"))
-
-plot <- ggplot(data = plot_data,
-               aes(x = days_left,
-                   y = predicted_deaths,
-                   color = type,
-                   group = type)) +
-    geom_hline(data = plot_data[!is.na(target), .(unique(target)), by = .(date)],
-               aes(yintercept = V1), color = "grey50") +
-    geom_line(data = reported_dead[date %in% example_dates],
-              aes(y = reported_dead, group = "Reported", color = "Reported"), linetype = "dashed") +
-    geom_point(data = reported_dead[date %in% example_dates],
-               aes(y = reported_dead, group = "Reported", color = "Reported")) +
-    # The actual models
-    geom_line(position = position_dodge(width = 0.6)) +
-    geom_point(data = plot_data[days_left != "0"], position = position_dodge(width = 0.6)) +
-    geom_errorbar(data = plot_data[days_left != "0"], aes(ymin = ci_lower, ymax = ci_upper),
-                  width = 0.7, position = position_dodge(width = 0.6)) +
-    # Converging with a grey point on the last day
-    geom_point(data = plot_data[days_left == "0" & type == "Historical Avg."], color = "grey50") +
-    # One plot for each day
-    facet_wrap(~date) +
-    # Theming
-    set_default_theme() +
-    # scale_fill_manual(values = fill_colors, limits = label_order, drop = FALSE) +
-    # scale_color_manual(values = wes_palette("Darjeeling2")) +
-    scale_color_manual(values = colors) +
-    scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(0, 5))) +
-    labs(title = "Predicting the number of deaths in a given day reported within 14 days.",
-         subtitle = "",
-         caption = "",
-         color = "Model",
-         x = "Days of lag to predict",
-         y = "Number of deaths")
-
+plot <- day_plot(plot_data[date %in% example_dates],
+                 reported_dead[date %in% example_dates],
+                 "Predicting the number of deaths in a given day reported within 14 days.")
 ggsave(filename = file.path("output", "plots", "lag_prediction_by_date.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w)
 
+# For verification, plot each date as well
+dates <- seq(as.Date("2020-04-15"), model[days_left == 13, max(date)], 1)
+for (i in seq_along(dates)) {
+    plot <- day_plot(plot_data[date == dates[i]],
+                     reported_dead[date == dates[i]],
+                     plot.title = dates[i])
+    ggsave(filename = file.path("output", "plots", "daily", paste0("prediction_", dates[i], ".pdf")),
+       plot = plot, device = cairo_pdf, width = w, height = w)
+}
 #
 ## PLOT 2: Statistics ##
 #
@@ -175,4 +194,4 @@ plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group 
          y = "")
 
 ggsave(filename = file.path("output", "plots", "SCRPS_over_weekdays.pdf"),
-       plot = plot, device = cairo_pdf, width = w, height = h/1.9)
+       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
