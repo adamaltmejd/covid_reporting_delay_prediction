@@ -10,7 +10,7 @@ source(file.path("src", "GPutil.R"))
 
 path.to.files <- file.path("..","data")
 MCMC_sim <- 20000
-burnin_p = 0.5
+burnin_p = 0.33
 deaths_sim <- 10
 maxusage.day = 20 #must be less then N
 unique.days  = 7
