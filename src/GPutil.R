@@ -155,3 +155,94 @@ lik_poisson2<- function(N, theta){
   return(list(loglik = lik, grad = grad, Hessian = Hessian))
 }
 
+
+dnegbin <- function(x, mu, phi, log.p=T){
+  lik <- lgamma(x+phi)-lgamma(phi) - lgamma(x+1)
+  lik <- lik + x*log(mu)
+  lik <- lik + phi * log(phi)
+  lik <- lik - (phi+x) * log(phi + mu)
+  if(log.p)
+    return(lik)
+  return(exp(lik))
+}
+
+
+#'
+#' Negative Biniomial log likelihood (phi)
+#' N     - (n x 1) Poisson observation
+#' theta - (m x 1) log intens
+#' phi   - (1 x 1) over disperstion
+#'
+lik_negbin_phi <- function(N, theta, phi){
+  mu <- exp(theta)
+  lik <- dnegbin(N, mu, phi)
+  grad <- digamma(N + phi) -digamma(phi)
+  grad <- grad  + log(phi) + 1
+  grad <- grad  - log(phi + mu)
+  grad <- grad  - (phi+N)/(phi + mu)
+  return(list(loglik = sum(lik), grad = sum(grad)))
+}
+
+#'
+#' Negative Biniomial log likelihood (theta)
+#' N     - (n x 1) Poisson observation
+#' theta - (m x 1) log intens
+#' phi   - (1 x 1) over disperstion
+#'
+lik_negbin_theta <- function(N, theta, phi){
+  mu <- exp(theta)
+  lik <- dnegbin(N, mu, phi)
+  grad <- mu * (N/mu - (phi+N)/(phi + mu))
+  return(list(loglik = sum(lik), grad = grad))
+}
+
+##
+#' testing lik_negbin_theta
+#' N     - (n x 1) Poisson observation
+#' theta - (m x 1) log intens
+#' phi   - (1 x 1) over disperstion
+##
+test_negbin <- function(N, theta, phi){
+
+  base <- lik_negbin_theta(N, theta, phi)
+  base2 <- lik_negbin_phi(N, theta, phi)
+  lik <- base$loglik
+  grad_theta <- base$grad
+  grad_phi <- base2$grad
+  eps <- 1e-6
+  grad_num_theta <- rep(0,length(theta))
+  grad_num_phi   <- (lik_negbin_theta(N, theta, phi+eps)$loglik - lik)/eps
+  for(i in 1:length(theta)){
+    theta_temp <- theta
+    theta_temp[i] <- theta_temp[i] + eps
+    grad_num_theta[i] <- (lik_negbin_theta(N, theta_temp, phi)$loglik - lik)/eps
+  }
+  print(base$loglik - base2$loglik)
+  print(grad_num_theta-grad_theta)
+  print(grad_num_phi - grad_phi)
+}
+##
+#' sampling from a discrete phi
+#'
+##
+sample.phi<- function(phi, N, theta, alpha = NULL, samples=10){
+
+  if(is.null(alpha))
+    alpha <- 10
+  acc <- 0
+  mu = exp(theta)
+  lik_0 <-sum(dnegbin(N, mu, phi))  - 0.01 * phi
+  for(j in 1:samples){
+    phi_star <- sample((phi-alpha):(phi+alpha), 1)
+    if(phi_star<=0)
+      next
+    lik_star <- sum(dnegbin(N, mu, phi_star)) - 0.01 * phi_star
+    if(log(runif(1)) < lik_star - lik_0){
+      lik_i = lik_star
+      phi <- phi_star
+      acc <- acc + 1
+    }
+  }
+ return(list(phi=phi,acc=acc))
+}
+

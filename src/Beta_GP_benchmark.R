@@ -6,7 +6,8 @@ library(foreach)
 library(fst)
 library(data.table)
 source("src/util.r")
-nclust <- 6
+nclust <- 1
+maxusage.day <- 20
 path.to.files <- file.path("data")
 files <- list.files(paste(path.to.files,"/simulation_results",sep=""),
                              pattern = "^param",
@@ -48,9 +49,9 @@ result_par <- foreach(i = index_files)  %dopar% {
                       Reported_T,
                       maxusage.day =Inf)
   detected_mod<- result$detected
-  for(k in 1:dim(data_T$report.new)[1]){
-    detected_mod[i,] <- cumsum(replace_na(data_mod$report.new[i,],0))
-  }
+  for(k in 1:dim(data_T$report.new)[1])
+    detected_mod[k,] <- cumsum(replace_na(data_mod$report.new[k,],0))
+
   detected_mod[is.na(result$detected)] <- NA
 
 

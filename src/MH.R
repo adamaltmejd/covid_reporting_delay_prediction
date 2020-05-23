@@ -253,12 +253,12 @@ MH_MALA <- function(MH_obj,...)
 
   if(Le==FALSE)
   {
-    mu_old <- MH_obj$theta + MH_obj$grad_old * MH_obj$sigma^2/2
-    theta_star <- mu_old  + MH_obj$sigma * rnorm(length(MH_obj$theta))
+    mu_old <- as.vector(MH_obj$theta + MH_obj$grad_old * MH_obj$sigma^2/2)
+    theta_star <- as.vector(mu_old  + MH_obj$sigma * rnorm(length(MH_obj$theta)))
 
   }else{
-    mu_old <-  MH_obj$theta +  MH_obj$sigma^2/2 *( MH_obj$Sigma%*%MH_obj$grad_old)
-    theta_star <- mu_old + MH_obj$sigma * (MH_obj$L%*%rnorm(length(MH_obj$theta)))
+    mu_old <-  as.vector(MH_obj$theta +  MH_obj$sigma^2/2 *( MH_obj$Sigma%*%MH_obj$grad_old))
+    theta_star <- as.vector(mu_old + MH_obj$sigma * (MH_obj$L%*%rnorm(length(MH_obj$theta))))
   }
   res <- MH_obj$Lik(theta_star,...)
   lik_star <- res$loglik

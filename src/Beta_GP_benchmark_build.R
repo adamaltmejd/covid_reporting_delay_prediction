@@ -31,10 +31,10 @@ X_T <- setup_data(N_T, maxusage.day, result$dates_report, unique.days)
 predicition.list <-list()
 
 
-cl <- parallel::makeCluster(nclust,setup_strategy = "sequential")
+cl <- parallel::makeCluster(nclust,setup_strategy = "sequential", outfile="")
 doParallel::registerDoParallel(cl)
 foreach(j = start.predict.day:N_T)  %dopar% {
-  result <- readRDS(file.path("data", "processed", "processed_data.rds"))
+    result <- readRDS(file.path("data", "processed", "processed_data.rds"))
   res_save<-benchmark_BetaGP_j(j,
                                result,true.day,
                                maxusage.day,
@@ -42,10 +42,10 @@ foreach(j = start.predict.day:N_T)  %dopar% {
                                MCMC_sim,
                                burnin_p,
                                deaths_sim = deaths_sim,
-                               prior = c(1,0))
+                               prior = c(0,0))
 
   save(res_save,
-       file = file.path("data", "simulation_results", paste0("param_", dates_report[j], ".rds")))
+       file = file.path("data", "simulation_results", paste0("param_", result$dates_report[j], ".rds")))
 }
 
 parallel::stopCluster(cl)

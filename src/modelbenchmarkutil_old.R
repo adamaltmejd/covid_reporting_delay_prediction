@@ -55,10 +55,6 @@ benchmark_BetaGP_j <- function(j,
     ##
     # seting up MCMC GP
     ##
-
-    phi.samples <- 10
-    phi <- 100
-    alpha.phi <- 10
     Start_theta <- log(deaths_est+1)
     tau <- 0.1
     MH_obj_GP <- MH_setup()
@@ -87,11 +83,12 @@ benchmark_BetaGP_j <- function(j,
         MH_obj_tau$theta <- c(tau, 1)
         Gp.prior <- matrix(NA, nrow=MCMC_sim, ncol=2)
     }
-    MH_obj_GP$Lik <- function(x, N, L, phi) {
+    MH_obj_GP$Lik <- function(x, N, L) {
         prior_list <- prior_GP(x, L)
-        lik_list   <- lik_negbin_theta(N, x, phi)
+        lik_list   <- lik_poisson(N, x)
         return(list(loglik = lik_list$loglik + prior_list$loglik,
-                    grad = as.vector(lik_list$grad  + prior_list$grad)))
+                    grad = lik_list$grad  + prior_list$grad,
+                    Hessian = lik_list$Hessian + prior_list$Hessian))
     }
 
     ##
@@ -104,7 +101,6 @@ benchmark_BetaGP_j <- function(j,
     Death_est <- matrix(NA, nrow=MCMC_sim, ncol=N)
     alpha.MCMC <- rep(4, N)
     pred_set <-array(NA, dim = c(j,N_T-j,MCMC_sim))
-    phis <- rep(0, MCMC_sim)
     p <- dim(X)[2]
     Alpha <- matrix(NA, ncol=N, nrow=N)
     Beta <- matrix(NA, ncol=N, nrow=N)
@@ -128,8 +124,8 @@ benchmark_BetaGP_j <- function(j,
         beta_2 <- MH_obj$theta[(p+1):(2*p)]
         Alpha[upper.tri(data_$report.new,diag=T)] <- exp(X%*%beta_1)
         Beta[upper.tri(data_$report.new,diag=T)]  <-  exp(X%*%beta_2)
-        #prior_N <- function(N, i){ dnegbin(N, exp(MH_obj_GP$theta[i]) - lgamma(N+1)}
-        prior_N <- function(N, i){ dnegbin(N, exp(MH_obj_GP$theta[i]),phi) }
+
+        prior_N <- function(N, i){ N *MH_obj_GP$theta[i] - lgamma(N+1)}
         res <- sample.deathsBB(deaths_sim,
                                deaths_est,
                                Alpha,
@@ -149,9 +145,7 @@ benchmark_BetaGP_j <- function(j,
         if(prior[2] == 0){
             L_theta          <- L%*%MH_obj_GP$theta
 
-            tau   <- rgamma(1,
-                            shape=length(L_theta)/2 + 0.01,
-                            scale = sum(L_theta^2)/2 + 0.01)
+            tau   <- gamma(1, shape=length(L_theta)/2 + 0.001, scale = sum(L_theta^2)/2 + 0.001)
             L_in <- sqrt(tau) * L
         }else{
             L_theta          <- (E_Q%*%MH_obj_GP$theta)
@@ -164,15 +158,9 @@ benchmark_BetaGP_j <- function(j,
 
         MH_obj_GP <- MALAiter(MH_obj_GP, TRUE,
                               N = deaths_est,
-                              L = L_in,
-                              phi = phi)
-        phi_res <- sample.phi(phi,
-                              deaths_est,
-                              MH_obj_GP$theta,
-                              alpha = alpha.phi)
-        phi <- phi_res$phi
+                              L = L_in)
+
         if(i < burnin){
-            alpha.phi <- max(1,alpha.phi + (2*(phi_res$acc/phi.samples > 0.3)  - 1))
             alpha.MCMC[res$acc/deaths_sim > 0.3] <- alpha.MCMC[res$acc/deaths_sim > 0.3] +1
             alpha.MCMC[res$acc/deaths_sim < 0.3] <- alpha.MCMC[res$acc/deaths_sim < 0.3] -1
             alpha.MCMC[alpha.MCMC<1] <- 1
@@ -186,7 +174,6 @@ benchmark_BetaGP_j <- function(j,
                 Gp.prior[i-burnin + 1,]  <- MH_obj_tau$theta
 
             }
-            phis[i-burnin + 1] <- phi
         }
     }
     res_save <- list(Thetas = Thetas,
@@ -195,7 +182,6 @@ benchmark_BetaGP_j <- function(j,
                      true.day = true.day,
                      unique.days = unique.days,
                      maxusage.day = maxusage.day,
-                     GP.prior      = Gp.prior,
-                     phis  =  phis)
+                     GP.prior      = Gp.prior)
     return(res_save)
 }

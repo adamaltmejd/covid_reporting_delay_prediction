@@ -71,11 +71,11 @@ sample.deathsBB <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, 
         lik_i <- lik_i + prior(deaths[i], i)
       for(j in 1:samples){
         death_star <- sample((deaths[i]-alpha.MCMC[i]):(deaths[i]+alpha.MCMC[i]), 1)
-
         lik_star <- loglikDeathsGivenProbBB(death_star, alpha_i , beta_i, Reported_i)
         if(use.prior==T)
           lik_star <- lik_star + prior(death_star, i)
-
+        if(is.nan(lik_star))
+          next
         if(log(runif(1)) < lik_star-lik_i){
           lik_i = lik_star
           deaths[i] <- death_star
