@@ -8,9 +8,9 @@ source(file.path("src", "util.r"))
 source(file.path("src", "MH.R"))
 source(file.path("src", "functions.R"))
 source(file.path("src", "GPutil.R"))
-source(file.path("src", "modelbenchmarkutil.R"))
+source(file.path("src", "modelbenchmarkutil_binomial.R"))
 nclust <- 6
-MCMC_sim <- 20000
+MCMC_sim <- 10000
 burnin_p = 0.3
 deaths_sim <- 5
 maxusage.day = 20 #must be less then N
@@ -35,14 +35,14 @@ cl <- parallel::makeCluster(nclust,setup_strategy = "sequential", outfile="")
 doParallel::registerDoParallel(cl)
 foreach(j = start.predict.day:N_T)  %dopar% {
     result <- readRDS(file.path("data", "processed", "processed_data.rds"))
-  res_save<-benchmark_BetaGP_j(j,
+  res_save<-benchmark_BinomGP_j(j,
                                result,true.day,
                                maxusage.day,
                                unique.days,
                                MCMC_sim,
                                burnin_p,
                                deaths_sim = deaths_sim,
-                               prior = c(0,0))
+                               prior = c(1,0))
 
   save(res_save,
        file = file.path("data", "simulation_results", paste0("param_", result$dates_report[j], ".rds")))

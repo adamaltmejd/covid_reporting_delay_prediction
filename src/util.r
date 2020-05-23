@@ -11,7 +11,9 @@ require(Matrix)
 #  alpha    - (N x 1) stepsizes
 #  true.dat  - (int) how many days after recording should one sample
 ##
-sample.deaths <- function(samples, deaths, P, Reported, alpha, true.day = 0){
+sample.deaths <- function(samples, deaths, P, Reported, alpha, true.day = 0,
+                          use.prior=FALSE,
+                          prior=NULL){
 
   N <- length(deaths)
   acc <- rep(0,N)
@@ -23,11 +25,18 @@ sample.deaths <- function(samples, deaths, P, Reported, alpha, true.day = 0){
       P_i         = P_i[index]
       Reported_i  = Reported_i[index]
       lik_i <- loglikDeathsGivenProb(deaths[i], P_i, Reported_i)
+      if(use.prior==T)
+        lik_i <- lik_i + prior(deaths[i], i)
       for(j in 1:samples){
         death_star <- sample((deaths[i]-alpha[i]):(deaths[i]+alpha[i]), 1)
-        lik_start <- loglikDeathsGivenProb(death_star,  P_i, Reported_i)
-        if(log(runif(1)) < lik_start-lik_i){
-          lik_i = lik_start
+        lik_star <- loglikDeathsGivenProb(death_star,  P_i, Reported_i)
+        if(use.prior==T)
+          lik_star <- lik_star + prior(death_star, i)
+        if(is.nan(lik_star))
+          next
+
+        if(log(runif(1)) < lik_star-lik_i){
+          lik_i = lik_star
           deaths[i] <- death_star
           acc[i] = acc[i] + 1
         }
