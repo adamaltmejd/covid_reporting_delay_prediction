@@ -14,8 +14,9 @@ deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.t
 model_predict <- read_fst(file.path("data", "processed", "model_predict.fst"), as.data.table = TRUE)
 
 DT1 <- model_predict[date >= Sys.Date() - 28]
-DT2 <- deaths_dt[!is.na(N) & !is.na(date) & date >= "2020-03-15" &
-                 publication_date == max(publication_date)]
+DT2 <- deaths_dt[!is.na(N) & !is.na(date) & publication_date == max(publication_date)]
+DT2[, avg := frollmean(N, 7, algo = "exact", align = "center")]
+DT2 <- DT2[date >= "2020-03-15"]
 
 colors <- c("gray80", "#ECCBAE")
 colors <- setNames(colors, c("Reported dead", "Model prediction"))
@@ -24,6 +25,7 @@ plot <- ggplot(data = DT1, aes(x = date, y = predicted_deaths)) +
     geom_bar(aes(fill = "Model prediction"), stat = "identity") +
     geom_bar(data = DT2,
              aes(y = N, fill = "Reported dead"), stat = "identity") +
+    geom_line(data = DT2[!is.na(avg)], aes(y = avg, linetype = "7-day moving average"), color = "grey50") +
     geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper),
                   width = 0.4, color = "#e0ac7e") +
     set_default_theme() +
@@ -35,6 +37,7 @@ plot <- ggplot(data = DT1, aes(x = date, y = predicted_deaths)) +
         subtitle = "",
         caption = "",
         fill = "",
+        linetype = "",
         x = "Death date",
         y = "Number of deaths")
 
