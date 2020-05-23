@@ -81,9 +81,9 @@ set_default_theme <- function() {
     theme_ipsum(base_family = "EB Garamond") %+replace%
         theme(
             text = element_text(size = 12, color = "#333333", family = "EB Garamond"),
-            plot.title = element_text(size = rel(2), face = "plain", hjust = 0, margin = margin(0,0,5,0)),
-            plot.subtitle = element_text(size = rel(1), face = "plain", hjust = 0, margin = margin(0,0,0,0)),
-            plot.caption = element_text(size = rel(0.7), family = "EB Garamond", face = "italic", hjust = 1, vjust = 1, margin = margin(12,0,0,0)),
+            #plot.title = element_text(size = rel(2), face = "plain", hjust = 0, margin = margin(0,0,5,0)),
+            #plot.subtitle = element_text(size = rel(1), face = "plain", hjust = 0, margin = margin(0,0,0,0)),
+            #plot.caption = element_text(size = rel(0.7), family = "EB Garamond", face = "italic", hjust = 1, vjust = 1, margin = margin(12,0,0,0)),
 
             legend.text = element_text(size = rel(0.9), family = "EB Garamond", hjust = 0, margin = margin(0, 0, 0, 0)),
             legend.background = element_rect(fill = "grey95"),
@@ -99,6 +99,7 @@ set_default_theme <- function() {
             # Panels
             plot.background = element_rect(fill = "#FFFFFF", color = NA), # bg of the plot
             # plot.background = element_rect(fill = "#f5f5f5", color = NA), # bg of the plot
+            plot.margin = unit(c(0, 0, 0, 0), "pt"),
             panel.border = element_blank(),
             panel.grid.major = element_line(linetype = "dotted", color = "#CCCCCC", size = 0.3),
             panel.grid.minor = element_line(linetype = "dotted", color = "#CECECE", size = 0.2),
