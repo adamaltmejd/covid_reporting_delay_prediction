@@ -9,9 +9,43 @@ source("src/functions.R")
 #
 w <- 11 # plot width (inches)
 
+# Plot 1 = Predictions and current stats
+deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
+model_predict <- read_fst(file.path("data", "processed", "model_predict.fst"), as.data.table = TRUE)
+
+DT1 <- model_predict[date >= Sys.Date() - 28]
+DT2 <- deaths_dt[!is.na(N) & !is.na(date) & date >= "2020-03-15" &
+                 publication_date == max(publication_date)]
+
+colors <- c("gray80", "#ECCBAE")
+colors <- setNames(colors, c("Reported dead", "Model prediction"))
+
+plot <- ggplot(data = DT1, aes(x = date, y = predicted_deaths)) +
+    geom_bar(aes(fill = "Model prediction"), stat = "identity") +
+    geom_bar(data = DT2,
+             aes(y = N, fill = "Reported dead"), stat = "identity") +
+    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper),
+                  width = 0.4, color = "#e0ac7e") +
+    set_default_theme() +
+    scale_fill_manual(values = colors) +
+    scale_x_date(date_breaks = "3 day", date_labels = "%b %d", expand = expansion(add = 0.8)) +
+    theme(axis.text.x = element_text(angle = 35, hjust = 1.3, vjust = 1.1)) +
+    scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(0, 5))) +
+    labs(title = paste0("Reported deaths as of ", deaths_dt[, max(publication_date)], " and model prediction"),
+        subtitle = "",
+        caption = "",
+        fill = "",
+        x = "Death date",
+        y = "Number of deaths")
+
+ggsave(filename = file.path("output", "plots", "latest_prediction.pdf"),
+       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
+
+
 # Load data
 benchmark <- read_fst(file.path("data", "processed", "constant_benchmark.fst"), as.data.table = TRUE)
 model <- read_fst(file.path("data", "processed", "model_benchmark.fst"), as.data.table = TRUE)
+
 
 # Fix data tables so they look the same
 reported_dead <- benchmark[, .(state, date, days_left = as.integer(days_left), reported_dead)]
