@@ -6,7 +6,7 @@ library(foreach)
 library(fst)
 library(data.table)
 source("src/util.r")
-nclust <- 1
+nclust <- 6
 maxusage.day <- 20
 path.to.files <- file.path("data")
 files <- list.files(paste(path.to.files,"/simulation_results",sep=""),
