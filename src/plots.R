@@ -79,13 +79,17 @@ day_plot <- function(DT, reported, plot.title) {
     colors <- c("#ECCBAE", "#046C9A", "gray50")
     colors <- setNames(colors, c(levels(DT$type), "Reported"))
 
+    if (any(DT[!is.na(target), uniqueN(target) != 1, by = date][, V1])) {
+        warning("Multiple unique target values for same day.")
+    }
+    hline <- DT[!is.na(target), .(unique(target)), by = .(date)]
+
     plot <- ggplot(data = DT,
                 aes(x = days_left,
                     y = predicted_deaths,
                     color = type,
                     group = type)) +
-        geom_hline(data = DT[!is.na(target), .(unique(target)), by = .(date)],
-                aes(yintercept = V1), color = "grey50") +
+        geom_hline(data = hline, aes(yintercept = V1), color = "grey50") +
         geom_line(data = reported,
                 aes(y = reported_dead, group = "Reported", color = "Reported"), linetype = "dashed") +
         geom_point(data = reported,
@@ -102,7 +106,7 @@ day_plot <- function(DT, reported, plot.title) {
         # scale_fill_manual(values = fill_colors, limits = label_order, drop = FALSE) +
         # scale_color_manual(values = wes_palette("Darjeeling2")) +
         scale_color_manual(values = colors) +
-        scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(0, 5))) +
+        scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(1, 5))) +
         labs(title = plot.title,
             subtitle = "",
             caption = "",
