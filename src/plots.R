@@ -33,7 +33,7 @@ plot <- ggplot(data = DT1, aes(x = date, y = predicted_deaths)) +
     scale_x_date(date_breaks = "3 day", date_labels = "%b %d", expand = expansion(add = 0.8)) +
     theme(axis.text.x = element_text(angle = 35, hjust = 1.3, vjust = 1.1)) +
     scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(0, 5))) +
-    labs(title = paste0("Reported deaths as of ", deaths_dt[, max(publication_date)], " and model prediction"),
+    labs(#title = paste0("Reported deaths as of ", deaths_dt[, max(publication_date)], " and model prediction"),
         subtitle = "",
         caption = "",
         fill = "",
@@ -125,7 +125,8 @@ set.seed(1234)
 example_dates <- sample(seq(as.Date("2020-04-15"), model[days_left == 13, max(date)], 1), 4)
 plot <- day_plot(plot_data[date %in% example_dates],
                  reported_dead[date %in% example_dates],
-                 "Predicting the number of deaths in a given day reported within 14 days.")
+                 "")
+                 #"Predicting the number of deaths in a given day reported within 14 days.")
 ggsave(filename = file.path("output", "plots", "lag_prediction_by_date.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w)
 
@@ -167,7 +168,7 @@ plot <- ggplot(data = plot_data, aes(x = factor(days_left), color = type, group 
     facet_wrap(~variable, scales = "free_y") +
     set_default_theme() +
     scale_color_manual(values = wes_palette("Darjeeling2")) +
-    labs(title = "Model metrics",
+    labs(#title = "Model metrics",
          subtitle = "",
          caption = "",
          color = "Model",
@@ -193,7 +194,7 @@ plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = ty
     geom_line() + geom_point() +
     set_default_theme() +
     scale_color_manual(values = wes_palette("Darjeeling2")) +
-    labs(title = "Model metrics",
+    labs(#title = "Model metrics",
          subtitle = "",
          caption = "",
          color = "Model",
@@ -223,7 +224,7 @@ plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group 
     # facet_wrap(~days_left) +
     set_default_theme() +
     scale_color_manual(values = wes_palette("Darjeeling2")) +
-    labs(title = "Model metrics",
+    labs(#title = "Model metrics",
          subtitle = "",
          caption = "",
          color = "Model",
