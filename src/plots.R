@@ -228,7 +228,7 @@ plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group 
          subtitle = "",
          caption = "",
          color = "Model",
-         x = "Last date included in the model",
+         x = "Weekday",
          y = "")
 
 ggsave(filename = file.path("output", "plots", "SCRPS_over_weekdays.pdf"),
