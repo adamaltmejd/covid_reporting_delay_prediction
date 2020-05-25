@@ -33,12 +33,12 @@ plot <- ggplot(data = DT1, aes(x = date, y = predicted_deaths)) +
     theme(axis.text.x = element_text(angle = 35, hjust = 1.3, vjust = 1.1)) +
     scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(0, 5))) +
     labs(#title = paste0("Reported deaths as of ", deaths_dt[, max(publication_date)], " and model prediction"),
-        subtitle = "",
-        caption = "",
-        fill = "",
-        linetype = "",
-        x = "Death date",
-        y = "Number of deaths")
+         #subtitle = "",
+         #caption = "",
+         fill = "",
+         linetype = "",
+         x = "Death date",
+         y = "Number of deaths")
 
 ggsave(filename = file.path("output", "plots", "latest_prediction.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
@@ -78,13 +78,17 @@ day_plot <- function(DT, reported, plot.title) {
     colors <- c("#ECCBAE", "#046C9A", "gray50")
     colors <- setNames(colors, c(levels(DT$type), "Reported"))
 
+    if (any(DT[!is.na(target), uniqueN(target) != 1, by = date][, V1])) {
+        warning("Multiple unique target values for same day.")
+    }
+    hline <- DT[!is.na(target), .(unique(target)), by = .(date)]
+
     plot <- ggplot(data = DT,
                 aes(x = days_left,
                     y = predicted_deaths,
                     color = type,
                     group = type)) +
-        geom_hline(data = DT[!is.na(target), .(unique(target)), by = .(date)],
-                aes(yintercept = V1), color = "grey50") +
+        geom_hline(data = hline, aes(yintercept = V1), color = "grey50") +
         geom_line(data = reported,
                 aes(y = reported_dead, group = "Reported", color = "Reported"), linetype = "dashed") +
         geom_point(data = reported,
@@ -101,10 +105,10 @@ day_plot <- function(DT, reported, plot.title) {
         # scale_fill_manual(values = fill_colors, limits = label_order, drop = FALSE) +
         # scale_color_manual(values = wes_palette("Darjeeling2")) +
         scale_color_manual(values = colors) +
-        scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(0, 5))) +
+        scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(1, 5))) +
         labs(title = plot.title,
-            subtitle = "",
-            caption = "",
+             #subtitle = "",
+             #caption = "",
             color = "Model",
             x = "Days of lag to predict",
             y = "Number of deaths")
@@ -170,8 +174,8 @@ plot <- ggplot(data = plot_data, aes(x = factor(days_left), color = type, group 
     set_default_theme() +
     scale_color_manual(values = wes_palette("Darjeeling2")) +
     labs(#title = "Model metrics",
-         subtitle = "",
-         caption = "",
+         #subtitle = "",
+         #caption = "",
          color = "Model",
          x = "Days of lag to predict",
          y = "")
@@ -196,8 +200,8 @@ plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = ty
     set_default_theme() +
     scale_color_manual(values = wes_palette("Darjeeling2")) +
     labs(#title = "Model metrics",
-         subtitle = "",
-         caption = "",
+         #subtitle = "",
+         #caption = "",
          color = "Model",
          x = "Last date included in the model",
          y = "SCRPS")
@@ -226,10 +230,10 @@ plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group 
     set_default_theme() +
     scale_color_manual(values = wes_palette("Darjeeling2")) +
     labs(#title = "Model metrics",
-         subtitle = "",
-         caption = "",
+         #subtitle = "",
+         #caption = "",
          color = "Model",
-         x = "Last date included in the model",
+         x = "Weekday",
          y = "")
 
 ggsave(filename = file.path("output", "plots", "SCRPS_over_weekdays.pdf"),
