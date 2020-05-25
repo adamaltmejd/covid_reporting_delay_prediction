@@ -12,7 +12,6 @@ w <- 11 # plot width (inches)
 # Plot 1 = Predictions and current stats
 deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
 model_predict <- read_fst(file.path("data", "processed", "model_predict.fst"), as.data.table = TRUE)
-
 DT1 <- model_predict[date >= Sys.Date() - 28]
 DT2 <- deaths_dt[!is.na(N) & !is.na(date) & publication_date == max(publication_date)]
 DT2[, avg := frollmean(N, 7, algo = "exact", align = "center")]
@@ -132,6 +131,8 @@ ggsave(filename = file.path("output", "plots", "lag_prediction_by_date.pdf"),
 
 # For verification, plot each date as well
 dates <- seq(as.Date("2020-04-15"), model[days_left == 13, max(date)], 1)
+plot_data$ci_upper <- apply(as.matrix(plot_data$ci_upper),1,function(x){min(200,x)})
+plot_data$predicted_deaths <- apply(as.matrix(plot_data$predicted_deaths),1,function(x){min(200,x)})
 for (i in seq_along(dates)) {
     plot <- day_plot(plot_data[date == dates[i]],
                      reported_dead[date == dates[i]],

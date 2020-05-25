@@ -1,4 +1,5 @@
 require(Matrix)
+holidays.Sweden <- as.Date(c("2020-04-10","2020-04-13","2020-05-01","2020-05-21"))
 
 ##
 # sample reported deaths after rep.day (if Inf) predicit day
@@ -113,7 +114,9 @@ fill.ReportBB <- function(deaths, Alpha, Beta, Reported, maxusage.day){
         p <- rbeta(1, Alpha_i[j], Beta_i[j])
 
         if(i> maxusage.day){
-          Reported_i[j] <- rbinom(1, size=deaths[i] - Reported_i[j-1], prob = p) + Reported_i[j-1]
+          if(deaths[i] - Reported_i[j-1]>0){
+            Reported_i[j] <- rbinom(1, size=deaths[i] - Reported_i[j-1], prob = p) + Reported_i[j-1]
+          }else{Reported_i[j] <- Reported_i[j-1]}
         }else{
         Reported_i[j] <- Reported_i[j-1]
         }
@@ -128,7 +131,7 @@ fill.ReportBB <- function(deaths, Alpha, Beta, Reported, maxusage.day){
 #
 #
 ##
-fill.Report <- function(deaths, P, Reported){
+fill.Report <- function(deaths, P, Reported, maxusage.day){
   N <- length(deaths)
   N_2 <- dim(P)[2]
   for(i in 1:N){
@@ -137,6 +140,11 @@ fill.Report <- function(deaths, P, Reported){
       index = is.na(Reported_i)==T
       for(j in min(which(index)):length(Reported_i)){
         Reported_i[j] <- rbinom(1, size=deaths[i] - Reported_i[j-1], prob =  P_i[j]) + Reported_i[j-1]
+        if(i> maxusage.day){
+          Reported_i[j] <- rbinom(1, size=deaths[i] - Reported_i[j-1], prob = P_i[j]) + Reported_i[j-1]
+        }else{
+          Reported_i[j] <- Reported_i[j-1]
+        }
       }
       Reported[i,i:N_2] = Reported_i
   }
@@ -302,6 +310,34 @@ buildXday <- function(N){
   return(sparseMatrix(i=i_,j=j_))
 }
 ##
+#' split data before and after lag
+#'
+#'
+#' Reported -  (N x N) number of reported deaths
+#' lag      -  (int)   how long after to report
+#'
+##
+splitlag <- function(Reported_T, lag){
+  N <- dim(Reported_T)[1]
+  N2 <- dim(Reported_T)[2]
+  Reported_O = Reported_T
+  day_completed <- rep(1,N)
+  for(i in 1:N){
+    k <- which.max(cumsum(holidays[i:N]==F)==(lag-1))
+    Reported_O[i, i:min(i+k, N2)] <- NA
+    if(k+i<N2){
+      Reported_O[i,  (i+k+1):N2] <- Reported_O[i,  (i+k+1):N2] - Reported_T[i,  (i+k)]
+      Reported_T[i, (i+k+1):N2]  <- NA
+    }else{
+      day_completed[i] <- 0
+    }
+  }
+  return(list(Reported_O = Reported_O,
+              Reported_T = Reported_T,
+              day_completed = day_completed) )
+}
+
+##
 # transforms data,
 # we remove data if negative..
 #
@@ -317,7 +353,9 @@ newDeaths <-function(deaths, reports,maxusage.day = -1){
   newreport[upper.tri(newreport)] <- diff.report[upper.tri(diff.report,T)]
   newreport[newreport<0 & is.na(newreport)==F]=0 #fake
   death.rem <- diag(deaths)
-  dr<-deaths-reports
+
+  cumsum_report <- t(apply(newreport, 1, function(x){x[is.na(x)==F]=cumsum(x[is.na(x)==F]); return(x)}))
+  dr<-deaths - cumsum_report
   N <- length(deaths)
   dr <- dr[1:(N-1),1:(N-1)]
   death.rem[upper.tri(newreport)] <- dr[upper.tri(dr,T)]
@@ -334,7 +372,7 @@ newDeaths <-function(deaths, reports,maxusage.day = -1){
   #removing small bugs in reporting
   newreport[death.rem <0 & is.na(death.rem)==F] = 0
   death.rem[death.rem <0& is.na(death.rem)==F] = 0
-  index <- (death.rem< newreport) &  is.na(death.rem) ==F
+  index <- (death.rem< newreport) &  is.na(death.rem) ==F & is.na(newreport)==F
   newreport[index] =death.rem[index]
   return(list(death.remain = death.rem, report.new = newreport))
 }
@@ -417,7 +455,7 @@ loglikProbBB <- function(beta, death.remain, report.new, X, calcH=T){
   X <- X[index,]
   alpha <- exp(X%*%beta_1)
   beta  <- exp(X%*%beta_2) #unfortunate name
-  if(min(1/(alpha+beta)) <10^-5)
+  if(min(1/(alpha+beta)) <10^-3)
     return(list(loglik = -Inf, grad = 0, Hessian = 0))
   y <- y[index]
   n <- n[index]
@@ -594,23 +632,25 @@ death.givenParamBB <- function(alpha, beta, Reported,Predict.day = Inf,sim=c(200
 #
 # unique.prob - (int) how many of days shall we have unique probabilites
 ##
-setup_data <- function(N, Predict.day, dates_report, unique.prob=NULL){
-  holidays.Sweden <- as.Date(c("2020-04-10","2020-04-13","2020-05-01","2020-05-21"))
+setup_data_lag <- function(N, Predict.day, dates_report, unique.prob=NULL){
   X <- buildXdayeffect(N,Predict.day)
   #holidays and weekends
 
   result$dates_report <- as.Date(dates_report)
 
   if(is.null(unique.prob)==F)
-    X <- cbind(X[,1:unique.prob],rowSums(X[,1:unique.prob])==0)
+    X <- cbind(X[,1:unique.prob,drop=F],rowSums(X[,1:unique.prob,drop=F])==0)
 
   holidays <- weekdays(dates_report)%in%c("Sunday","Saturday") | c(dates_report)%in%c(holidays.Sweden)
   holiday.yesterday <- weekdays(dates_report - 1)%in%c("Sunday","Saturday") |
     (result$dates_report-1)%in%c(holidays.Sweden)
-  Xhol <- buildXholiday(N,holidays)
-  Xhol.yesterday <- buildXholiday(N,holiday.yesterday)
+  Xhol <- buildXholiday(N,holidays - (holiday.yesterday*holidays==T))
+  Xhol.sunday <- buildXholiday(N,holiday.yesterday*holidays==T)
+  Xhol.yesterday <-buildXholiday(N,holiday.yesterday - (holiday.yesterday*holidays==T) )
+  X.Wednesday <-buildXholiday(N, weekdays(dates_report)%in%c('Wednesday') )
+  #X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday, Xhol*X[,1],X.Wednesday-X.Wednesday*Xhol)
+  X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday, Xhol*X[,1],X.Wednesday-X.Wednesday*Xhol)
 
-  X <- cbind(X, Xhol, Xhol.yesterday)
   return(X)
 }
 
