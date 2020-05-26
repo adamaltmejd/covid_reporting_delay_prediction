@@ -75,7 +75,6 @@ sample.deathsBB <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, 
       alpha_i  = alpha_i[index]
       beta_i  = beta_i[index]
       Reported_i  = Reported_i[index]
-
       lik_i <- loglikDeathsGivenProbBB(deaths[i],alpha_i , beta_i, Reported_i)
       if(use.prior==T)
         lik_i <- lik_i + prior(deaths[i], i)
@@ -122,6 +121,44 @@ fill.ReportBB <- function(deaths, Alpha, Beta, Reported, maxusage.day){
         }
       }
     Reported[i,i:N_2] = Reported_i
+  }
+  return(Reported)
+}
+
+
+##
+# fill report using binimoal beta up to lag
+#
+# deaths    - (N x 1) number of estimated deaths
+# Alpha     - (N x m) parameter for Beta Bin
+# Beta      - (N x m) parameter for Beta Bin
+# dates     - (m x 1) dates reported
+# Reported  - (N x m) reported so far and na for non reported
+# lag       - (int)   lag = 0 is only first non-holiday, lag = 1 two non holidays
+##
+fill.ReportBB.lag <- function(deaths, Alpha, Beta, Reported, dates, lag){
+  N <- length(deaths)
+  m <- dim(Alpha)[2]
+  holidays <- weekdays(dates)%in%c("Sunday","Saturday") | c(dates)%in%c(holidays.Sweden)
+  for(i in 1:N){
+    k <- which.max(cumsum(holidays[i:m]==F)==(lag+1))-1
+    if(k==0)
+      k <- m - i
+    Alpha_i         = Alpha[i,i:(i+k)]
+    Beta_i          = Beta[i,i:(i+k)]
+    Reported_i  = Reported[i,i:(i+k)]
+    index = is.na(Reported_i)==T
+    if(sum(index)==0)
+      next
+
+    for(j in min(which(index)):length(Reported_i)){
+      p <- rbeta(1, Alpha_i[j], Beta_i[j])
+      if(deaths[i] - Reported_i[j-1]>0){
+          Reported_i[j] <- rbinom(1, size=deaths[i] - Reported_i[j-1], prob = p) + Reported_i[j-1]
+        }else{Reported_i[j] <- Reported_i[j-1]}
+
+    }
+    Reported[i,i:(i+k)] = Reported_i
   }
   return(Reported)
 }
@@ -314,16 +351,21 @@ buildXday <- function(N){
 #'
 #'
 #' Reported -  (N x N) number of reported deaths
-#' lag      -  (int)   how long after to report
+#' dates    -  (N x 1) dates of reporting
+#' lag      -  (int)   how long after to report (lag = 0 is only first non-holiday, lag = 1 two non holidays)
 #'
 ##
-splitlag <- function(Reported_T, lag){
+splitlag <- function(Reported_T, dates, lag){
+
+  holidays <- weekdays(dates)%in%c("Sunday","Saturday") | c(dates)%in%c(holidays.Sweden)
   N <- dim(Reported_T)[1]
   N2 <- dim(Reported_T)[2]
   Reported_O = Reported_T
   day_completed <- rep(1,N)
   for(i in 1:N){
-    k <- which.max(cumsum(holidays[i:N]==F)==(lag-1))
+    k <- which.max(cumsum(holidays[i:N2]==F)==(lag+1))-1
+    if(k==0)
+      k <- N2-i
     Reported_O[i, i:min(i+k, N2)] <- NA
     if(k+i<N2){
       Reported_O[i,  (i+k+1):N2] <- Reported_O[i,  (i+k+1):N2] - Reported_T[i,  (i+k)]

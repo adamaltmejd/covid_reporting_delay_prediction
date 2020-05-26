@@ -23,7 +23,7 @@ doParallel::registerDoParallel(cl)
 foreach(j = start.predict.day:N_T)  %dopar% {
     cat('j=',j,", ", file=stdout())
     result <- readRDS(file.path("data", "processed", "processed_data.rds"))
-  res_save<-benchmark_BetaGP_lag_j(j,
+  res_save_lag<-benchmark_BetaGP_lag_j(j,
                                     result = result,
                                     lag   = lag,
                                     MCMC_sim = MCMC_sim,
@@ -31,7 +31,7 @@ foreach(j = start.predict.day:N_T)  %dopar% {
                                     deaths_sim = deaths_sim,
                                     prior = c(0))
 
-  save(res_save,
+  save(res_save_lag,
        file = file.path("data", "simulation_results", paste0("param_lagged_", result$dates_report[j], ".rds")))
 }
 

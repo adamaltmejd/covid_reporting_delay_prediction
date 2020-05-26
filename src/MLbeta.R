@@ -2,19 +2,19 @@
 source("src/util.r")
 ##
 #'
-#'    lag    - (int)   lag days
+#'    lag    - (int)   lag days  (lag = 0 is only first non-holiday, lag = 1 two non holidays)
 #'    theta0 - (p x 1) inital guess of parameters
 ##
 ML_betaBin <- function(result,
                        lag,
                        theta0 = NULL){
 
-    report <- splitlag(result$detected, lag)
+    report <- splitlag(result$detected,as.Date(result$dates_report) ,lag)
     report_lag <- report$Reported_T
     deaths_est_T <- apply(report$Reported_T, 1, max, na.rm=T)
 
     data_T <- newDeaths(deaths_est_T,
-                        report$Reported_T)
+                        report_lag)
     N <- dim(data_T$death.remain)[2]
     X <- setup_data_lag(N, 2, result$dates_report[1:N], 2)
     IndexX <-  row(data_T$report.new) <= (N-lag)
@@ -49,7 +49,7 @@ log_bb<- function(theta, y, n,X){
 #' j - day j
 #' result    - (output) of data
 #' true.day  - (int) days not estimated
-#'  lag    - (int)   lag days
+#'  lag    - (int)   lag days  (lag = 0 is only first non-holiday, lag = 1 two non holidays)
 #' MCMC_sim     - (int) how many simulations
 #' burnin_p     - ([0,1]) how many burnins to run in percantage of MCMC_sim
 #' prior        - (1 ) [1] 0: rw1, 1: rw2,
@@ -68,7 +68,7 @@ benchmark_BetaGP_lag_j <-function(j,
     result_j$detected     <- result_j$detected[1:j,1:j]
     result_j$dates        <- result_j$dates[1:j]
     result_j$dates_report <-  result_j$dates[1:j]
-    report_j <- splitlag(result_j$detected, lag)
+    report_j <- splitlag(result_j$detected,as.Date(result_j$dates_report), lag)
     param<- ML_betaBin(result_j,
                        lag)
     N_j <- j
@@ -116,7 +116,7 @@ benchmark_BetaGP_lag_j <-function(j,
     Death_est <- matrix(NA, nrow=MCMC_sim, ncol=N_j)
     alpha.MCMC <- rep(4, N_j)
     pred_set <-array(NA, dim = c(j,N_T-j,MCMC_sim))
-    p <- dim(X)[2]
+
 
     burnin <- ceiling(burnin_p*MCMC_sim)
 
@@ -124,6 +124,8 @@ benchmark_BetaGP_lag_j <-function(j,
     data_ <-newDeaths(deaths_est,
                       report_j$Reported_T,
                       Inf)
+    Alpha[upper.tri(data_$report.new,diag=T)] <- exp(X_j%*%param$alpha_X)
+    Beta[upper.tri(data_$report.new,diag=T)]  <-  exp(X_j%*%param$beta_X)
 
     for(i in 1:(MCMC_sim+burnin-1)){
 
@@ -137,8 +139,6 @@ benchmark_BetaGP_lag_j <-function(j,
             cat(' ',i/10000,' ')
         }
 
-        Alpha[upper.tri(data_$report.new,diag=T)] <- exp(X_j%*%param$alpha_X)
-        Beta[upper.tri(data_$report.new,diag=T)]  <-  exp(X_j%*%param$beta_X)
 
         prior_N <- function(N, i){ N *MH_obj_GP$theta[i] - lgamma(N+1)}
         res <- sample.deathsBB(deaths_sim,
@@ -178,6 +178,7 @@ benchmark_BetaGP_lag_j <-function(j,
         }
     }
     res_save <- list(Death_est = Death_est,
+                     theta = c(param$alpha_X,param$beta_X),
                      theta_GP = theta_GP,
                      lag       = lag,
                      GPprior      = GPprior,
