@@ -43,7 +43,20 @@ colnames(detected) <- c(res2[,1]$date)
 d_ <- diag(detected)
 d_[is.na(d_)] <- 0
 diag(detected) <- d_
-
+repeated = 1
+while(repeated != 0){
+    repeated = 0
+    for(i in 1:(dim(detected)[1]-1)){
+        for(j in i:(dim(detected)[2]-1)){
+            if(detected[i,j] > detected[i,j+1]){
+                temp = ceiling(0.5*detected[i,j] + 0.5*detected[i,j+1])
+                detected[i,j] =temp
+                detected[i,j+1] =temp
+                repeated = 1
+            }
+        }
+    }
+}
 result <- list(detected = detected, dates = res2[,1]$date, dates_report=unique(deaths_dt$publication_date))
 saveRDS(result, file.path("data", "processed", "processed_data.rds"))
 

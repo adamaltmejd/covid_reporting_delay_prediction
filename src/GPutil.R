@@ -186,13 +186,27 @@ lik_negbin_phi <- function(N, theta, phi){
 #'
 #' Negative Biniomial log likelihood (theta)
 #' N     - (n x 1) Poisson observation
-#' theta - (m x 1) log intens
+#' theta - (n x 1) log intens
 #' phi   - (1 x 1) over disperstion
 #'
 lik_negbin_theta <- function(N, theta, phi){
   mu <- exp(theta)
   lik <- dnegbin(N, mu, phi)
   grad <- mu * (N/mu - (phi+N)/(phi + mu))
+  return(list(loglik = sum(lik), grad = grad))
+}
+
+#'
+#' Negative Biniomial log likelihood (theta)
+#' N     - (n x 1) Poisson observation
+#' theta - (m x 1) log intens
+#' A     - (n x 1) linking obs to theta
+#' phi   - (1 x 1) over disperstion
+#'
+lik_negbin_theta_A <- function(N, theta, phi, A){
+  mu <- as.vector(exp(A%*%theta))
+  lik <- dnegbin(N, mu, phi)
+  grad <- as.vector(t(A)%*%(mu * (N/mu - (phi+N)/(phi + mu))))
   return(list(loglik = sum(lik), grad = grad))
 }
 

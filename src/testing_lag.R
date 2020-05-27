@@ -2,6 +2,7 @@ library(rstan)
 
 
 source("src/util.r")
+source("src/MLbeta.R")
 sim <- 1000
 unique.days = 5
 maxusage.day=20
@@ -9,49 +10,41 @@ result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 Reported_T = result$detected
 N_T <- dim(Reported_T)[1]
 fixed = N_T
-
-holidays.Sweden <- as.Date(c("2020-04-10","2020-04-13","2020-05-01","2020-05-21"))
-holidays <- weekdays(result$dates_report)%in%c("Sunday","Saturday") | c(result$dates_report)%in%c(holidays.Sweden)
-Reported_T = result$detected[1:fixed,1:fixed]
-Reported_O = result$detected[1:fixed,1:fixed]
-N_T <- dim(Reported_T)[2]
 lag <- 3
-for(i in 1:N_T){
-    k <- which.max(cumsum(holidays[i:N_T]==F)==(lag-1))
-    Reported_O[i, i:min(i+k, N_T)] <- NA
-    if(k+i<N_T){
 
-        Reported_O[i,  (i+k+1):N_T] <- Reported_O[i,  (i+k+1):N_T] - Reported_T[i,  (i+k)]
-        Reported_T[i, (i+k+1):N_T]<- NA
+report <- splitlag(result$detected[1:fixed,1:fixed],as.Date(result$dates_report[1:fixed]), lag)
+deaths_O_est <- apply(report$Reported_O, 1, max, na.rm=T)
 
-    }
-
-}
-
-deaths_est_T <- apply(Reported_T, 1, max, na.rm=T)
-
-data_T <- newDeaths(deaths_est_T,
-                    Reported_T,
-                    maxusage.day =maxusage.day)
-
-
-deaths_est_O <- apply(Reported_O, 1, max, na.rm=T)
-data_O <- newDeaths(deaths_est_O,
-                    Reported_O,
-                    maxusage.day =maxusage.day)
-X_O <- setup_data(fixed, maxusage.day, result$dates_report[1:fixed], 2)
+data_O <-newDeaths(deaths_O_est,
+                  report$Reported_O,
+                  maxusage.day)
+X_O <- setup_data_postlag(fixed, 2, result$dates_report[1:fixed], 1)
+X_O <- X_O[,colSums(X_O)>0]
 index <- upper.tri(data_O$death.remain,diag = T)
 y_O = data_O$report.new[index]
 n_O = data_O$death.remain[index]
-index = is.na(y)==F & is.na(n)==F
+index = is.na(y_O)==F & is.na(n_O)==F
 X_O <- as.matrix(X_O[index,])
-X_O <- X_O[,colSums(X_O)>0]
+
 y_O <- y_O[index]
 n_O <- n_O[index]
-fit_O <- glm( cbind(y_O, n_O) ~ X_O,
+fit_O <- glm( cbind(y_O, n_O) ~ X_O-1,
                  family = "binomial")
 
-X_T <- setup_data(fixed, maxusage.day, result$dates_report[1:fixed], 2)
+res1 <- optim(rep(0, dim(X_O)[2]*2),
+             function(x){-loglikProbBB(x, data_O$death.remain, data_O$report.new, X_O)$loglik},
+             function(x){-loglikProbBB(x, data_O$death.remain, data_O$report.new, X_O)$grad},
+             method = 'CG')
+res <- optim(res1$par,
+             function(x){-loglikProbBB(x, data_O$death.remain, data_O$report.new, X_O)$loglik})
+
+
+
+###
+# XT
+#
+###
+X_T <- setup_data_postlag(fixed, maxusage.day, result$dates_report[1:fixed], 2)
 index <- upper.tri(data_T$death.remain,diag = T)
 y_T = data_T$report.new[index]
 n_T = data_T$death.remain[index]

@@ -4,11 +4,13 @@
 ###
 library( stringr)
 library(foreach)
+library(tidyr)
 library(fst)
 library(data.table)
 source("src/util.r")
-nclust <- 6
-maxusage.day <- 20
+nclust <- 5
+
+start.predict.day=25
 path.to.files <- file.path("data")
 #files <- list.files('/Users/jonaswallin/Dropbox/temp/simulation_results_beta',
 #                    pattern = "^param",
@@ -18,7 +20,7 @@ files <- list.files(paste(path.to.files,"/simulation_results",sep=""),
                              full.names = TRUE)
 alpha_CI <- 0.1
 
-index_files <- 1:length(files)
+index_files <- 1:(length(files)-1)
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 
 
@@ -31,10 +33,11 @@ result_par <- foreach(i = index_files)  %dopar% {
   library(Matrix)
   library(tidyr)
   library(fst)
+  library(stringr)
+  load(files[i]) #res_save_lag
 
-  load(files[i])
   cat('i=',i,", ", file=stdout())
-  Date <- as.Date(result$dates_report[dim(res_save$Death_est)[2]])
+  Date <- as.Date(result$dates_report[dim(res_save_lag$Death_est)[2]])
   cat('file= ',format(Date) , '\n',file=stdout())
   file.name = paste(path.to.files,"/simulation_results/prediction_valdiation.RData",sep="")
   write.data <- file.exists(file.name)==F
@@ -43,78 +46,89 @@ result_par <- foreach(i = index_files)  %dopar% {
     write.data = Date%in%as.Date(names(result_par)) ==F
   }
   if(write.data){
-    list2env(res_save, envir = environment())
     result <- readRDS(file.path("data", "processed", "processed_data.rds"))
+    result$detected[14, 21:dim(result$detected)[2]] <- result$detected[14, 21:dim(result$detected)[2]] - 15
 
-    Reported_T = result$detected
     pred_time = which(result$dates_report==str_extract(files[i],'[0-9]{4}-[0-9]{2}-[0-9]{2}'))
     cat('pred_time=',pred_time,"\n", file=stdout())
-    N_T <- dim(Reported_T)[1]
-    deaths_est_T <- apply(Reported_T, 1, max, na.rm=T)
-    data_T <- newDeaths(deaths_est_T,
-                        Reported_T,
-                        maxusage.day =maxusage.day)
-    X_T <- setup_data(N_T, maxusage.day, result$dates_report, unique.days)
+    N <- dim(result$detected)[1]
+    lag <- res_save_lag$lag
+    report <- splitlag(result$detected,as.Date(result$dates_report) ,res_save_lag$lag)
 
-    #handling annoying misstakes
-    data_mod <- newDeaths(deaths_est_T,
-                        Reported_T,
-                        maxusage.day =Inf)
-    detected_mod<- result$detected
-    for(k in 1:dim(data_T$report.new)[1])
-      detected_mod[k,] <- cumsum(replace_na(data_mod$report.new[k,],0))
-
-    detected_mod[is.na(result$detected)] <- NA
-
-
+    X_T <- setup_data_lag(N, 3, result$dates_report, npar)
+    X_O <- setup_data_postlag(N, res_save_lag$lag, 0, result$dates_report)
     Reported <- result$detected[1:pred_time,1:pred_time]
-    Reported_fill <- cbind(Reported, matrix(NA, nrow=pred_time,ncol = (N_T-pred_time)))
+    Reported_fill <- cbind(Reported, matrix(NA, nrow=pred_time,ncol = (N-pred_time)))
 
-    p <- dim(Thetas)[2]/2
-    sim <- 200#dim(Thetas)[1]
-    pred_set <-array(NA, dim = c(pred_time,N_T-pred_time,sim))
+    p_T <- length(res_save_lag$theta)/2
+    p_O <- dim(X_O)[2]
+    sim <- dim(res_save_lag$Death_est)[1]
+    pred_set <-array(NA, dim = c(pred_time,N-pred_time,sim))
+
+    Alpha_T <- matrix(NA, N,N)
+    Beta_T  <- matrix(NA, N,N)
+
+    mu <-  1/(1+exp(-X_T%*%res_save_lag$theta[1:p_T]))
+    M  <- exp(X_T%*%res_save_lag$theta[p_T+(1:p_T)])
+    Alpha_T[upper.tri(Alpha_T,diag=T)] <- M*mu
+    Beta_T[upper.tri(Beta_T,diag=T)]   <- (M - 1)*mu
+
+    Alpha_T <- Alpha_T[1:pred_time,1:N]
+    Beta_T  <- Beta_T[1:pred_time, 1:N]
+    Alpha_O <- matrix(NA, N,N)
+    Beta_O  <- matrix(NA, N,N)
+    mu <-  1/(1+exp(-X_O%*%res_save_post_lag$theta[1:p_O]))
+    M  <- exp(X_O%*%res_save_post_lag$theta[p_O+(1:p_O)])
+    Alpha_O[upper.tri(Alpha_O,diag=T)]  <- M*mu
+    Beta_O[upper.tri(Alpha_O,diag=T)]   <- (M - 1)*mu
+
     for(k in 1:sim){
-      beta_1 <- Thetas[k,1:p]
-      beta_2 <- Thetas[k,(p+1):(2*p)]
-      Alpha_T <- matrix(NA, N_T,N_T)
-      Beta_T  <- matrix(NA, N_T,N_T)
 
-      Alpha_T[upper.tri(Alpha_T,diag=T)] <- exp(X_T%*%beta_1)
-      Beta_T[upper.tri(Beta_T,diag=T)]   <- exp(X_T%*%beta_2)
-      Alpha_T <- Alpha_T[1:pred_time,1:N_T]
-      Beta_T  <- Beta_T[1:pred_time, 1:N_T]
-      Reported_sample <-fill.ReportBB(Death_est[k,],
+
+      Reported_sample_lag <-fill.ReportBB.lag(res_save_lag$Death_est[k,],
                                       Alpha_T,
                                       Beta_T,
                                       Reported_fill,
-                                      maxusage.day = true.day)
-      pred_set[,,k] <- Reported_sample[,(pred_time+1):N_T]
+                                      result$dates_report[1:N],
+                                      lag = lag)
+      Reported_sample_post_lag <-fill.ReportBB.postlag(res_save_post_lag$Death_est[k,],
+                                              Alpha_O,
+                                              Beta_O,
+                                              Reported_sample_lag,
+                                              result$dates_report[1:N],
+                                              lag = lag)
+      pred_set[,,k] <- Reported_sample_post_lag[,(pred_time+1):N]
     }
 
-    CI <- apply(pred_set,c(1,2), quantile,probs=c(alpha_CI/2,0.5,1-alpha_CI/2))
+    CI <- apply(pred_set,c(1,2), quantile,probs=c(alpha_CI/2,0.5,1-alpha_CI/2),na.rm=T)
     CI_low <- as.matrix(CI[1,,])
-    colnames( CI_low)<- format(result$dates_report[(pred_time+1):N_T],"%Y-%m-%d")
+    colnames( CI_low)<- format(result$dates_report[(pred_time+1):N],"%Y-%m-%d")
     rownames( CI_low)<- format(result$dates[1:pred_time],"%Y-%m-%d")
 
     med <- as.matrix(CI[2,,])
-    colnames( med)<- format(result$dates_report[(pred_time+1):N_T],"%Y-%m-%d")
+    colnames( med)<- format(result$dates_report[(pred_time+1):N],"%Y-%m-%d")
     rownames( med)<- format(result$dates[1:pred_time],"%Y-%m-%d")
 
     CI_up <- as.matrix(CI[3,,])
-    colnames( CI_up)<- format(result$dates_report[(pred_time+1):N_T],"%Y-%m-%d")
+    colnames( CI_up)<- format(result$dates_report[(pred_time+1):N],"%Y-%m-%d")
     rownames( CI_up)<- format(result$dates[1:pred_time],"%Y-%m-%d")
     index <- format(result$dates_report[pred_time],"%Y-%m-%d")
 
     predicition_by_reported_day$CI_low <- CI_low
     predicition_by_reported_day$CI_up <- CI_up
     predicition_by_reported_day$med <- med
-    predicition_by_reported_day$Truth <- as.matrix(detected_mod[1:pred_time,(pred_time+1):N_T])
 
-    colnames( predicition_by_reported_day$Truth)<- format(result$dates_report[(pred_time+1):N_T],"%Y-%m-%d")
+    deaths_est_T <- apply(result$detected, 1, max, na.rm=T)
+    #handling annoying misstakes
+
+    predicition_by_reported_day$Truth <- as.matrix(result$detected[1:pred_time,(pred_time+1):N])
+    colnames( predicition_by_reported_day$Truth)<- format(result$dates_report[(pred_time+1):N],"%Y-%m-%d")
     rownames( predicition_by_reported_day$Truth)<- format(result$dates[1:pred_time],"%Y-%m-%d")
-    SCPRS <- matrix(nrow=pred_time, ncol = N_T-pred_time)
+    SCPRS <- matrix(0,nrow=pred_time, ncol = N-pred_time)
     for(k_death in 1:pred_time){
-      for(k_report in 1:(N_T-pred_time)){
+      if(k_death<=5)
+        next
+      for(k_report in 1:(N-pred_time)){
 
         predSample <-pred_set[k_death,k_report,]
         P1 <- predSample[1:ceiling(sim/3)]
@@ -129,7 +143,7 @@ result_par <- foreach(i = index_files)  %dopar% {
         SCPRS[k_death, k_report] <- -EabsYX/EabsXX - 0.5*log(EabsXX)
       }
     }
-    colnames( SCPRS)<- format(result$dates_report[(pred_time+1):N_T],"%Y-%m-%d")
+    colnames( SCPRS)<- format(result$dates_report[(pred_time+1):N],"%Y-%m-%d")
     rownames( SCPRS)<- format(result$dates[1:pred_time],"%Y-%m-%d")
     predicition_by_reported_day$SCPRS <- SCPRS
   }else{
@@ -142,8 +156,7 @@ result_par <- foreach(i = index_files)  %dopar% {
 }
 
 parallel::stopCluster(cl)
-start.predict.day=16
-names(result_par) <- result$dates_report[start.predict.day+index_files-1]
+names(result_par) <- result$dates_report[25+index_files-1]
 save(
      result_par,
      file=paste(path.to.files,"/simulation_results/prediction_valdiation.RData",sep="")

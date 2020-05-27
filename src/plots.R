@@ -15,7 +15,7 @@ model_predict <- read_fst(file.path("data", "processed", "model_predict.fst"), a
 DT1 <- model_predict[date >= Sys.Date() - 28]
 DT2 <- deaths_dt[!is.na(N) & !is.na(date) & publication_date == max(publication_date)]
 DT2[, avg := frollmean(N, 7, algo = "exact", align = "center")]
-DT2 <- DT2[date >= "2020-03-15"]
+DT2 <- DT2[date > "2020-03-15"]
 
 colors <- c("gray80", "#ECCBAE")
 colors <- setNames(colors, c("Reported dead", "Model prediction"))
@@ -47,7 +47,7 @@ ggsave(filename = file.path("output", "plots", "latest_prediction.pdf"),
 # Load data
 benchmark <- read_fst(file.path("data", "processed", "constant_benchmark.fst"), as.data.table = TRUE)
 model <- read_fst(file.path("data", "processed", "model_benchmark.fst"), as.data.table = TRUE)
-
+benchmark <- benchmark[state >="2020-04-26"]
 
 # Fix data tables so they look the same
 reported_dead <- benchmark[, .(state, date, days_left = as.integer(days_left), reported_dead)]
@@ -135,8 +135,7 @@ ggsave(filename = file.path("output", "plots", "lag_prediction_by_date.pdf"),
 
 # For verification, plot each date as well
 dates <- seq(as.Date("2020-04-15"), model[days_left == 13, max(date)], 1)
-plot_data$ci_upper <- apply(as.matrix(plot_data$ci_upper),1,function(x){min(200,x)})
-plot_data$predicted_deaths <- apply(as.matrix(plot_data$predicted_deaths),1,function(x){min(200,x)})
+
 for (i in seq_along(dates)) {
     plot <- day_plot(plot_data[date == dates[i]],
                      reported_dead[date == dates[i]],
