@@ -7,18 +7,15 @@ library(foreach)
 library(fst)
 library(data.table)
 source("src/util.r")
-nclust <- 6
+nclust <- 2
 maxusage.day <- 20
 path.to.files <- file.path("data")
-#files <- list.files('/Users/jonaswallin/Dropbox/temp/simulation_results_beta',
-#                    pattern = "^param",
-#                    full.names = TRUE)
-files <- list.files(paste(path.to.files,"/simulation_results",sep=""),
+files <- list.files(paste(path.to.files,"/simulation_results_old",sep=""),
                              pattern = "^param",
                              full.names = TRUE)
 alpha_CI <- 0.1
 
-index_files <- 1:length(files)
+index_files <- 1:(length(files)-1)
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 
 
@@ -31,15 +28,16 @@ result_par <- foreach(i = index_files)  %dopar% {
   library(Matrix)
   library(tidyr)
   library(fst)
+  library(stringr)
 
   load(files[i])
   cat('i=',i,", ", file=stdout())
   Date <- as.Date(result$dates_report[dim(res_save$Death_est)[2]])
   cat('file= ',format(Date) , '\n',file=stdout())
-  file.name = paste(path.to.files,"/simulation_results/prediction_valdiation.RData",sep="")
+  file.name = paste(path.to.files,"/simulation_results_old/prediction_valdiation.RData",sep="")
   write.data <- file.exists(file.name)==F
   if(write.data==F){
-    load(paste(path.to.files,"/simulation_results/prediction_valdiation.RData",sep=""))
+    load(paste(path.to.files,"/simulation_results_old/prediction_valdiation.RData",sep=""))
     write.data = Date%in%as.Date(names(result_par)) ==F
   }
   if(write.data){
@@ -71,7 +69,7 @@ result_par <- foreach(i = index_files)  %dopar% {
     Reported_fill <- cbind(Reported, matrix(NA, nrow=pred_time,ncol = (N_T-pred_time)))
 
     p <- dim(Thetas)[2]/2
-    sim <- 200#dim(Thetas)[1]
+    sim <- dim(Thetas)[1]
     pred_set <-array(NA, dim = c(pred_time,N_T-pred_time,sim))
     for(k in 1:sim){
       beta_1 <- Thetas[k,1:p]
@@ -79,8 +77,11 @@ result_par <- foreach(i = index_files)  %dopar% {
       Alpha_T <- matrix(NA, N_T,N_T)
       Beta_T  <- matrix(NA, N_T,N_T)
 
-      Alpha_T[upper.tri(Alpha_T,diag=T)] <- exp(X_T%*%beta_1)
-      Beta_T[upper.tri(Beta_T,diag=T)]   <- exp(X_T%*%beta_2)
+      mu <- 1/(1+exp(-X_T%*%beta_1))
+      M  <- exp(X_T%*%beta_2)
+      Alpha_T[upper.tri(Alpha_T,diag=T)] <- M * mu
+      Beta_T[upper.tri(Alpha_T,diag=T)]  <- M * (1-mu)
+
       Alpha_T <- Alpha_T[1:pred_time,1:N_T]
       Beta_T  <- Beta_T[1:pred_time, 1:N_T]
       Reported_sample <-fill.ReportBB(Death_est[k,],
@@ -142,7 +143,7 @@ result_par <- foreach(i = index_files)  %dopar% {
 }
 
 parallel::stopCluster(cl)
-start.predict.day=16
+start.predict.day=10
 names(result_par) <- result$dates_report[start.predict.day+index_files-1]
 save(
      result_par,
@@ -165,7 +166,7 @@ for(day in names(result_par)){
 
     Report_day <- as.Date(day)+Delay
     Death_day <-  Report_day - nDelay
-    if(Death_day<=as.Date('2020-04-06'))
+    if(Death_day<=as.Date('2020-04-10'))
       next
 
     CI_low <- result_par[[day]]$CI_low
@@ -207,7 +208,7 @@ out_BGP <- data.table(state     = as.Date(state,origin="1970-01-01"),
                   predicted_deaths = predicted_deaths,
                   SCRPS   = SCRPS_out)
 
-write_fst(out_BGP, file.path("data", "processed", "model_benchmark.fst"))
+write_fst(out_BGP, file.path("data", "processed", "model_benchmark_old.fst"))
 if(0){
   pdf('Prediction Result.pdf')
   par(mfrow=c(2,2))

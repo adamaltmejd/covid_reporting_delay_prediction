@@ -17,7 +17,7 @@ ML_betaBin <- function(result,
     data_T <- newDeaths(deaths_est_T,
                         report_lag)
     N <- dim(data_T$death.remain)[2]
-    X <- setup_data_lag(N, 3, result$dates_report[1:N],npar)
+    X <- setup_data_lag(N, npar, result$dates_report[1:N],npar)
     IndexX <- matrix(FALSE, N, N)
     for(i in 1:N){
         if( sum(data_T$death.remain[i,] == 0 & is.na(data_T$death.remain[i,] )==F) >0){
@@ -55,6 +55,7 @@ ML_betaBin <- function(result,
 ML_betaBin_post <- function(result,
                        lag,
                        maxusage.day,
+                       npars,
                        theta0 = NULL){
 
     N <- dim(result$detected)[2]
@@ -65,7 +66,7 @@ ML_betaBin_post <- function(result,
     data_O <- newDeaths(deaths_est_T,
                         report_lag)
 
-    X <- setup_data_postlag(N, lag, 0, result$dates_report[1:N])
+    X <- setup_data_postlag2(N, lag, npars, result$dates_report[1:N])
     IndexX <- matrix(FALSE, N, N)
     for(i in 1:N){
         if( N-i >= maxusage.day){
@@ -139,10 +140,11 @@ benchmark_BetaGP_lag_j <-function(j,
     result_j$dates_report <-  result_j$dates_report[1:j]
     report_j <- splitlag(result_j$detected,as.Date(result_j$dates_report), lag)
     param<- ML_betaBin(result_j,
-                       lag)
+                       lag,
+                       npar)
     N_j <- j
-    X_T <- setup_data_lag(N_T, 3, result$dates_report, npar)
-    X_j <- setup_data_lag(N_j, 3, result_j$dates_report, npar)
+    X_T <- setup_data_lag(N_T, npar, result$dates_report, npar)
+    X_j <- setup_data_lag(N_j, npar, result_j$dates_report, npar)
 
 
     deaths_est <- apply(report_j$Reported_T, 1, max, na.rm=T)
@@ -157,7 +159,7 @@ benchmark_BetaGP_lag_j <-function(j,
     ###
     # A -matrix
     ###
-    pool <- 3
+    pool <- 1
     A_m  <- ceiling(N_j/pool)
     A_i <- N_j/pool
     A_j <- rep(1:A_m,each=pool)[1:N_j]
@@ -209,7 +211,7 @@ benchmark_BetaGP_lag_j <-function(j,
     mu <-  1/(1+exp(-X_j%*%param$alpha_X))
     M  <- exp(X_j%*%param$beta_X)
     Alpha[upper.tri(data_$report.new,diag=T)] <- M*mu
-    Beta[upper.tri(data_$report.new,diag=T)]  <- M - M*mu
+    Beta[upper.tri(data_$report.new,diag=T)]  <- M*(1-mu)
     MU <- Alpha
     MM <- Beta
     MU[upper.tri(data_$report.new,diag=T)]  <- mu
@@ -310,7 +312,8 @@ benchmark_BetaGP_post_lag_j <- function(j,
                                         MCMC_sim,
                                         burnin_p,
                                         deaths_sim,
-                                        prior = 0){
+                                        prior = 0,
+                                        npars = 2){
     require(Matrix)
     N_T <- length(result$dates)
     deaths_est_T <- apply(result$detected, 1, max, na.rm=T)
@@ -320,14 +323,15 @@ benchmark_BetaGP_post_lag_j <- function(j,
     result_j$dates_report <-  result_j$dates[1:j]
     report_j <- splitlag(result_j$detected,as.Date(result_j$dates_report), lag)
     N_j <- j
-    X_T <- setup_data_postlag(N_T, lag, 0, result$dates_report)
-    X_j <- setup_data_postlag(N_j, lag, 0, result_j$dates_report)
+    X_T <- setup_data_postlag2(N_T, lag, npars, result$dates_report)
+    X_j <- setup_data_postlag2(N_j, lag, npars, result_j$dates_report)
     deaths_est <- apply(report_j$Reported_O, 1, function(x) { if(all(is.na(x))){return(0)};
                                                             max(x,na.rm=T)})
 
     param <- ML_betaBin_post(result = result_j,
                              lag=  lag,
-                             maxusage.day = maxusage.day)
+                             maxusage.day = maxusage.day,
+                             npars)
     ##
     # seting up MCMC GP
     ##
@@ -340,8 +344,7 @@ benchmark_BetaGP_post_lag_j <- function(j,
     ###
     pool <- 1
     A_m  <- ceiling(N_j/pool)
-    A_i <- N_j/pool
-    A_j <- rep(1:A_m,each=pool)[1:N_j]
+    A_j <- rep(1:A_m,each=pool)[(A_m*pool - N_j + 1):(A_m*pool)]
     A   <- sparseMatrix(i=1:N_j,j=A_j,  dims=c(N_j, A_m))
     Start_theta <- as.vector(log((t(A)%*%deaths_est)/colSums(A)+1))
     tau <- 0.1
@@ -391,7 +394,7 @@ benchmark_BetaGP_post_lag_j <- function(j,
     mu <-  1/(1+exp(-X_j%*%param$alpha_X))
     M  <- exp(X_j%*%param$beta_X)
     Alpha[upper.tri(data_$report.new,diag=T)] <- M*mu
-    Beta[upper.tri(data_$report.new,diag=T)]  <- M - M*mu
+    Beta[upper.tri(data_$report.new,diag=T)]  <- M *(1-mu)
     MU <- Alpha
     MM <- Beta
     MU[upper.tri(data_$report.new,diag=T)]  <- mu
@@ -451,6 +454,7 @@ benchmark_BetaGP_post_lag_j <- function(j,
             Death_est[i-burnin + 1,] <-res$deaths
             theta_GP[i-burnin + 1,] <-  as.vector(MH_obj_GP$theta)
             Gp.prior[i-burnin + 1]  <- tau
+            phis[i-burnin + 1]  <- phi
         }
     }
     res_save <- list(theta = c(param$alpha_X,param$beta_X),
@@ -463,7 +467,8 @@ benchmark_BetaGP_post_lag_j <- function(j,
                      date  = result$dates_report[j],
                      lag = lag,
                      j = j,
-                     A=  A)
+                     A=  A,
+                     npars=  npars)
     return(res_save)
 }
 

@@ -46,8 +46,8 @@ ggsave(filename = file.path("output", "plots", "latest_prediction.pdf"),
 
 # Load data
 benchmark <- read_fst(file.path("data", "processed", "constant_benchmark.fst"), as.data.table = TRUE)
-model <- read_fst(file.path("data", "processed", "model_benchmark.fst"), as.data.table = TRUE)
-benchmark <- benchmark[state >="2020-04-26"]
+model <- read_fst(file.path("data", "processed", "model_benchmark_old.fst"), as.data.table = TRUE)
+benchmark <- benchmark[state >="2020-04-11"]
 
 # Fix data tables so they look the same
 reported_dead <- benchmark[, .(state, date, days_left = as.integer(days_left), reported_dead)]
@@ -134,7 +134,7 @@ ggsave(filename = file.path("output", "plots", "lag_prediction_by_date.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w)
 
 # For verification, plot each date as well
-dates <- seq(as.Date("2020-04-15"), model[days_left == 13, max(date)], 1)
+dates <- seq(as.Date("2020-04-26"), model[days_left == 13, max(date)], 1)
 
 for (i in seq_along(dates)) {
     plot <- day_plot(plot_data[date == dates[i]],

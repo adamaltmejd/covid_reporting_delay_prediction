@@ -9,12 +9,12 @@ source(file.path("src", "MH.R"))
 source(file.path("src", "functions.R"))
 source(file.path("src", "GPutil.R"))
 source(file.path("src", "modelbenchmarkutil_poisson.R"))
-nclust <- 6
-MCMC_sim <- 15000
+nclust <- 4
+MCMC_sim <- 20000
 burnin_p = 0.5
 deaths_sim <- 5
 maxusage.day = 20 #must be less then N
-unique.days  = 5
+unique.days  = 6
 true.day = 5
 start.predict.day = 40#16 # more then unique days
 
@@ -45,7 +45,7 @@ foreach(j = start.predict.day:N_T)  %dopar% {
                                deaths_sim = deaths_sim)
 
   save(res_save,
-       file = file.path("data", "simulation_results", paste0("param_", result$dates_report[j], ".rds")))
+       file = file.path("data", "simulation_results_old", paste0("param_", result$dates_report[j], ".rds")))
 }
 
 parallel::stopCluster(cl)

@@ -104,6 +104,60 @@ sample.deathsBB <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, 
   return(list(deaths=deaths, acc = acc))
 }
 
+##
+# sample reported deaths after rep.day (if Inf) predicit day using Beta binomial dist
+#
+#  samples  - (int) how many samples should be done for each N (cheap)
+#  deaths   - (N x 1) true number of deaths each day
+#  alpha     - (N x N) matrix of beta binom parameter (only upper triangular part relevant)
+#  beta      - (N x N) matrix of beta binom parameter (only upper triangular part relevant)
+#  Reported - (N x N) matrix of reported deaths cumlative (only upper triangular relevant)
+#  alpha.MCMC    - (N x 1) stepsizes
+#  true.dat  - (int) how many days after recording should one sample
+#  prior     - (function) should  return log of prior density (use N and i)
+##
+sample.deathsBB_negbin <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, true.day = 0 ,
+                                   theta,
+                                   phi){
+
+  N <- length(deaths)
+  acc <- rep(0,N)
+  for(i in 1:N){
+    if(i > true.day){
+      alpha_i     = alpha[i,i:N]
+      beta_i      = beta[i,i:N]
+      Reported_i  = Reported[i,i:N]
+      index = is.na(Reported_i)==F
+      alpha_i  = alpha_i[index]
+      beta_i  = beta_i[index]
+      Reported_i  = Reported_i[index]
+      if(length(Reported_i)>0){
+        lik_i <- loglikDeathsGivenProbBB(deaths[i],alpha_i , beta_i, Reported_i)
+      }else{
+        lik_i <- 0
+      }
+      lik_i <- lik_i + dnegbin(deaths[i], theta[i],phi)
+      for(j in 1:samples){
+        death_star <- sample((deaths[i]-alpha.MCMC[i]):(deaths[i]+alpha.MCMC[i]), 1)
+        if(length(Reported_i)>0){
+          lik_star <- loglikDeathsGivenProbBB(death_star, alpha_i , beta_i, Reported_i)
+        }else{
+          lik_star <- 0
+        }
+        lik_star <- lik_star + dnegbin(death_star, theta[i],phi)
+        if(is.nan(lik_star))
+          next
+        if(log(runif(1)) < lik_star-lik_i){
+          lik_i = lik_star
+          deaths[i] <- death_star
+          acc[i] = acc[i] + 1
+        }
+      }
+    }
+  }
+  return(list(deaths=deaths, acc = acc))
+}
+
 
 ##
 # sample reported deaths after rep.day (if Inf) predicit day using Beta binomial dist
@@ -643,16 +697,16 @@ loglikProbBB_param2 <- function(beta, death.remain, report.new, X, calcH=F){
 
   lik <- sum(dBB(y, size = n, alpha = alpha, beta = beta, log.p=T))
   if(is.na(lik))
-    return(list(loglik = -Inf, grad = 0, Hessian = 0))
+    return(list(loglik = -Inf, grad = 0))
 
-  lik <- lik - sum(exp(beta_2))
+  lik <- lik - 2*sum(exp(beta_2))
   grad_lik <- grad_dBB(y, size = n, alpha = alpha, beta = beta)
 
-  grad_mu <- t(X)%*%(M*mu * (1-mu) * grad_lik$grad_alpha)
-  grad_mu <- grad_mu - t(X)%*%(M * mu * (1-mu) * grad_lik$grad_beta)
-  grad_M <- t(X)%*%(M*mu * grad_lik$grad_alpha)
-  grad_M <- grad_M + t(X)%*%(M * (1-mu) * grad_lik$grad_beta)
-  grad_M <- grad_M - exp(beta_2)
+  grad_mu <- (M*mu * (1-mu) * grad_lik$grad_alpha)
+  grad_mu <- t(X)%*%(grad_mu - (M * mu * (1-mu) * grad_lik$grad_beta))
+  grad_M <- (M*mu * grad_lik$grad_alpha)
+  grad_M <- grad_M + (M * (1-mu) * grad_lik$grad_beta)
+  grad_M <- t(X)%*%grad_M - 2*exp(beta_2)
   grad =  c(as.vector(grad_mu),as.vector(grad_M))
   if(sum(is.na(grad))>0)
     return(list(loglik = -Inf, grad = 0))
@@ -875,8 +929,6 @@ setup_data <- function(N, Predict.day, dates_report, unique.prob=NULL){
   Xhol <- buildXholiday(N,holidays - (holiday.yesterday*holidays==T))
   Xhol.sunday <- buildXholiday(N,holiday.yesterday*holidays==T)
   Xhol.yesterday <-buildXholiday(N,holiday.yesterday - (holiday.yesterday*holidays==T) )
-  X.Wednesday <-buildXholiday(N, weekdays(dates_report)%in%c('Wednesday') )
-  #X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday, Xhol*X[,1],X.Wednesday-X.Wednesday*Xhol)
   X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday, Xhol*X[,1])
 
   return(X)
@@ -938,9 +990,58 @@ setup_data_postlag <- function(N, lag, Predict.day, dates_report, unique.prob=NU
   Xhol <- buildXholiday(N,holidays - (holiday.yesterday*holidays==T))
   Xhol.sunday <- buildXholiday(N,holiday.yesterday*holidays==T)
   Xhol.yesterday <-buildXholiday(N,holiday.yesterday - (holiday.yesterday*holidays==T) )
-  X.Wednesday <-buildXholiday(N, weekdays(dates_report)%in%c('Wednesday') )
+  #X.Wednesday <-buildXholiday(N, weekdays(dates_report)%in%c('Wednesday') )
   #X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday, Xhol*X[,1],X.Wednesday-X.Wednesday*Xhol)
-  X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday,X.Wednesday-X.Wednesday*Xhol)
+  X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday)
+
+  return(X)
+}
+
+##
+# buidling the X matrix
+#
+#
+# unique.prob - (int) how many of days shall we have unique probabilites
+##
+setup_data_postlag2 <- function(N, lag, params, dates_report){
+  if(params==0){
+    X <- matrix(1, nrow=N*(N+1)/2,  ncol=1)
+    unique.prob= 0
+  }else{
+    X_ <- matrix(0, nrow=N, ncol = N)
+    holidays <- weekdays(dates_report)%in%c("Sunday","Saturday") | c(dates_report)%in%c(holidays.Sweden)
+    for(i in 1:N){
+      k <- which.max(cumsum(holidays[i:N]==F)==(lag+1))-1
+      for(p in 1:params){
+        if((i+k +p) <= N)
+          X_[i,(i+k +p)] <- p
+      }
+    }
+    X_ <- X_[upper.tri(X_,diag=T)]
+    j_ <-  X_[X_>0]
+    i_base <- 1:length(X_)
+    i_ <-  i_base[X_>0]
+    X <- sparseMatrix(i=i_,j=j_ , dims=c(length(X_), max(j_))  )
+    unique.prob = max(j_)
+  }
+
+
+
+  #holidays and weekends
+
+  result$dates_report <- as.Date(dates_report)
+
+  if(unique.prob)
+    X <- cbind(X[,1:unique.prob,drop=F],rowSums(X[,1:unique.prob,drop=F])==0)
+
+  holidays <- weekdays(dates_report)%in%c("Sunday","Saturday") | c(dates_report)%in%c(holidays.Sweden)
+  holiday.yesterday <- weekdays(dates_report - 1)%in%c("Sunday","Saturday") |
+    (result$dates_report-1)%in%c(holidays.Sweden)
+  Xhol <- buildXholiday(N,holidays - (holiday.yesterday*holidays==T))
+  Xhol.sunday <- buildXholiday(N,holiday.yesterday*holidays==T)
+  Xhol.yesterday <-buildXholiday(N,holiday.yesterday - (holiday.yesterday*holidays==T) )
+  X.Wednesday <-buildXholiday(N, weekdays(dates_report)%in%c('Wednesday') )
+  X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday,X.Wednesday)
 
   return(X)
 }

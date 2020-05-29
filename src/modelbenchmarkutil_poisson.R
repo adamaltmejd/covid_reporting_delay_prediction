@@ -28,7 +28,7 @@ benchmark_BetaGP_j <- function(j,
     dates_report <- result$dates_report[1:j]
     N <- dim(Reported)[1]
     deaths_est <- apply(Reported, 1, max, na.rm=T)
-    deaths_est[1:true.day] = deaths_est_T[1:(1+true.day-1)] #days with known deaths
+    deaths_est[1:true.day] = deaths_est_T[1:(true.day)] #days with known deaths
 
 
     data_ <- newDeaths(deaths_est,
@@ -45,13 +45,26 @@ benchmark_BetaGP_j <- function(j,
     # seting up MCMC
     ##
     MH_obj <- MH_setup()
-    MH_obj$sigma <- 0.01
+    MH_obj$sigma <- 0.1
     MH_obj$theta <- rep(0,2*dim(X)[2])
 
     MH_obj$Lik <- loglikProbBB_param2
     ##
     # seting up MCMC GP
     ##
+    phi.samples <- 10
+    phi <- 100
+    alpha.phi <- 10
+    ###
+    # A -matrix
+    ###
+    pool <- 1
+    A_m  <- ceiling(N/pool)
+    A_j <- rep(1:A_m,each=pool)[(A_m*pool - N + 1):(A_m*pool)]
+    A   <- sparseMatrix(i=1:N,j=A_j,  dims=c(N, A_m))
+    Start_theta <- as.vector(log((t(A)%*%deaths_est)/colSums(A)+1))
+
+
     Start_theta <- log(deaths_est+1)
     tau <- 0.1
     MH_obj_GP <- MH_setup()
@@ -80,16 +93,16 @@ benchmark_BetaGP_j <- function(j,
         MH_obj_tau$theta <- c(tau, 1)
         Gp.prior <- matrix(NA, nrow=MCMC_sim, ncol=2)
     }
-    MH_obj_GP$Lik <- function(x, N, L) {
+    MH_obj_GP$Lik <- function(x, N, L, phi, A) {
         prior_list <- prior_GP(x, L)
-        lik_list   <- lik_poisson(N, x)
+        lik_list   <- lik_negbin_theta_A(N, x, phi, A)
         return(list(loglik = lik_list$loglik + prior_list$loglik,
-                    grad = lik_list$grad  + prior_list$grad))
+                    grad = as.vector(lik_list$grad  + prior_list$grad)))
     }
 
-    ##
-    # mcmc loop
-    ##
+
+    phis <- rep(0, MCMC_sim)
+
     P <- matrix(NA, ncol=N, nrow=N)
     Thetas <- matrix(NA, nrow=MCMC_sim, ncol = length(MH_obj$theta))
     theta_GP <-  matrix(NA, nrow=MCMC_sim, ncol = length(MH_obj_GP$theta))
@@ -123,16 +136,15 @@ benchmark_BetaGP_j <- function(j,
         Alpha[upper.tri(data_$report.new,diag=T)] <- M * mu
         Beta[upper.tri(data_$report.new,diag=T)]  <- M * (1-mu)
 
-        prior_N <- function(N, i){ N *MH_obj_GP$theta[i] - lgamma(N+1)}
-        res <- sample.deathsBB(deaths_sim,
+        res <- sample.deathsBB_negbin(deaths_sim,
                                deaths_est,
                                Alpha,
                                Beta,
                                Reported,
                                alpha.MCMC,
                                true.day = true.day,
-                               use.prior=T,
-                               prior=prior_N)
+                               theta = as.vector(exp(A%*%MH_obj_GP$theta)),
+                               phi = phi)
         deaths_est <- res$deaths
         data_ <-newDeaths(deaths_est,Reported,maxusage.day)
 
@@ -156,9 +168,17 @@ benchmark_BetaGP_j <- function(j,
 
         MH_obj_GP <- MALAiter(MH_obj_GP, TRUE,
                               N = deaths_est,
-                              L = L_in)
+                              L = L_in,
+                              phi = phi,
+                              A = A)
+        phi_res <- sample.phi(phi,
+                              deaths_est,
+                              as.vector(A%*%MH_obj_GP$theta),
+                              alpha = alpha.phi)
+        phi <- phi_res$phi
 
         if(i < burnin){
+            alpha.phi <- max(1,alpha.phi + (2*(phi_res$acc/phi.samples > 0.3)  - 1))
             alpha.MCMC[res$acc/deaths_sim > 0.3] <- alpha.MCMC[res$acc/deaths_sim > 0.3] +1
             alpha.MCMC[res$acc/deaths_sim < 0.3] <- alpha.MCMC[res$acc/deaths_sim < 0.3] -1
             alpha.MCMC[alpha.MCMC<1] <- 1
@@ -172,6 +192,7 @@ benchmark_BetaGP_j <- function(j,
                 Gp.prior[i-burnin + 1,]  <- MH_obj_tau$theta
 
             }
+            phis[i-burnin + 1]  <- phi
         }
     }
     res_save <- list(Thetas = Thetas,
@@ -179,6 +200,8 @@ benchmark_BetaGP_j <- function(j,
                      theta_GP = theta_GP,
                      true.day = true.day,
                      unique.days = unique.days,
+                     phis = phis,
+                     A=  A,
                      maxusage.day = maxusage.day,
                      GP.prior      = Gp.prior,
                      date  = dates_report[j],
