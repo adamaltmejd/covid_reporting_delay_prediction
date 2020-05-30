@@ -308,6 +308,7 @@ MH_SA <- function(MH_obj, option = 1)
 
   if(option == 1)
   {
+    if(MH_obj$count %% 2 == 0){
     w0 <- (MH_obj$n_SA -1)
 
     w1 <- MH_obj$n_SA
@@ -319,8 +320,13 @@ MH_SA <- function(MH_obj, option = 1)
       MH_obj$Sigma  <- (MH_obj$thetaM- MH_obj$theta)%*%t(MH_obj$thetaM- MH_obj$theta)
     }
     MH_obj$n_SA  <- MH_obj$n_SA + 1
-    if(MH_obj$count > 20 * nrow(MH_obj$Sigma))
+    if(MH_obj$n_SA  == 20 * nrow(MH_obj$Sigma)){
       MH_obj$L <- t(chol(MH_obj$Sigma))
+      MH_obj$sigma <- MH_obj$sigma/sqrt(max(diag(MH_obj$Sigma)))
+    }
+    if(MH_obj$n_SA > 20 * nrow(MH_obj$Sigma))
+      MH_obj$L <- t(chol(MH_obj$Sigma))
+    }
   }
   if( option == 2)
   {

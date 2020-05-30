@@ -8,7 +8,7 @@ maxusage.day=20
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 Reported_T = result$detected
 N_T <- dim(Reported_T)[1]
-fixed = N_T
+fixed = N_T-20
 Reported_T <- result$detected[1:fixed,1:fixed]
 deaths_est_T <- apply(Reported_T, 1, max, na.rm=T)
 deaths_est_T <- deaths_est_T[1:fixed]

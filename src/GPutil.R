@@ -19,6 +19,27 @@ tau_sigma_prior <- function(x, L_theta, Q_E){
   return(list(loglik = lik))
 }
 
+matern.covariance <- function(h, kappa, nu, sigma)
+{
+  if (nu == 1/2) {
+    C = sigma^2*exp(-kappa*abs(h))
+  } else {
+    C = (sigma^2 / (2^(nu - 1) * gamma(nu))) * ((kappa*abs(h))^nu) * besselK(kappa*abs(h), nu)
+  }
+  C[h == 0] = sigma^2
+  return(as.matrix(C))
+}
+
+lik.spatial <- function(Y, Sigma, R = NULL ){
+
+  if(is.null(R))
+    R = chol(Sigma)
+  v = solve(t(R),Y)
+  log.like = -sum(log(diag(R))) - 0.5*t(v) %*% v
+  return(log.like)
+}
+
+
 #'
 #' General Gaussian prior
 #'
@@ -31,6 +52,19 @@ prior_GP <- function(theta, L){
   Hessian <- - Q
   return(list(loglik = lik, grad = grad, Hessian = Hessian))
 }
+
+#'
+#' General Gaussian prior
+#'
+#'  @param theta - (nx1) the processes
+#'  @param L     - (nxn) cholesky covariance factor
+prior_GP2 <- function(theta, Sigma){
+  theta_Sigma <- solve(Sigma,theta)
+  lik <- -1/2 * t(theta)%*%theta_Sigma
+  grad = theta_Sigma
+  return(list(loglik = lik, grad = grad))
+}
+
 #'
 #' first order random walk model (intrisinct)
 #'  d theta /dt = N(0,\tau)

@@ -39,24 +39,27 @@ benchmark_BetaGP_j <- function(j,
     ##
     # building covariate matrix
     ##
+    X_mixed <- setup_data_mixed_effect(N, 2, result$dates_report[1:N])
     X_mu <- setup_data(N, maxusage.day,  result$dates_report[1:N], 1)
     X_M  <- X_mu[,1:2]
-    X_mixed <- setup_data_mixed_effect(N, 2, result$dates_report[1:N])
     X_longlag <- rowSums(X_mixed)>0
     X_trend <- setup_all_days(N)/7
-    X_mu <- cbind(X_mu, X_trend*(X_longlag==F))
+    X_mu <- cbind(X_mu, X_trend* ( X_longlag==F))
     X_M  <- cbind(X_M[,1],X_M[,2]*(X_longlag==0), X_longlag)
+
     p <- dim(X_mu)[2]
     p1 <- dim(X_M)[2]
+    p2 <- dim(X_mixed)[2]
 
     ##
     # seting up MCMC
     ##
     MH_obj <- MH_setup()
-    MH_obj$sigma <- 0.01
-    MH_obj$theta <- rep(0,p + p1)
+    MH_obj$sigma <- 0.1
+    MH_obj$theta <- rep(0,p + p1 + p2)
 
-    MH_obj$Lik <- loglikProbBB3
+    MH_obj$Lik <- loglikProbBB_mixedeffect
+    sigma_mixed <- 1
     ##
     # seting up MCMC GP
     ##
@@ -73,7 +76,7 @@ benchmark_BetaGP_j <- function(j,
     Start_theta <- as.vector(log((t(A)%*%deaths_est)/colSums(A)+1))
 
 
-    Start_theta <- log(deaths_est+1)
+    Start_theta <- Start_theta
     tau <- 0.1
     MH_obj_GP <- MH_setup()
     MH_obj_GP$sigma <- 0.1
@@ -110,7 +113,7 @@ benchmark_BetaGP_j <- function(j,
 
 
     phis <- rep(0, MCMC_sim)
-
+    sigma_mixeds <- rep(0, MCMC_sim)
     P <- matrix(NA, ncol=N, nrow=N)
     Thetas <- matrix(NA, nrow=MCMC_sim, ncol = length(MH_obj$theta))
     theta_GP <-  matrix(NA, nrow=MCMC_sim, ncol = length(MH_obj_GP$theta))
@@ -135,17 +138,22 @@ benchmark_BetaGP_j <- function(j,
                            death.remain = data_$death.remain,
                            report.new   = data_$report.new,
                            X_mu         = X_mu,
-                           X_M          = X_M)
+                           X_M          = X_M,
+                           X_mixed      = X_mixed,
+                           sigma_mixed  = sigma_mixed)
 
 
 
         beta_mu    <- MH_obj$theta[1:p]
         beta_M     <- MH_obj$theta[p + (1:p1)]
-        mu <- 1/(1+exp(-X_mu%*%beta_mu))
+        beta_mixed <- MH_obj$theta[p + p1 + (1:p2)]
+        mu <- 1/(1+exp(-X_mu%*%beta_mu - X_mixed%*%beta_mixed))
         M  <- exp(X_M%*%beta_M)
         Alpha[upper.tri(data_$report.new,diag=T)] <- M * mu
         Beta[upper.tri(data_$report.new,diag=T)]  <- M * (1-mu)
 
+        tau <- rgamma(1, shape=length(beta_mixed)/2 + 1, scale = sum(beta_mixed^2)/2 + 0.001)
+        sigma_mixed <- 1/sqrt(tau)
 
         res <- sample.deathsBB_negbin(deaths_sim,
                                deaths_est,
@@ -197,16 +205,13 @@ benchmark_BetaGP_j <- function(j,
             Thetas[i-burnin + 1,] <- MH_obj$theta
             Death_est[i-burnin + 1,] <-res$deaths
             theta_GP[i-burnin + 1,] <-  as.vector(MH_obj_GP$theta)
-            if(prior[2]==0){
-                Gp.prior[i-burnin + 1]  <- tau
-            }else{
-                Gp.prior[i-burnin + 1,]  <- MH_obj_tau$theta
-
-            }
+            Gp.prior[i-burnin + 1]  <- tau
             phis[i-burnin + 1]  <- phi
+            sigma_mixeds[i-burnin + 1] <- sigma_mixed
         }
     }
     res_save <- list(Thetas = Thetas,
+                     sigma_mixeds = sigma_mixeds,
                      Death_est = Death_est,
                      theta_GP = theta_GP,
                      true.day = true.day,

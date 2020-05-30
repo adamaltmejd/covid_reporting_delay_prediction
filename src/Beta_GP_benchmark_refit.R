@@ -14,7 +14,7 @@ path.to.files <- file.path("data")
 #files <- list.files('/Users/jonaswallin/Dropbox/temp/simulation_results_beta',
 #                    pattern = "^param",
 #                    full.names = TRUE)
-files <- list.files(paste(path.to.files,"/simulation_results_old",sep=""),
+files <- list.files(paste(path.to.files,"/simulation_results_model1",sep=""),
                              pattern = "^param",
                              full.names = TRUE)
 
@@ -113,7 +113,7 @@ for(k in 7:length(states_u)){
 
 }
 
-write_fst(sim.data, file.path("data", "processed", "model_refit.fst"))
+write_fst(sim.data, file.path("data", "processed", "model1_refit.fst"))
 print(sim.data[,.(median(yhat, na.rm=T),median(yhat_mod, na.rm=T)), by = .(days.left)])
 SCPRS <- c()
 for(k in 1:length(states_u)){
