@@ -53,13 +53,15 @@ benchmark <- benchmark[state >="2020-04-11"]
 reported_dead <- benchmark[, .(state, date, days_left = as.integer(days_left), reported_dead)]
 benchmark <- benchmark[!is.na(target), .(state, date, target, days_left = as.integer(days_left), ci_upper, ci_lower, predicted_deaths, SCRPS)]
 model[, days_left := as.integer(days_left)]
+model[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, SCRPS = NA_real_)]
+
 # Add a final 14-day prediction to model (just equal to truth)
-model <- rbindlist(list(model, data.table(state = model[, unique(date)] + 14, date = model[, unique(date)], days_left = 14)), use.names = TRUE, fill = TRUE)
+# model <- rbindlist(list(model, data.table(state = model[, unique(date)] + 14, date = model[, unique(date)], days_left = 14)), use.names = TRUE, fill = TRUE)
 
 # Days left as factor
-reported_dead[, days_left := forcats::fct_rev(factor(14 - days_left))]
-benchmark[, days_left := forcats::fct_rev(factor(14 - days_left))]
-model[, days_left := forcats::fct_rev(factor(14 - days_left))]
+reported_dead[, days_left := forcats::fct_rev(factor(days_left))]
+benchmark[, days_left := forcats::fct_rev(factor(days_left))]
+model[, days_left := forcats::fct_rev(factor(days_left))]
 
 # Order correctly
 setkey(reported_dead, date, state, days_left)

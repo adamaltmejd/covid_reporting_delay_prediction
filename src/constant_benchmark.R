@@ -10,11 +10,11 @@ generate_predictions <- function(deaths_dt) {
     # Calculate the average lag from the last 21 days for each report
     # So when calculating the average number of deaths added on day 3,
     # include day-3 reports from three weeks back from that date.
-    DT <- deaths_dt[days_since_publication != 0 &
-                   !is.na(days_since_publication) &
+    DT <- deaths_dt[days_lag != 0 &
+                   !is.na(days_lag) &
                    !is.na(date) &
                    date >= "2020-04-02",
-                   .(date, publication_date, lag = days_since_publication, n_diff)]
+                   .(date, publication_date, lag = days_lag, n_diff)]
 
     # To simplify, we assume no additional deaths are added after 28 days.
     DT <- DT[lag <= 28]
@@ -52,7 +52,7 @@ generate_predictions <- function(deaths_dt) {
     # we want predict the number of deaths that happened on 2020-05-10 and have
     # been reported until 2020-05-11, 12, etc.
     predictions <- avg_delay[deaths_dt[date >= "2020-04-02" & publication_date >= "2020-04-14"],
-              on = .(state = publication_date), #lag > days_since_publication),
+              on = .(state = publication_date), #lag > days_lag),
               by = .EACHI,
               .(date,
                 prediction_date = date + 1:.N,
@@ -93,7 +93,7 @@ out <- DT[, .(state,
               predicted_deaths_SD = predicted_deaths_SD_cum,
               reported_dead,
               target,
-              days_left = state - date,
+              days_left = 14 - as.integer(state - date),
               ci_upper = predicted_deaths_cum + qnorm(1-alpha/2) * predicted_deaths_SD_cum,
               ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
               SCRPS = SCRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
