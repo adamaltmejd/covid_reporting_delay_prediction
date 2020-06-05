@@ -10,6 +10,9 @@ library(data.table)
 source("src/util.r")
 nclust <- 6
 report.day = 14 # how long after death we wish to predicit
+maxusage.day = 20
+unique.days  = 2
+true.day = 5
 path.to.files <- file.path("data")
 #files <- list.files('/Users/jonaswallin/Dropbox/temp/simulation_results_beta',
 #                    pattern = "^param",
@@ -65,7 +68,8 @@ sim.data <- foreach(i = index_files, .combine='rbind')  %dopar% {
                                 date       = rep(Death.date,sim),
                                 days.left  = rep(as.Date(result$dates_report[pred_time]) - Death.date  ,sim),
                                 y          = rep(y,sim),
-                                yhat       = NA)
+                                yhat       = NA,
+                                Nhat       = NA)
 
 
 
@@ -87,6 +91,7 @@ sim.data <- foreach(i = index_files, .combine='rbind')  %dopar% {
                                     Beta_T,
                                     Reported_fill,
                                     maxusage.day = 0)
+    simulation.data$Nhat[1:length(Death.date) + (length(Death.date)* (k-1))] =res_save$Death_est[k,]
   simulation.data$yhat[1:length(Death.date) + (length(Death.date)* (k-1))] =
     Reported_sample[row(Reported_sample)  == col(Reported_sample) -report.day
                              &  col(Reported_sample) >= pred_time]
@@ -100,22 +105,27 @@ states_u <- sort(unique(sim.data$state))
 sim.data$yhat_mod <- sim.data$yhat
 for(k in 7:length(states_u)){
   for(d in 0:14){
-    data <- sim.data[     sim.data$state >= states_u[k]-10 &
-                          sim.data$state < states_u[k] &
+    data <- sim.data[    sim.data$state >= states_u[k]-10 -(14-d) &
+                         sim.data$state < states_u[k] - (14-d) &
                          sim.data$days.left ==d &
                          is.na(sim.data$y) == F &
                          is.na(sim.data$yhat) == F,]
     cat('k:',k,' d:',d,' m:', median(data$y-data$yhat, na.rm=T),' mean:', mean(data$y-data$yhat, na.rm=T),'\n')
     index <- sim.data$state==states_u[k] &
             sim.data$days.left ==d
-    sim.data$yhat_mod[index] <- sim.data$yhat[index] + median(data$y-data$yhat, na.rm=T)
+    if(is.na(median(data$y-data$yhat, na.rm=T))==F){
+      sim.data$yhat_mod[index] <- sim.data$yhat[index] + median(data$y-data$yhat, na.rm=T)
+    }
+
   }
 
 }
 
-write_fst(sim.data, file.path("data", "processed", "model1_refit.fst"))
+write_fst(sim.data, file.path("data", "processed", "model_refit.fst"))
 print(sim.data[,.(median(yhat, na.rm=T),median(yhat_mod, na.rm=T)), by = .(days.left)])
 SCPRS <- c()
+model_benchmark_bias <- c()
+model_benchmark      <- c()
 for(k in 1:length(states_u)){
   data_k <- sim.data[sim.data$state==states_u[k],]
   dates_u <- unique(data_k$date)
@@ -124,37 +134,62 @@ for(k in 1:length(states_u)){
     if(is.na(data_kj$y[1])==T)
       next
     sim <- length(data_kj$yhat)
-    P1 <- data_kj$yhat[1:ceiling(sim/3)]
-    P2 <- data_kj$yhat[(ceiling(sim/3) + 1):(floor(2*sim/3) )]
-    P3 <- data_kj$yhat[(floor(2*sim/3) + 1):(floor(2*sim/3) + length(P2))]
+    P1 <- data_kj$yhat[1:(floor(sim/3) )]
+    P2 <- data_kj$yhat[(floor(sim/3) + 1):(floor(2*sim/3) )]
+    P3 <- data_kj$yhat[(floor(2*sim/3) + 1):(floor(2*sim/3) + length(P1))]
     EabsXX <- mean(abs(sample(P1)-sample(P3)))
     if(EabsXX == 0){
       EabsXX <- 1
     }
     EabsYX <- mean(abs(data_kj$y[1]-P2))
 
-    P1_mod <- data_kj$yhat_mod[1:ceiling(sim/3)]
-    P2_mod <- data_kj$yhat_mod[(ceiling(sim/3) + 1):(floor(2*sim/3) )]
-    P3_mod <- data_kj$yhat_mod[(floor(2*sim/3) + 1):(floor(2*sim/3) + length(P2))]
-    EabsXX_mod <- mean(abs(sample(P1_mod)-sample(P3_mod)))
-    if(EabsXX_mod == 0){
-      EabsXX_mod <- 1
-    }
-    EabsYX_mod <- mean(abs(data_kj$y[1]-P2_mod))
+    P1_mod <- data_kj$yhat_mod[1:(floor(sim/3) )]
+    P2_mod <- data_kj$yhat_mod[(floor(sim/3) + 1):(floor(2*sim/3) )]
+    P3_mod <- data_kj$yhat_mod[(floor(2*sim/3) + 1):(floor(2*sim/3) + length(P1_mod))]
 
+    EabsXX_mod <- mean(abs(sample(P1_mod)-sample(P3_mod)))
+    I <- -1-2*prod(sign(quantile(data_kj$yhat_mod,prob=c(0.05,0.95), na.rm=T)))
+    if(is.na(EabsXX_mod)==T){
+      EabsXX_mod <- EabsXX
+      EabsYX_mod <- EabsYX
+      I_mod <- I
+    }else{
+      if(EabsXX_mod == 0){
+        EabsXX_mod <- 1
+      }
+      EabsYX_mod <- mean(abs(data_kj$y[1]-P2_mod))
+      I_mod<- prod(sign(quantile(data_kj$yhat_mod,prob=c(0.05,0.95), na.rm=T)))
+    }
+    CI_1 <- as.vector(quantile(data_kj$yhat,prob=c(0.05,0.95),na.rm=T))
+    CI_2 <- as.vector(quantile(data_kj$yhat_mod,prob=c(0.05,0.95),na.rm=T))
+    M1   <- median(data_kj$yhat, na.rm=T)
+    M2   <- median(data_kj$yhat_mod, na.rm=T)
     SCPRS <- rbind(SCPRS,
-                   cbind(data_kj[1,1:3],
+                   cbind(data_kj[1,1:4],
                          -EabsYX/EabsXX - 0.5*log(EabsXX),
                          -EabsYX_mod/EabsXX_mod - 0.5*log(EabsXX_mod),
-                   EabsXX,
-                   -EabsYX ,
-                   -EabsYX_mod,
-                   median(P1_mod),
-                    median(P1)))
+                         CI_1[1],CI_1[2],CI_2[1],CI_2[2],
+                         (CI_1[1]-data_kj$y[1])*(CI_1[2]-data_kj$y[1])<=0,
+                          (CI_2[1]-data_kj$y[1])*(CI_2[2]-data_kj$y[1])<=0,
+                   M1,M2))
 
+    model_benchmark      <-rbind(model_benchmark,
+                                 cbind(data_kj[1,1:4],-EabsYX/EabsXX - 0.5*log(EabsXX),
+                                 M1,
+                                 CI_1[1],
+                                 CI_1[2]))
+    model_benchmark_bias <-rbind(model_benchmark_bias,
+                                 cbind(data_kj[1,1:4],
+                                       -EabsYX_mod/EabsXX_mod - 0.5*log(EabsXX_mod),
+                                 M2,
+                                 CI_2[1],
+                                 CI_2[2]))
     }
 }
-print(SCPRS[, .(mean(V2, na.rm=T),mean(V3, na.rm=T)), by = .(days.left)])
-print(SCPRS[order(days.left), .(mean(EabsXX, na.rm=T), mean(V5, na.rm=T),mean(V6, na.rm=T)), by = .(days.left)])
+names(model_benchmark_bias) <- c('state','date','days_left','target','SCRPS','predicted_deaths','ci_lower','ci_upper')
+model_benchmark_bias <- model_benchmark_bias[,c('state','date','target','days_left','ci_upper','ci_lower','predicted_deaths','SCRPS')]
+names(model_benchmark) <- c('state','date','days_left','target','SCRPS','predicted_deaths','ci_lower','ci_upper')
+model_benchmark<-model_benchmark[,c('state','date','target','days_left','ci_upper','ci_lower','predicted_deaths','SCRPS')]
 
-print(SCPRS[, .(mean(V7, na.rm=T)-mean(V8, na.rm=T)), by = .(days.left)])
+write_fst(model_benchmark, file.path("data", "processed", "model_benchmark.fst"))
+write_fst(model_benchmark_bias, file.path("data", "processed", "model_benchmark.fst"))

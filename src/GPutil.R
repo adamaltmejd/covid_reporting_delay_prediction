@@ -58,12 +58,33 @@ prior_GP <- function(theta, L){
 #'
 #'  @param theta - (nx1) the processes
 #'  @param L     - (nxn) cholesky covariance factor
-prior_GP2 <- function(theta, Sigma){
-  theta_Sigma <- solve(Sigma,theta)
-  lik <- -1/2 * t(theta)%*%theta_Sigma
+prior_GP2 <- function(theta, Sigma, mu ){
+  theta_Sigma <- solve(Sigma,theta - mu )
+  lik <- -1/2 * t(theta - mu)%*%theta_Sigma
   grad = theta_Sigma
   return(list(loglik = lik, grad = grad))
 }
+
+prior_GP3 <- function(theta, a1, a2, mu ,alpha=0.001, beta = 0.001){
+
+  theta <- theta-mu
+  n <- length(theta)
+  L <- toeplitz(c(-a2,-a1,1, rep(0,n-3)))
+  L[lower.tri(L,diag=F)] <- 0
+  L <- L[-c(n,n-1),]
+  L<-as(L, "sparseMatrix")
+  lik <- -tau/2 * sum((L%*%theta)^2)
+  Q = t(L)%*%L
+  grad <- -tau * (Q%*%theta)
+  ##
+  # sample tau
+  ##
+  sigma   <- 1/rgamma(1, shape= (n-2)/2+1 + alpha, rate = -lik/tau + beta)
+  tau_sample <- 1/sigma
+  return(list(loglik = lik, grad = grad,  tau=tau_sample))
+
+}
+
 
 #'
 #' first order random walk model (intrisinct)

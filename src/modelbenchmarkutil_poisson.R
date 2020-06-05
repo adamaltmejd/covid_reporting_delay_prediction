@@ -11,6 +11,7 @@
 #' burnin_p     - ([0,1]) how many burnins to run in percantage of MCMC_sim
 #' prior        - (2 x 1) [1] 0: rw1, 1: rw2,
 #'                        [2] 0: no noise, 1: noise
+#' j0          - start day
 ##
 benchmark_BetaGP_j <- function(j,
                                result,
@@ -20,15 +21,16 @@ benchmark_BetaGP_j <- function(j,
                                MCMC_sim,
                                burnin_p,
                                deaths_sim,
-                               prior = c(0,0)){
+                               prior = c(0,0),
+                               j0 = 1){
     require(Matrix)
     N_T <- dim(result$detected)[1]
     deaths_est_T <- apply(result$detected, 1, max, na.rm=T)
-    Reported <- result$detected[1:j,1:j]
-    dates_report <- result$dates_report[1:j]
+    Reported <- result$detected[j0:j,j0:j]
+    dates_report <- result$dates_report[j0:j]
     N <- dim(Reported)[1]
     deaths_est <- apply(Reported, 1, max, na.rm=T)
-    deaths_est[1:true.day] = deaths_est_T[1:(true.day)] #days with known deaths
+    deaths_est[1:true.day] = deaths_est_T[j0:(j0-1+true.day)] #days with known deaths
 
 
     data_ <- newDeaths(deaths_est,
@@ -39,13 +41,13 @@ benchmark_BetaGP_j <- function(j,
     ##
     # building covariate matrix
     ##
-    X_mu <- setup_data(N, maxusage.day,  result$dates_report[1:N], 1)
+    X_mu <- setup_data(N, maxusage.day,  result$dates_report[1:N], 3)
     X_M  <- X_mu[,1:2]
-    X_mixed <- setup_data_mixed_effect(N, 2, result$dates_report[1:N])
+    X_mixed <- setup_data_postlag(N, 2, 1,result$dates_report[1:N])
     X_longlag <- rowSums(X_mixed)>0
     X_trend <- setup_all_days(N)/7
-    X_mu <- cbind(X_mu, X_trend*(X_longlag==F))
-    X_M  <- cbind(X_M[,1],X_M[,2]*(X_longlag==0), X_longlag)
+    #X_mu <- cbind(X_mu)
+    X_M  <- cbind(X_M[,1],X_M[,2], X_longlag)
     p <- dim(X_mu)[2]
     p1 <- dim(X_M)[2]
 
@@ -216,6 +218,7 @@ benchmark_BetaGP_j <- function(j,
                      maxusage.day = maxusage.day,
                      GP.prior      = Gp.prior,
                      date  = dates_report[j],
-                     j = j)
+                     j = j,
+                     j0 = j0)
     return(res_save)
 }

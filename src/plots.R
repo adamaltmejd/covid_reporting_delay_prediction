@@ -11,7 +11,7 @@ w <- 11 # plot width (inches)
 
 # Plot 1 = Predictions and current stats
 deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
-model_predict <- read_fst(file.path("data", "processed", "model_predict.fst"), as.data.table = TRUE)
+model_predict <- read_fst(file.path("data", "processed", "model_latest.fst"), as.data.table = TRUE)
 DT1 <- model_predict[date >= Sys.Date() - 28]
 DT2 <- deaths_dt[!is.na(N) & !is.na(date) & publication_date == max(publication_date)]
 DT2[, avg := frollmean(N, 7, algo = "exact", align = "center")]
@@ -46,7 +46,7 @@ ggsave(filename = file.path("output", "plots", "latest_prediction.pdf"),
 
 # Load data
 benchmark <- read_fst(file.path("data", "processed", "constant_benchmark.fst"), as.data.table = TRUE)
-model <- read_fst(file.path("data", "processed", "model_benchmark_old.fst"), as.data.table = TRUE)
+model <- read_fst(file.path("data", "processed", "model_benchmark.fst"), as.data.table = TRUE)
 benchmark <- benchmark[state >="2020-04-11"]
 
 # Fix data tables so they look the same

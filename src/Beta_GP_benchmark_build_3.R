@@ -11,7 +11,7 @@ source(file.path("src", "functions.R"))
 source(file.path("src", "GPutil.R"))
 source(file.path("src", "modelbenchmarkutil_poisson3.R"))
 nclust <- 6
-MCMC_sim <- 20000
+MCMC_sim <- 100
 burnin_p = 0.5
 deaths_sim <- 5
 maxusage.day = 20 #must be less then N
@@ -33,6 +33,10 @@ foreach(j = start.predict.day:N_T)  %dopar% {
                                MCMC_sim,
                                burnin_p,
                                deaths_sim = deaths_sim)
+  plot( colMeans(res_save$Death_est),ylim=c(20,120))
+  points(apply(result$detected[1:length(colMeans(res_save$Death_est)),],1,max,na.rm=T),col='red')
+  lines(apply( res_save$Death_est,2,quantile,0.95),col='green')
+  lines(apply( res_save$Death_est,2,quantile,0.05),col='green')
   save(res_save,
        file = file.path("data", "simulation_results_model2", paste0("param_", result$dates_report[j], ".rds")))
 }

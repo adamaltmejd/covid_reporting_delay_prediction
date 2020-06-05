@@ -10,14 +10,14 @@ source(file.path("src", "MH.R"))
 source(file.path("src", "functions.R"))
 source(file.path("src", "GPutil.R"))
 source(file.path("src", "modelbenchmarkutil_poisson.R"))
-nclust <- 6
-MCMC_sim <- 1000
+nclust <- 4
+MCMC_sim <- 15000
 burnin_p = 0.5
 deaths_sim <- 5
 maxusage.day = 20 #must be less then N
 unique.days  = 2
-true.day = 8
-start.predict.day = 10#16 # more then unique days
+true.day = 5
+start.predict.day = 11#16 # more then unique days
 
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
 N_T <- dim(result$detected)[1]
@@ -33,15 +33,9 @@ foreach(j = start.predict.day:N_T)  %dopar% {
                                MCMC_sim,
                                burnin_p,
                                deaths_sim = deaths_sim)
-  plot( colMeans(res_save$Death_est),ylim=c(20,160))
-  points(apply(result$detected[1:j,],1,max,na.rm=T),col='red')
-  lines(apply( res_save$Death_est,2,quantile,0.95),col='green')
-  lines(apply( res_save$Death_est,2,quantile,0.05),col='green')
-  points(apply(result$detected[1:j,1:j],1,max,na.rm=T),col='blue')
-
 
   save(res_save,
-       file = file.path("data", "simulation_results", paste0("param_", result$dates_report[j], ".rds")))
+       file = file.path("data", "simulation_results_model1", paste0("param_", result$dates_report[j], ".rds")))
 }
 
 parallel::stopCluster(cl)

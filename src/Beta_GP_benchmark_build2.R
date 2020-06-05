@@ -36,7 +36,7 @@ foreach(j = start.predict.day:N_T)  %dopar% {
 
 
   save(res_save,
-       file = file.path("data", "simulation_results_model2", paste0("param_", result$dates_report[j], ".rds")))
+       file = file.path("data", "simulation_results_model4", paste0("param_", result$dates_report[j], ".rds")))
 }
 
 parallel::stopCluster(cl)
