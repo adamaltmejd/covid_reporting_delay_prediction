@@ -117,6 +117,7 @@ sim.data <- foreach(i = index_files, .combine='rbind')  %dopar% {
 parallel::stopCluster(cl)
 states_u <- sort(unique(sim.data$state))
 sim.data$yhat_mod <- sim.data$yhat
+sim.data$yhat_mod2 <- sim.data$yhat
 for(k in 7:length(states_u)){
   for(d in 0:14){
     data <- sim.data[     sim.data$state >= states_u[k]-10 -(14-d) &
@@ -129,8 +130,13 @@ for(k in 7:length(states_u)){
             sim.data$days.left ==d
     if(is.na( median(data$y-data$yhat, na.rm=T))==F & d < 10){
       sim.data$yhat_mod[index] <- sim.data$yhat[index] + median(data$y-data$yhat, na.rm=T)
-    }else{
-      sim.data$yhat_mod[index] <- sim.data$yhat[index]
+      dats <- unique(data$date)
+      data$yhat2 <- NA
+      for(dat in 1:length(dats)){
+        index <- data$date==dats[dat]
+        data$yhat2[index] <- sample(data$yhat[index])
+      }
+      sim.data$yhat_mod2 <- sim.data$yhat_mod *sd(data$y-data$yhat, na.rm=T)/sd(data$yhat2-data$yhat, na.rm=T)
     }
 
   }
@@ -207,6 +213,8 @@ for(k in 1:length(states_u)){
 }
 names(model_benchmark_bias) <- c('state','date','days_left','target','SCRPS','predicted_deaths','ci_lower','ci_upper')
 model_benchmark_bias <- model_benchmark_bias[,c('state','date','target','days_left','ci_upper','ci_lower','predicted_deaths','SCRPS')]
+model_benchmark_bias$days_left =  model_benchmark_bias$date -model_benchmark_bias$state +14
+
 names(model_benchmark) <- c('state','date','days_left','target','SCRPS','predicted_deaths','ci_lower','ci_upper')
 model_benchmark<-model_benchmark[,c('state','date','target','days_left','ci_upper','ci_lower','predicted_deaths','SCRPS')]
 
