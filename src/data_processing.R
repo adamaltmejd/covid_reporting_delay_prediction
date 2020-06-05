@@ -57,8 +57,19 @@ dts <- lapply(files, load_fhm_deaths)
 deaths_dt <- rbindlist(dts)
 setkey(deaths_dt, publication_date, date)
 
-deaths_dt[!is.na(date) & publication_date > "2020-04-02", days_since_publication := publication_date - date]
-deaths_dt[date == "2020-04-02" & publication_date == "2020-04-02", days_since_publication := 0]
+n_workdays <- Vectorize(function(a, b) {
+    dates <- seq(a, b, "days")
+    dates <- dates[dates != a]
+    dates <- dates[!(weekdays(dates) %in% c("Saturday", "Sunday"))]
+    # Drop Swedish holidays
+    dates <- dates[!(dates %in% c("2020-04-10", "2020-04-13", "2020-05-01", "2020-05-21"))]
+    return(length(dates))
+})
+
+deaths_dt[!is.na(date) & publication_date > "2020-04-02", days_lag := publication_date - date]
+deaths_dt[!is.na(date) & publication_date > "2020-04-02", workdays_lag := n_workdays(date, publication_date)]
+
+deaths_dt[date == "2020-04-02" & publication_date == "2020-04-02", days_lag := 0]
 
 deaths_dt[!is.na(date), paste0("n_m", 1) := shift(N, n = 1, type = "lag", fill = 0L), by = date]
 deaths_dt[!is.na(date), n_diff := N - n_m1]
