@@ -81,7 +81,7 @@ day_plot <- function(DT, reported, plot.title) {
     colors <- setNames(colors, c(levels(DT$type), "Reported"))
 
     if (any(DT[!is.na(target), uniqueN(target) != 1, by = date][, V1])) {
-        warning("Multiple unique target values for same day.")
+        warning("Multiple unique target values for same day: ", plot.title)
     }
     hline <- DT[!is.na(target), .(unique(target)), by = .(date)]
 
@@ -143,7 +143,7 @@ for (i in seq_along(dates)) {
                      reported_dead[date == dates[i]],
                      plot.title = dates[i])
     ggsave(filename = file.path("output", "plots", "daily", paste0("prediction_", dates[i], ".pdf")),
-       plot = plot, device = cairo_pdf, width = w, height = w)
+           plot = plot, device = cairo_pdf, width = w, height = w)
 }
 #
 ## PLOT 2: Statistics ##
