@@ -13,7 +13,7 @@ w <- 11 # plot width (inches)
 deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
 model_predict <- read_fst(file.path("data", "processed", "model_latest.fst"), as.data.table = TRUE)
 DT1 <- model_predict[date >= Sys.Date() - 28]
-DT2 <- deaths_dt[!is.na(N) & !is.na(date) & publication_date == max(publication_date)]
+DT2 <- deaths_dt[!is.na(N) & !is.na(date) & publication_date == max(model_predict[, date])]
 DT2[, avg := frollmean(N, 7, algo = "exact", align = "center")]
 DT2 <- DT2[date > "2020-03-15"]
 
