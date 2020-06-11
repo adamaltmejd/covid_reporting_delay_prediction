@@ -328,12 +328,14 @@ benchmark_BetaGP_post_lag_j <- function(j,
     N_j <- j
 
     X_j <- setup_data_postlag2(j, lag, npars, result_j$dates_report)
+    X_M <- setup_data_postlag2(j, lag, npars, result_j$dates_report)
     deaths_est <- apply(report_j$Reported_O, 1, function(x) { if(all(is.na(x))){return(0)};
                                                             max(x,na.rm=T)})
     X_mu <- X_j
+    #X_mixed <- setup_data_mixed_effect(N, 2, result$dates_report[1:N])
 
     p  <- dim(X_mu)[2]
-    X_M  <- cbind(rep(1,dim(X_mu)[1]),rowSums(X_mu[,4:5])>0)
+    #X_M  <- cbind(rep(1,dim(X_mu)[1]),rowSums(X_mu[,4:5])>0)
     p1 <- dim(X_M)[2]
 
 

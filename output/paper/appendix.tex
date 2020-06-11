@@ -67,7 +67,7 @@ These extra parameters are created to account for the under-reporting that occur
 Finally we add an extra mixture component that allows for very low reporting.
 
 \subsection{Priors}
-For the $\mv{\alpha}$ and $\mv{\beta}$ parameters we use an (improper) uniform prior. For the deaths, $\mv{d}$, one could imagine several different prior ideally some sort of epidemiological model. However, here we just assume a log-Gaussian Cox processes \cite{Moller1998_log_gaussian}, but instead of Poisson distribution we use a negative binomial to handle possible over dispersion. The latent Gaussian processes has a intrinsic random walk distribution \cite{Rue2005_gaussian_markov} i.e.
+For the $\mv{\alpha}$ and $\mv{\beta}$ parameters we use an (improper) uniform prior. For the deaths, $\mv{d}$, one could imagine several different prior ideally some sort of epidemiological model. However, here we just assume a log-Gaussian Cox processes \citep{Moller1998_log_gaussian}, but instead of Poisson distribution we use a negative binomial to handle possible over dispersion. The latent Gaussian processes has a intrinsic random walk distribution \citep{Rue2005_gaussian_markov} i.e.
 \begin{align*}
 \log(\mu_i) - \log(\mu_{i-1}) &\sim N(0,\sigma^2),\\
 d_i| \lambda_i  &\sim NegBin(\mu_i, \phi).
@@ -92,9 +92,9 @@ where where and $j\leq i$ and $i=1,\ldots,T$.
 
 \section{Inference}
 As the main goal to generate inference of the number of death $\mv{d}$ is through the posterior distribution of number of deaths $\mv{d}$ given the observations $\mv{r}$.
-In order to generate samples from this distribution we use a Markov Chain Monte Carlo method \cite{Brooks2011_handbook_markov}. In more detail we use a blocked Gibbs sampler, which generates samples in the following sequence:
+In order to generate samples from this distribution we use a Markov Chain Monte Carlo method \citep{Brooks2011_handbook_markov}. In more detail we use a blocked Gibbs sampler, which generates samples in the following sequence:
 \begin{itemize}
-	\item  We sample $\mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H|\mv{d}, \mv{r}$ using the fact that one can integrate out $p$ in the model, and then  $\mv{d}|\mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H,\mv{r},\mv{\lambda}$  follows a Beta-Binomial distribution. Here to we use an adaptive MALA (\cite{Atchade2006_adaptive_version}) to sample from these parameters.
+	\item  We sample $\mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H|\mv{d}, \mv{r}$ using the fact that one can integrate out $p$ in the model, and then  $\mv{d}|\mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H,\mv{r},\mv{\lambda}$  follows a Beta-Binomial distribution. Here to we use an adaptive MALA \citep{Atchade2006_adaptive_version} to sample from these parameters.
 	\item  To sample $\mv{d}|\mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H,\mv{r},\mv{\lambda}$, that each death, $d_i$ is conditionally independent, and we just use a Metropolis Hastings random walk to sample each one.
 	\item To sample $\mv{\lambda} | \mv{d},\sigma^2$ we again use an adaptive MALA.
 	\item Finally We sample $\sigma^2|\mv{d}$,and  $p_0,\pi$ directly since this distribution is explicit, and $\phi$ using a MH-RW.

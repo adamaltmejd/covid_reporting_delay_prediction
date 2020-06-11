@@ -216,6 +216,7 @@ model_benchmark_bias$days_left =  model_benchmark_bias$date -model_benchmark_bia
 
 names(model_benchmark) <- c('state','date','days_left','target','SCRPS','predicted_deaths','ci_lower','ci_upper')
 model_benchmark<-model_benchmark[,c('state','date','target','days_left','ci_upper','ci_lower','predicted_deaths','SCRPS')]
+model_benchmark$days_left =  model_benchmark$date -model_benchmark$state +14
 
 write_fst(model_benchmark, file.path("data", "processed", "model_benchmark.fst"))
 write_fst(model_benchmark_bias, file.path("data", "processed", "model_benchmark_bias.fst"))

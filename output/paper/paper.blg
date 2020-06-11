@@ -1,18 +1,49 @@
-[0] Config.pm:304> INFO - This is Biber 2.14
-[0] Config.pm:307> INFO - Logfile is 'paper.blg'
-[98] biber-darwin:322> INFO - === Fri May 22, 2020, 13:30:55
-[120] Biber.pm:415> INFO - Reading 'paper.bcf'
-[333] Biber.pm:943> INFO - Found 12 citekeys in bib section 0
-[348] Biber.pm:4256> INFO - Processing section 0
-[348] Utils.pm:75> INFO - Globbing data source 'bibliography.bib'
-[348] Utils.pm:91> INFO - Globbed data source 'bibliography.bib' to bibliography.bib
-[360] Biber.pm:4455> INFO - Looking for bibtex format file 'bibliography.bib' for section 0
-[364] bibtex.pm:1653> INFO - LaTeX decoding ...
-[389] bibtex.pm:1471> INFO - Found BibTeX data source 'bibliography.bib'
-[520] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
-[520] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'level = 4' with 'level = 2'
-[520] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
-[520] Biber.pm:4084> INFO - Sorting list 'cms/global//global/global' of type 'entry' with template 'cms' and locale 'en-US'
-[520] Biber.pm:4090> INFO - No sort tailoring available for locale 'en-US'
-[539] bbl.pm:652> INFO - Writing 'paper.bbl' with encoding 'UTF-8'
-[548] bbl.pm:755> INFO - Output to paper.bbl
+This is BibTeX, Version 0.99d (TeX Live 2015)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: paper.aux
+The style file: chicago.bst
+Database file #1: bibliography.bib
+Warning--no number and no volume in Ohman2020_antalet_virusdoda
+Warning--page numbers missing in Ohman2020_antalet_virusdoda
+You've used 13 entries,
+            2861 wiz_defined-function locations,
+            710 strings with 7662 characters,
+and the built_in function-call counts, 8957 in all, are:
+= -- 740
+> -- 676
+< -- 0
++ -- 206
+- -- 236
+* -- 820
+:= -- 1654
+add.period$ -- 38
+call.type$ -- 13
+change.case$ -- 93
+chr.to.int$ -- 13
+cite$ -- 15
+duplicate$ -- 229
+empty$ -- 530
+format.name$ -- 272
+if$ -- 1630
+int.to.chr$ -- 1
+int.to.str$ -- 0
+missing$ -- 14
+newline$ -- 67
+num.names$ -- 130
+pop$ -- 66
+preamble$ -- 1
+purify$ -- 173
+quote$ -- 0
+skip$ -- 249
+stack$ -- 0
+substring$ -- 475
+swap$ -- 74
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 240
+warning$ -- 2
+while$ -- 131
+width$ -- 0
+write$ -- 169
+(There were 2 warnings)

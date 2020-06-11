@@ -1,568 +1,89 @@
-% $ biblatex auxiliary file $
-% $ biblatex bbl format version 3.1 $
-% Do not modify the above lines!
-%
-% This is an auxiliary file used by the 'biblatex' package.
-% This file may safely be deleted. It will be recreated by
-% biber as required.
-%
-\begingroup
-\makeatletter
-\@ifundefined{ver@biblatex.sty}
-  {\@latex@error
-     {Missing 'biblatex' package}
-     {The bibliography requires the 'biblatex' package.}
-      \aftergroup\endinput}
-  {}
-\endgroup
+\begin{thebibliography}{}
 
+\bibitem[\protect\citeauthoryear{Anderson, Heesterbeek, Klinkenberg, and
+  Hollingsworth}{Anderson et~al.}{2020}]{Anderson2020_how_will}
+Anderson, R.~M., H.~Heesterbeek, D.~Klinkenberg, and T.~D. Hollingsworth
+  (2020).
+\newblock How will country-based mitigation measures influence the course of
+  the {{COVID}}-19 epidemic?
+\newblock {\em The Lancet\/}~{\em 395\/}(10228), 931--934.
 
-\refsection{0}
-  \datalist[entry]{cms/global//global/global}
-    \entry{Anderson2020_how_will}{article}{}
-      \name{author}{4}{}{%
-        {{un=0,uniquepart=base,hash=be459da52bac759d10cdedca98ba547a}{%
-           family={Anderson},
-           familyi={A\bibinitperiod},
-           given={Roy\bibnamedelima M.},
-           giveni={R\bibinitperiod\bibinitdelim M\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=ae6f74ab171bb403fcaaf216d066f3db}{%
-           family={Heesterbeek},
-           familyi={H\bibinitperiod},
-           given={Hans},
-           giveni={H\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=f4412693d6d421820bd2aa2ce7268f67}{%
-           family={Klinkenberg},
-           familyi={K\bibinitperiod},
-           given={Don},
-           giveni={D\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=d10eb222d90a075588d4c2210578ff20}{%
-           family={Hollingsworth},
-           familyi={H\bibinitperiod},
-           given={T.\bibnamedelimi Déirdre},
-           giveni={T\bibinitperiod\bibinitdelim D\bibinitperiod},
-           givenun=0}}%
-      }
-      \list{publisher}{1}{%
-        {Elsevier}%
-      }
-      \strng{namehash}{e739f797182e90ab0932ad71ea81195a}
-      \strng{fullhash}{0b41ffe214723bf91a5995d1abe69fcf}
-      \strng{bibnamehash}{0b41ffe214723bf91a5995d1abe69fcf}
-      \strng{authorbibnamehash}{0b41ffe214723bf91a5995d1abe69fcf}
-      \strng{authornamehash}{e739f797182e90ab0932ad71ea81195a}
-      \strng{authorfullhash}{0b41ffe214723bf91a5995d1abe69fcf}
-      \field{sortinit}{A}
-      \field{sortinithash}{a3dcedd53b04d1adfd5ac303ecd5e6fa}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{day}{21}
-      \field{eprinttype}{pmid}
-      \field{issn}{0140-6736, 1474-547X}
-      \field{journaltitle}{The Lancet}
-      \field{langid}{english}
-      \field{month}{3}
-      \field{number}{10228}
-      \field{shortjournal}{The Lancet}
-      \field{title}{How Will Country-Based Mitigation Measures Influence the Course of the {{COVID}}-19 Epidemic?}
-      \field{volume}{395}
-      \field{year}{2020}
-      \field{dateera}{ce}
-      \field{pages}{931\bibrangedash 934}
-      \range{pages}{4}
-      \verb{doi}
-      \verb 10.1016/S0140-6736(20)30567-5
-      \endverb
-      \verb{eprint}
-      \verb 32164834
-      \endverb
-    \endentry
-    \entry{Atchade2006_adaptive_version}{article}{}
-      \name{author}{1}{}{%
-        {{un=0,uniquepart=base,hash=05a9618c0530932ffbfd1d8436779d1f}{%
-           family={Atchadé},
-           familyi={A\bibinitperiod},
-           given={Yves\bibnamedelima F.},
-           giveni={Y\bibinitperiod\bibinitdelim F\bibinitperiod},
-           givenun=0}}%
-      }
-      \strng{namehash}{05a9618c0530932ffbfd1d8436779d1f}
-      \strng{fullhash}{05a9618c0530932ffbfd1d8436779d1f}
-      \strng{bibnamehash}{05a9618c0530932ffbfd1d8436779d1f}
-      \strng{authorbibnamehash}{05a9618c0530932ffbfd1d8436779d1f}
-      \strng{authornamehash}{05a9618c0530932ffbfd1d8436779d1f}
-      \strng{authorfullhash}{05a9618c0530932ffbfd1d8436779d1f}
-      \field{sortinit}{A}
-      \field{sortinithash}{a3dcedd53b04d1adfd5ac303ecd5e6fa}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{day}{1}
-      \field{issn}{1573-7713}
-      \field{journaltitle}{Methodology and Computing in Applied Probability}
-      \field{langid}{english}
-      \field{month}{6}
-      \field{number}{2}
-      \field{shortjournal}{Methodol Comput Appl Probab}
-      \field{title}{An {{Adaptive Version}} for the {{Metropolis Adjusted Langevin Algorithm}} with a {{Truncated Drift}}}
-      \field{volume}{8}
-      \field{year}{2006}
-      \field{dateera}{ce}
-      \field{pages}{235\bibrangedash 254}
-      \range{pages}{20}
-      \verb{doi}
-      \verb 10.1007/s11009-006-8550-0
-      \endverb
-    \endentry
-    \entry{Brooks2011_handbook_markov}{book}{}
-      \name{author}{4}{}{%
-        {{un=0,uniquepart=base,hash=44e6b85e4b24ea984e58302c151818d6}{%
-           family={Brooks},
-           familyi={B\bibinitperiod},
-           given={Steve},
-           giveni={S\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=1e1eb60e3b6e222217bf8e9b24070b28}{%
-           family={Gelman},
-           familyi={G\bibinitperiod},
-           given={Andrew},
-           giveni={A\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=91338e619ca9474a380864619a3b98a1}{%
-           family={Jones},
-           familyi={J\bibinitperiod},
-           given={Galin},
-           giveni={G\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=85ea5d8c6fc2be6b9cae229fdff73961}{%
-           family={Meng},
-           familyi={M\bibinitperiod},
-           given={Xiao-Li},
-           giveni={X\bibinithyphendelim L\bibinitperiod},
-           givenun=0}}%
-      }
-      \list{publisher}{1}{%
-        {CRC Press}%
-      }
-      \strng{namehash}{eb4b2cd91ad78135015c11642dac3ba9}
-      \strng{fullhash}{dab40d7760b6559dd9d433c60f154f16}
-      \strng{bibnamehash}{dab40d7760b6559dd9d433c60f154f16}
-      \strng{authorbibnamehash}{dab40d7760b6559dd9d433c60f154f16}
-      \strng{authornamehash}{eb4b2cd91ad78135015c11642dac3ba9}
-      \strng{authorfullhash}{dab40d7760b6559dd9d433c60f154f16}
-      \field{sortinit}{B}
-      \field{sortinithash}{8de16967003c7207dae369d874f1456e}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{day}{10}
-      \field{eprinttype}{googlebooks}
-      \field{isbn}{978-1-4200-7942-5}
-      \field{langid}{english}
-      \field{month}{5}
-      \field{pagetotal}{620}
-      \field{title}{Handbook of {{Markov Chain Monte Carlo}}}
-      \field{year}{2011}
-      \field{dateera}{ce}
-      \verb{eprint}
-      \verb qfRsAIKZ4rIC
-      \endverb
-    \endentry
-    \entry{Jajosky2004_evaluation_reporting}{article}{}
-      \name{author}{2}{}{%
-        {{un=0,uniquepart=base,hash=bcbf245456e17dbde3b014128d8f9650}{%
-           family={Jajosky},
-           familyi={J\bibinitperiod},
-           given={Ruth\bibnamedelima Ann},
-           giveni={R\bibinitperiod\bibinitdelim A\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=6d8593ff38e3763705f07e89f9e90000}{%
-           family={Groseclose},
-           familyi={G\bibinitperiod},
-           given={Samuel\bibnamedelima L.},
-           giveni={S\bibinitperiod\bibinitdelim L\bibinitperiod},
-           givenun=0}}%
-      }
-      \strng{namehash}{a5fa792a9c9b57be4de92c7f2fcb05c7}
-      \strng{fullhash}{a5fa792a9c9b57be4de92c7f2fcb05c7}
-      \strng{bibnamehash}{a5fa792a9c9b57be4de92c7f2fcb05c7}
-      \strng{authorbibnamehash}{a5fa792a9c9b57be4de92c7f2fcb05c7}
-      \strng{authornamehash}{a5fa792a9c9b57be4de92c7f2fcb05c7}
-      \strng{authorfullhash}{a5fa792a9c9b57be4de92c7f2fcb05c7}
-      \field{sortinit}{J}
-      \field{sortinithash}{c45040a764d616897e7f5b30174d7b92}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{day}{26}
-      \field{issn}{1471-2458}
-      \field{journaltitle}{BMC Public Health}
-      \field{month}{7}
-      \field{number}{1}
-      \field{shortjournal}{BMC Public Health}
-      \field{title}{Evaluation of Reporting Timeliness of Public Health Surveillance Systems for Infectious Diseases}
-      \field{volume}{4}
-      \field{year}{2004}
-      \field{dateera}{ce}
-      \field{pages}{29}
-      \range{pages}{1}
-      \verb{doi}
-      \verb 10.1186/1471-2458-4-29
-      \endverb
-    \endentry
-    \entry{Leslie1939_attempt_determine}{article}{}
-      \name{author}{2}{}{%
-        {{un=0,uniquepart=base,hash=64b554d94d1acaddf4e3341af5df2f8d}{%
-           family={Leslie},
-           familyi={L\bibinitperiod},
-           given={P.\bibnamedelimi H.},
-           giveni={P\bibinitperiod\bibinitdelim H\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=ebc4479ce07f73255a8f5142cb3596ee}{%
-           family={Davis},
-           familyi={D\bibinitperiod},
-           given={D.\bibnamedelimi H.\bibnamedelimi S.},
-           giveni={D\bibinitperiod\bibinitdelim H\bibinitperiod\bibinitdelim S\bibinitperiod},
-           givenun=0}}%
-      }
-      \list{publisher}{1}{%
-        {[Wiley, British Ecological Society]}%
-      }
-      \strng{namehash}{32c8cbfb6fa71addead54db969867d32}
-      \strng{fullhash}{32c8cbfb6fa71addead54db969867d32}
-      \strng{bibnamehash}{32c8cbfb6fa71addead54db969867d32}
-      \strng{authorbibnamehash}{32c8cbfb6fa71addead54db969867d32}
-      \strng{authornamehash}{32c8cbfb6fa71addead54db969867d32}
-      \strng{authorfullhash}{32c8cbfb6fa71addead54db969867d32}
-      \field{sortinit}{L}
-      \field{sortinithash}{dad3efd0836470093a7b4a7bb756eb8c}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{0021-8790}
-      \field{journaltitle}{Journal of Animal Ecology}
-      \field{number}{1}
-      \field{title}{An {{Attempt}} to {{Determine}} the {{Absolute Number}} of {{Rats}} on a {{Given Area}}}
-      \field{volume}{8}
-      \field{year}{1939}
-      \field{dateera}{ce}
-      \field{pages}{94\bibrangedash 113}
-      \range{pages}{20}
-      \verb{doi}
-      \verb 10.2307/1255
-      \endverb
-    \endentry
-    \entry{Matechou2016_open_models}{article}{}
-      \name{author}{5}{}{%
-        {{un=0,uniquepart=base,hash=03dde7f3373e9b431f185fa3bf430913}{%
-           family={Matechou},
-           familyi={M\bibinitperiod},
-           given={Eleni},
-           giveni={E\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=b1a1879aa48ca9981e0a07bf1e0580fc}{%
-           family={McCrea},
-           familyi={M\bibinitperiod},
-           given={Rachel\bibnamedelima S.},
-           giveni={R\bibinitperiod\bibinitdelim S\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=f6e63cca78ac76555da6db3482f5efe9}{%
-           family={Morgan},
-           familyi={M\bibinitperiod},
-           given={Byron\bibnamedelimb J.\bibnamedelimi T.},
-           giveni={B\bibinitperiod\bibinitdelim J\bibinitperiod\bibinitdelim T\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=741fc3dae45e264b5ea0a8f94bf5450d}{%
-           family={Nash},
-           familyi={N\bibinitperiod},
-           given={Darryn\bibnamedelima J.},
-           giveni={D\bibinitperiod\bibinitdelim J\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=36104903576789c9da15db9da2d5d945}{%
-           family={Griffiths},
-           familyi={G\bibinitperiod},
-           given={Richard\bibnamedelima A.},
-           giveni={R\bibinitperiod\bibinitdelim A\bibinitperiod},
-           givenun=0}}%
-      }
-      \list{publisher}{1}{%
-        {Institute of Mathematical Statistics}%
-      }
-      \strng{namehash}{634af70deabeffafb7106fd587912383}
-      \strng{fullhash}{9fc38256cd8fa7dc61e2123fd02088cd}
-      \strng{bibnamehash}{9fc38256cd8fa7dc61e2123fd02088cd}
-      \strng{authorbibnamehash}{9fc38256cd8fa7dc61e2123fd02088cd}
-      \strng{authornamehash}{634af70deabeffafb7106fd587912383}
-      \strng{authorfullhash}{9fc38256cd8fa7dc61e2123fd02088cd}
-      \field{sortinit}{M}
-      \field{sortinithash}{2e5c2f51f7fa2d957f3206819bf86dc3}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{1932-6157, 1941-7330}
-      \field{journaltitle}{Annals of Applied Statistics}
-      \field{langid}{english}
-      \field{month}{9}
-      \field{number}{3}
-      \field{shortjournal}{Ann. Appl. Stat.}
-      \field{title}{Open Models for Removal Data}
-      \field{volume}{10}
-      \field{year}{2016}
-      \field{dateera}{ce}
-      \field{pages}{1572\bibrangedash 1589}
-      \range{pages}{18}
-      \verb{doi}
-      \verb 10.1214/16-AOAS949
-      \endverb
-    \endentry
-    \entry{Moller1998_log_gaussian}{article}{}
-      \name{author}{3}{}{%
-        {{un=0,uniquepart=base,hash=34a34faee236d9a2ce2445703187ad35}{%
-           family={Møller},
-           familyi={M\bibinitperiod},
-           given={Jesper},
-           giveni={J\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=b46854bd6482103adf66828fc8e186be}{%
-           family={Syversveen},
-           familyi={S\bibinitperiod},
-           given={Anne\bibnamedelima Randi},
-           giveni={A\bibinitperiod\bibinitdelim R\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=ef8336e09a94e01cb8672630b489eb93}{%
-           family={Waagepetersen},
-           familyi={W\bibinitperiod},
-           given={Rasmus\bibnamedelima Plenge},
-           giveni={R\bibinitperiod\bibinitdelim P\bibinitperiod},
-           givenun=0}}%
-      }
-      \strng{namehash}{7bea4d29471ef58eab815f997ab87e00}
-      \strng{fullhash}{01b0b564f1532ff2b84a5f4296727a0a}
-      \strng{bibnamehash}{01b0b564f1532ff2b84a5f4296727a0a}
-      \strng{authorbibnamehash}{01b0b564f1532ff2b84a5f4296727a0a}
-      \strng{authornamehash}{7bea4d29471ef58eab815f997ab87e00}
-      \strng{authorfullhash}{01b0b564f1532ff2b84a5f4296727a0a}
-      \field{sortinit}{M}
-      \field{sortinithash}{2e5c2f51f7fa2d957f3206819bf86dc3}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{1467-9469}
-      \field{journaltitle}{Scandinavian Journal of Statistics}
-      \field{langid}{english}
-      \field{number}{3}
-      \field{title}{Log {{Gaussian Cox Processes}}}
-      \field{volume}{25}
-      \field{year}{1998}
-      \field{dateera}{ce}
-      \field{pages}{451\bibrangedash 482}
-      \range{pages}{32}
-      \verb{doi}
-      \verb 10.1111/1467-9469.00115
-      \endverb
-    \endentry
-    \entry{Moran1951_mathematical_theory}{article}{}
-      \name{author}{1}{}{%
-        {{un=0,uniquepart=base,hash=89abbf201fed5e8a1a1b30418bed35cc}{%
-           family={Moran},
-           familyi={M\bibinitperiod},
-           given={P.\bibnamedelimi A.\bibnamedelimi P.},
-           giveni={P\bibinitperiod\bibinitdelim A\bibinitperiod\bibinitdelim P\bibinitperiod},
-           givenun=0}}%
-      }
-      \list{publisher}{1}{%
-        {[Oxford University Press, Biometrika Trust]}%
-      }
-      \strng{namehash}{89abbf201fed5e8a1a1b30418bed35cc}
-      \strng{fullhash}{89abbf201fed5e8a1a1b30418bed35cc}
-      \strng{bibnamehash}{89abbf201fed5e8a1a1b30418bed35cc}
-      \strng{authorbibnamehash}{89abbf201fed5e8a1a1b30418bed35cc}
-      \strng{authornamehash}{89abbf201fed5e8a1a1b30418bed35cc}
-      \strng{authorfullhash}{89abbf201fed5e8a1a1b30418bed35cc}
-      \field{sortinit}{M}
-      \field{sortinithash}{2e5c2f51f7fa2d957f3206819bf86dc3}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{issn}{0006-3444}
-      \field{journaltitle}{Biometrika}
-      \field{number}{3/4}
-      \field{title}{A {{Mathematical Theory}} of {{Animal Trapping}}}
-      \field{volume}{38}
-      \field{year}{1951}
-      \field{dateera}{ce}
-      \field{pages}{307\bibrangedash 311}
-      \range{pages}{5}
-      \verb{doi}
-      \verb 10.2307/2332576
-      \endverb
-    \endentry
-    \entry{No_author_2020_coronavirus_three}{article}{}
-      \list{publisher}{1}{%
-        {Nature Publishing Group}%
-      }
-      \field{sortinit}{N}
-      \field{sortinithash}{98cf339a479c0454fe09153a08675a15}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labeltitlesource}{shorttitle}
-      \field{day}{17}
-      \field{issue}{7799}
-      \field{journaltitle}{Nature}
-      \field{langid}{english}
-      \field{month}{3}
-      \field{number}{7799}
-      \field{shorttitle}{Coronavirus}
-      \field{title}{Coronavirus: Three Things All Governments and Their Science Advisers Must Do Now}
-      \field{volume}{579}
-      \field{year}{2020}
-      \field{dateera}{ce}
-      \field{pages}{319\bibrangedash 320}
-      \range{pages}{2}
-      \verb{doi}
-      \verb 10.1038/d41586-020-00772-4
-      \endverb
-    \endentry
-    \entry{Ohman2020_antalet_virusdoda}{article}{}
-      \name{author}{2}{}{%
-        {{un=0,uniquepart=base,hash=0eac94a29f9b368513f9728838027cc2}{%
-           family={Öhman},
-           familyi={Ö\bibinitperiod},
-           given={Daniel},
-           giveni={D\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=733d72ffb55f137fe3ed62c5a7367f50}{%
-           family={Gagliano},
-           familyi={G\bibinitperiod},
-           given={Alexander},
-           giveni={A\bibinitperiod},
-           givenun=0}}%
-      }
-      \strng{namehash}{c0444993e924de086f63b7966dbfdf75}
-      \strng{fullhash}{c0444993e924de086f63b7966dbfdf75}
-      \strng{bibnamehash}{c0444993e924de086f63b7966dbfdf75}
-      \strng{authorbibnamehash}{c0444993e924de086f63b7966dbfdf75}
-      \strng{authornamehash}{c0444993e924de086f63b7966dbfdf75}
-      \strng{authorfullhash}{c0444993e924de086f63b7966dbfdf75}
-      \field{sortinit}{Ö}
-      \field{sortinithash}{ff8d4eeb5101e3cf3809959b3592d942}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{title}
-      \field{day}{24}
-      \field{entrysubtype}{magazine}
-      \field{journalsubtitle}{Nyheter (Ekot)}
-      \field{journaltitle}{Sveriges Radio}
-      \field{langid}{swedish}
-      \field{month}{4}
-      \field{title}{Antalet virusdöda har underskattats}
-      \field{urlday}{22}
-      \field{urlmonth}{5}
-      \field{urlyear}{2020}
-      \field{year}{2020}
-      \field{dateera}{ce}
-      \field{urldateera}{ce}
-      \verb{urlraw}
-      \verb https://sverigesradio.se/sida/artikel.aspx?programid=83&artikel=7459277
-      \endverb
-      \verb{url}
-      \verb https://sverigesradio.se/sida/artikel.aspx?programid=83&artikel=7459277
-      \endverb
-    \endentry
-    \entry{Pollock1991_review_papers}{article}{}
-      \name{author}{1}{}{%
-        {{un=0,uniquepart=base,hash=b3cc86780b0af8278e20a428b4842afb}{%
-           family={Pollock},
-           familyi={P\bibinitperiod},
-           given={Kenneth\bibnamedelima H.},
-           giveni={K\bibinitperiod\bibinitdelim H\bibinitperiod},
-           givenun=0}}%
-      }
-      \list{publisher}{1}{%
-        {Taylor \& Francis}%
-      }
-      \strng{namehash}{b3cc86780b0af8278e20a428b4842afb}
-      \strng{fullhash}{b3cc86780b0af8278e20a428b4842afb}
-      \strng{bibnamehash}{b3cc86780b0af8278e20a428b4842afb}
-      \strng{authorbibnamehash}{b3cc86780b0af8278e20a428b4842afb}
-      \strng{authornamehash}{b3cc86780b0af8278e20a428b4842afb}
-      \strng{authorfullhash}{b3cc86780b0af8278e20a428b4842afb}
-      \field{sortinit}{P}
-      \field{sortinithash}{bb5b15f2db90f7aef79bb9e83defefcb}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{shorttitle}
-      \field{day}{1}
-      \field{issn}{0162-1459}
-      \field{journaltitle}{Journal of the American Statistical Association}
-      \field{month}{3}
-      \field{number}{413}
-      \field{shorttitle}{Review {{Papers}}}
-      \field{title}{Review {{Papers}}: {{Modeling Capture}}, {{Recapture}}, and {{Removal Statistics}} for {{Estimation}} of {{Demographic Parameters}} for {{Fish}} and {{Wildlife Populations}}: {{Past}}, {{Present}}, and {{Future}}}
-      \field{volume}{86}
-      \field{year}{1991}
-      \field{dateera}{ce}
-      \field{pages}{225\bibrangedash 238}
-      \range{pages}{14}
-      \verb{doi}
-      \verb 10.1080/01621459.1991.10475022
-      \endverb
-    \endentry
-    \entry{Rue2005_gaussian_markov}{book}{}
-      \name{author}{2}{}{%
-        {{un=0,uniquepart=base,hash=09362260e1fddec76ee0c1f7caad5f33}{%
-           family={Rue},
-           familyi={R\bibinitperiod},
-           given={Havard},
-           giveni={H\bibinitperiod},
-           givenun=0}}%
-        {{un=0,uniquepart=base,hash=08e9979cf126d2bd3a8136e3cdc6cc76}{%
-           family={Held},
-           familyi={H\bibinitperiod},
-           given={Leonhard},
-           giveni={L\bibinitperiod},
-           givenun=0}}%
-      }
-      \list{publisher}{1}{%
-        {CRC Press}%
-      }
-      \strng{namehash}{fbbbc9bb0b9dcfc2098db00248c7a9ec}
-      \strng{fullhash}{fbbbc9bb0b9dcfc2098db00248c7a9ec}
-      \strng{bibnamehash}{fbbbc9bb0b9dcfc2098db00248c7a9ec}
-      \strng{authorbibnamehash}{fbbbc9bb0b9dcfc2098db00248c7a9ec}
-      \strng{authornamehash}{fbbbc9bb0b9dcfc2098db00248c7a9ec}
-      \strng{authorfullhash}{fbbbc9bb0b9dcfc2098db00248c7a9ec}
-      \field{sortinit}{R}
-      \field{sortinithash}{b9c68a358aea118dfa887b6e902414a7}
-      \field{extradatescope}{labelyear}
-      \field{labeldatesource}{}
-      \field{labelnamesource}{author}
-      \field{labeltitlesource}{shorttitle}
-      \field{day}{18}
-      \field{isbn}{978-0-203-49202-4}
-      \field{langid}{english}
-      \field{month}{2}
-      \field{pagetotal}{280}
-      \field{shorttitle}{Gaussian {{Markov Random Fields}}}
-      \field{title}{Gaussian {{Markov Random Fields}}: {{Theory}} and {{Applications}}}
-      \field{year}{2005}
-      \field{dateera}{ce}
-    \endentry
-  \enddatalist
-\endrefsection
-\endinput
+\bibitem[\protect\citeauthoryear{Atchad{\'e}}{Atchad{\'e}}{2006}]{Atchade2006_adaptive_version}
+Atchad{\'e}, Y.~F. (2006).
+\newblock An {{Adaptive Version}} for the {{Metropolis Adjusted Langevin
+  Algorithm}} with a {{Truncated Drift}}.
+\newblock {\em Methodology and Computing in Applied Probability\/}~{\em
+  8\/}(2), 235--254.
 
+\bibitem[\protect\citeauthoryear{Bolin and Wallin}{Bolin and
+  Wallin}{2019}]{bolin2019scale}
+Bolin, D. and J.~Wallin (2019).
+\newblock Scale dependence: Why the average crps often is inappropriate for
+  ranking probabilistic forecasts.
+
+\bibitem[\protect\citeauthoryear{Brooks, Gelman, Jones, and Meng}{Brooks
+  et~al.}{2011}]{Brooks2011_handbook_markov}
+Brooks, S., A.~Gelman, G.~Jones, and X.-L. Meng (2011).
+\newblock {\em Handbook of {{Markov Chain Monte Carlo}}}.
+\newblock {CRC Press}.
+
+\bibitem[\protect\citeauthoryear{Jajosky and Groseclose}{Jajosky and
+  Groseclose}{2004}]{Jajosky2004_evaluation_reporting}
+Jajosky, R.~A. and S.~L. Groseclose (2004).
+\newblock Evaluation of reporting timeliness of public health surveillance
+  systems for infectious diseases.
+\newblock {\em BMC Public Health\/}~{\em 4\/}(1), 29.
+
+\bibitem[\protect\citeauthoryear{Leslie and Davis}{Leslie and
+  Davis}{1939}]{Leslie1939_attempt_determine}
+Leslie, P.~H. and D.~H.~S. Davis (1939).
+\newblock An {{Attempt}} to {{Determine}} the {{Absolute Number}} of {{Rats}}
+  on a {{Given Area}}.
+\newblock {\em Journal of Animal Ecology\/}~{\em 8\/}(1), 94--113.
+
+\bibitem[\protect\citeauthoryear{Matechou, McCrea, Morgan, Nash, and
+  Griffiths}{Matechou et~al.}{2016}]{Matechou2016_open_models}
+Matechou, E., R.~S. McCrea, B.~J.~T. Morgan, D.~J. Nash, and R.~A. Griffiths
+  (2016).
+\newblock Open models for removal data.
+\newblock {\em Annals of Applied Statistics\/}~{\em 10\/}(3), 1572--1589.
+
+\bibitem[\protect\citeauthoryear{M{\o}ller, Syversveen, and
+  Waagepetersen}{M{\o}ller et~al.}{1998}]{Moller1998_log_gaussian}
+M{\o}ller, J., A.~R. Syversveen, and R.~P. Waagepetersen (1998).
+\newblock Log {{Gaussian Cox Processes}}.
+\newblock {\em Scandinavian Journal of Statistics\/}~{\em 25\/}(3), 451--482.
+
+\bibitem[\protect\citeauthoryear{Moran}{Moran}{1951}]{Moran1951_mathematical_theory}
+Moran, P. A.~P. (1951).
+\newblock A {{Mathematical Theory}} of {{Animal Trapping}}.
+\newblock {\em Biometrika\/}~{\em 38\/}(3/4), 307--311.
+
+\bibitem[\protect\citeauthoryear{Nature}{Nature}{2020}]{No_author_2020_coronavirus_three}
+Nature (2020).
+\newblock Coronavirus: Three things all governments and their science advisers
+  must do now.
+\newblock {\em Nature\/}~{\em 579\/}(7799), 319--320.
+
+\bibitem[\protect\citeauthoryear{{\"O}hman and Gagliano}{{\"O}hman and
+  Gagliano}{2020}]{Ohman2020_antalet_virusdoda}
+{\"O}hman, D. and A.~Gagliano (2020).
+\newblock Antalet virusd\"oda har underskattats.
+\newblock {\em Sveriges Radio\/}.
+
+\bibitem[\protect\citeauthoryear{Pollock}{Pollock}{1991}]{Pollock1991_review_papers}
+Pollock, K.~H. (1991).
+\newblock Review {{Papers}}: {{Modeling Capture}}, {{Recapture}}, and {{Removal
+  Statistics}} for {{Estimation}} of {{Demographic Parameters}} for {{Fish}}
+  and {{Wildlife Populations}}: {{Past}}, {{Present}}, and {{Future}}.
+\newblock {\em Journal of the American Statistical Association\/}~{\em
+  86\/}(413), 225--238.
+
+\bibitem[\protect\citeauthoryear{Rue and Held}{Rue and
+  Held}{2005}]{Rue2005_gaussian_markov}
+Rue, H. and L.~Held (2005).
+\newblock {\em Gaussian {{Markov Random Fields}}: {{Theory}} and
+  {{Applications}}}.
+\newblock {CRC Press}.
+
+\end{thebibliography}

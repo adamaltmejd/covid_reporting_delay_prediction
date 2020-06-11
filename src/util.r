@@ -781,6 +781,72 @@ loglik <- function(beta,death.remain, report.new, X, sigma){
 ##
 #####
 
+##
+# likelihood observations given deaths and probabilites
+# model is:
+# newreport[upper.tri] \sim   BB(deaths[upper.tri], exp(X\beta_1), exp(X\beta_2))
+#
+#' @return obj - list
+#'               $loglik  - logliklihood
+#'               $grad    - gradient
+##
+loglikProbBB_mixedeffect_bi <- function(beta, death.remain, report.new, X_mu, X_M, X_mixed, sigma_mixed){
+
+  p <- dim(X_mu)[2]
+  p1 <- dim(X_M)[2]
+  p2 <- dim(X_mixed)[2]
+  beta_mu    <- beta[1:p]
+  beta_M     <- beta[p + (1:p1)]
+  beta_mixed <- beta[p + p1 + (1:p2)]
+  N <- dim(report.new)[1]
+
+  index <- upper.tri(death.remain,diag = T)
+  y = report.new[index]
+  n = death.remain[index]
+  index = is.na(y)==F & is.na(n)==F
+  X_mu    <- X_mu[index,]
+  X_mixed <- X_mixed[index,]
+  X_M     <- X_M[index,]
+  mu      <- 1/(1+exp(-X_mu%*%beta_mu - X_mixed%*%beta_mixed))
+  M       <- exp(X_M%*%beta_M)
+
+  alpha <- M * mu
+  beta  <- M * (1-mu)
+  y <- y[index]
+  n <- n[index]
+
+  if(max(beta)>120)
+    return(list(loglik = -Inf, grad = 0))
+
+
+  lik <- sum(dBB(y, size = n, alpha = alpha, beta = beta, log.p=T))
+  if(is.na(lik))
+    return(list(loglik = -Inf, grad = 0))
+
+  ##
+  #
+  # mixed effect
+  ##
+  lik <- lik - (0.5/sigma_mixed^2) * sum(beta_mixed^2)
+  ##
+  # prior
+  ##
+  #lik <- lik - sum(exp(beta_M))
+  grad_lik <- grad_dBB(y, size = n, alpha = alpha, beta = beta)
+
+  grad_mu <- (M*mu * (1-mu) * grad_lik$grad_alpha)
+  grad_mu <- (grad_mu - (M * mu * (1-mu) * grad_lik$grad_beta))
+  grad_mixed <- t(X_mixed)%*%grad_mu - (1/sigma_mixed^2) * beta_mixed
+  grad_mu    <- t(X_mu)%*%grad_mu
+  grad_M <- (M*mu * grad_lik$grad_alpha)
+  grad_M <- grad_M + (M * (1-mu) * grad_lik$grad_beta)
+  grad_M <- t(X_M)%*%grad_M #- exp(beta_M)
+  grad =  c(as.vector(grad_mu),as.vector(grad_M),as.vector(grad_mixed))
+  if(sum(is.na(grad))>0)
+    return(list(loglik = -Inf, grad = 0))
+  return(list(loglik = lik, grad = grad))
+}
+
 
 ##
 # likelihood observations given deaths and probabilites
