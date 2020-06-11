@@ -71,11 +71,19 @@ deaths_dt[!is.na(date) & publication_date > "2020-04-02", workdays_lag := n_work
 
 deaths_dt[date == "2020-04-02" & publication_date == "2020-04-02", `:=`(workdays_lag = 0, days_lag = 0)]
 
-deaths_dt[!is.na(date), paste0("n_m", 1) := shift(N, n = 1, type = "lag", fill = 0L), by = date]
+# Change reports to ensure no negatives
+deaths_dt[!is.na(date), n_m1 := shift(N, n = 1, type = "lag", fill = 0L), by = date]
+deaths_dt[!is.na(date), n_p1 := shift(N, n = 1, type = "lead", fill = NA_integer_), by = date]
+while (deaths_dt[N < n_m1, .N] > 0) {
+    # cat(deaths_dt[N - n_m1 < 0, .N], ", ")
+    deaths_dt[N < n_m1, N := ceiling((N + n_m1) / 2)]
+    deaths_dt[N > n_p1, N := ceiling((N + n_p1) / 2)]
+    deaths_dt[!is.na(date), n_m1 := shift(N, n = 1, type = "lag", fill = 0L), by = date]
+    deaths_dt[!is.na(date), n_p1 := shift(N, n = 1, type = "lead", fill = NA_integer_), by = date]
+}
+
 deaths_dt[!is.na(date), n_diff := N - n_m1]
-# deaths_dt[!is.na(date) & n_m1 > 0 & !is.na(n_m1), n_diff_pct := N/n_m1 - 1]
-# deaths_dt[!is.na(date) & n_m1 == 0 & N == 0, n_diff_pct := 0]
-deaths_dt[, n_m1 := NULL]
+deaths_dt[, c("n_m1", "n_p1") := NULL]
 
 setkey(deaths_dt, date, publication_date)
 write_fst(deaths_dt, file.path("data", "processed", "deaths_dt.fst"))
