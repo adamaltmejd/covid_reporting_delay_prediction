@@ -12,14 +12,17 @@
 \usepackage{tabularx}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 
+\usepackage{amsmath}
+\newcommand{\mv}[1]{{\boldsymbol{\mathrm{#1}}}}
+
 % TITLE
 
 \title{Nowcasting Covid-19 statistics reported with delay: a case-study of Sweden}
 \date{\today}
 \author{
 	Adam Altmejd\thanks{SOFI, Stockholm University and Swedish House of Finance, \href{mailto:adam@altmejd.se}{adam@altmejd.se}} \and
-	Joacim Rocklöv \and
-	Jonas Wallin
+	Joacim Rocklöv\thanks{Department of Public Health and Clinical Medicine, Section of Sustainable Health, Umeå University}\thanks{Heidelberg Institute of Global Health, University of Heidelberg} \and
+	Jonas Wallin\thanks{Department of statistics, Lund university, \href{mailto:jonas.wallin81@gmail.com}{jonas.wallin81@gmail.com}}
 }
 
 \begin{document}
@@ -45,7 +48,7 @@ Still, these unfinished statistics offer crucial information. If the pandemic is
 
 Such predictions provide an additional feature that is perhaps even more important. They explicitly model the uncertainty about these unknown quantities, ensuring that all users of these data have the same view of the current state of the epidemic.
 
-In this paper we describe a statistical methodology for nowcasting the epidemic statistics, such as hospitalizations or deaths, and their degrees of uncertainty, based on the daily reported event frequency and the observed distribution pattern of reporting delays. The prediction model is building on methods developed in ecology, referred to as the ``removal method'' or ``capture-retain'' models (\cite{Pollock1991_review_papers}).
+In this paper we describe a statistical methodology for nowcasting the epidemic statistics, such as hospitalizations or deaths, and their degrees of uncertainty, based on the daily reported event frequency and the observed distribution pattern of reporting delays. The prediction model is building on methods developed in ecology, referred to as the ``removal method'' (\cite{Pollock1991_review_papers}).
 
 To help motivate why such forecasting is needed, we now turn to the case of Sweden. The model is flexible by design, however, and could easily be applied to other countries as well.
 
@@ -89,7 +92,7 @@ In Figure~\ref{fig:latest_prediction} we apply the model to the latest statistic
 \end{figure}
 
 \section{Model Performance}
-To say judge whether or not the model is accurate we need to compare it to a benchmark. The moving average of reported deaths is not useful, since it becomes strongly biased for deaths that occurred within the last week. Instead, we create a benchmark prediction by adding the mean historical lags from the last two weeks to the reported numbers\footnote{For a death date two days ago we add the mean of deaths reported after 3 days, 4 days, etc. We use the sum of standard deviations as confidence intervals, assuming that lags are independent across days. The exact calculation is described in the appendix.}. 
+To say judge whether or not the model is accurate we need to compare it to a benchmark. The moving average of reported deaths is not useful, since it becomes strongly biased for deaths that occurred within the last week. Instead, we create a benchmark prediction by a Normal distribution where the mean and standard deviation is taken from the historical lags from the last two weeks to the reported numbers\footnote{For a death date two days ago we add the mean of deaths reported after 3 days, 4 days, etc. We use the sum of standard deviations to generate the prediction intervals, assuming that lags are independent across days. The exact calculation is described in the appendix.}. 
 
 Figure~\ref{fig:four_dates} depicts four randomly chosen dates where the model is compared to the benchmark. The model and the benchmark are tasked with predicting the total number of individuals who have died at a given date and have been reported within 14 days of that date. As time progresses, more deaths are reported and the dashed grey line approaches the horizontal line. Meanwhile model uncertainty decreases.
 
@@ -100,7 +103,7 @@ Figure~\ref{fig:four_dates} depicts four randomly chosen dates where the model i
     \label{fig:four_dates}
 \end{figure}
 
-Figure~\ref{fig:model_metrics} shows model performance compared to the benchmark for three difference performance metrics. All three graphs are based on predictions of reported deaths within 14 days, and show how performance increases as more data has been reported. Each data point is the average of all dates where predictions can be evaluated. SCRPS is a measure of accuracy that rewards precision, similar to a Brier score (see definition in Appendix). The central plot shows the width of the confidence intervals, and the rightmost one the proportion of CI´s that cover the true value.
+Figure~\ref{fig:model_metrics} shows model performance compared to the benchmark for three difference performance metrics. All three graphs are based on predictions of reported deaths within 14 days, and show how performance increases as more data has been reported. Each data point is the average of all dates where predictions can be evaluated. SCRPS is a measure of accuracy that rewards precision, similar to a Brier score (see definition in Appendix). The central plot shows the width of the prediction intervals, and the rightmost one the proportion of PI´s that cover the true value.
 
 Benchmark and model point estimates are similarly close to the truth. The model produces tighter confidence intervals however, except during the very first day when only a single report is available.
 
@@ -116,9 +119,11 @@ The model proposed here can estimate the trends in surveillance data with report
 
 Whenever case statistics are collected from multiple sources and attributed to its actual event date in the middle of a public health emergency, similar reporting delays to the ones in Sweden will necessarily occur. The method described thus has implications and value beyond Sweden, for any situation where nowcasts of disease event frequencies are of relevance to public health.
 
-Nevertheless, the method also has its limitations. As presented, the model assumes that all deaths are reported in the same manner. Given there exists many regions in Sweden this is unlikely to be the case. For example, it is easy to see that the Swedish region Västra Götland follows a different reporting structure than Stockholm. Building a model for each region separately would most likely give better results and make the assumptions more reasonable. Unfortunately we do not currently have access to the high resolution data required to do so.
+Nevertheless, the method also has its limitations. As presented, the model assumes that all deaths are reported in the same manner. Given there exists many regions in Sweden this is unlikely to be the case. For example, it is easy to see that the Swedish region Västra Götland follows a different reporting structure than Stockholm. Building a model for each region separately would most likely give better results and make the assumptions more reasonable. Unfortunately we do not currently have access to the high resolution data required to do so. 
 
-Moreover, deaths are reported from two distinct populations that seem to follow different trends. At the time of writing, the daily deaths in elderly care, reported with a longer delay, seem to be decreasing slower than hospital deaths. But statistics offer only aggregate numbers, prohibiting us from modeling two distinct processes.
+
+
+Moreover, deaths are reported from two distinct populations that seem to follow different trends. At the time of writing, the daily deaths in elderly care, reported with a longer delay, seem to be decreasing slower than hospital deaths. But statistics offer only aggregate numbers, prohibiting us from modeling two distinct processes. However, wew have noted a clear decline in proportions of deaths reported the two first working days. In early april .\% of deaths where reported within the first two working days wheras in late may only \% where reported during the same time interval. We adress this by assuming that the two deaths from the two first working days comes from a different population then the remainder of days.
 
 Another limitation is that the model assumes that the number of new reported deaths for a given day cannot be negative, which is not actually true, due to miscount or misclassification of days. The number of such cases is very small, however, and its removal should not make much difference. The central assumption of the model is that the proportions deaths reported each day is fixed (up to the known covariates). If actual reporting standards change over time, the model will not be able to account for this. But reporting likely becomes faster as the crisis infrastructure improves. One can imagine that after a while the reporting improves, or is changed, if this is not accounted for by a covariate in the model, it will report incorrect numbers. Of course, there might be unknown variables that we have failed to incorporate, but at the least the model is an improvement from the estimates using moving averages. When the covariates to the reporting delay pattern are known, the model can incorporate them and provide more accurate predictions. 
 
