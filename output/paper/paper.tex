@@ -10,10 +10,9 @@
 \usepackage{array}
 \usepackage{multirow}
 \usepackage{tabularx}
+\usepackage{amsthm}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
-
-\usepackage{amsmath}
-\newcommand{\mv}[1]{{\boldsymbol{\mathrm{#1}}}}
+\newcommand{\mv}[1]{{\boldsymbol{#1}}}
 
 % TITLE
 
@@ -21,7 +20,7 @@
 \date{\today}
 \author{
 	Adam Altmejd\thanks{SOFI, Stockholm University and Swedish House of Finance, \href{mailto:adam@altmejd.se}{adam@altmejd.se}} \and
-	Joacim Rocklöv\thanks{Department of Public Health and Clinical Medicine, Section of Sustainable Health, Umeå University}\thanks{Heidelberg Institute of Global Health, University of Heidelberg} \and
+	Joacim Rocklöv\thanks{Department of Public Health and Clinical Medicine, Umeå University,\href{mailto:joacim.rocklov@umu.se}{joacim.rocklov@umu.se }}\thanks{Heidelberg Institute of Global Health, University of Heidelberg}  \and
 	Jonas Wallin\thanks{Department of statistics, Lund university, \href{mailto:jonas.wallin81@gmail.com}{jonas.wallin81@gmail.com}}
 }
 
@@ -33,7 +32,7 @@
         The new corona virus disease --- COVID-2019 --- is rapidly spreading through the world. The availability of unbiased timely statistics of trends in disease events are a key to effective responses. But due to reporting delays, the most recently reported numbers are frequently underestimating of the total number of infections, hospitalizations and deaths creating an illusion of a downward trend. Here we describe a statistical methodology for predicting true daily quantities and their uncertainty, estimated using historical reporting delays. The methodology takes into account the observed distribution pattern of the lag. It is derived from the ``removal method'', a well-established estimation framework in the field of ecology.
 	\end{abstract}
 
-	\noindent Keywords:
+	%\noindent Keywords:
 
 \end{titlingpage}
 %\tableofcontents*
@@ -66,7 +65,7 @@ The removal method that has three major advantages over simply reporting moving 
 
 \begin{itemize}
 	\item it does not relay any previous trend in the data,
-	\item we can generate confidence bounds for the uncertainty about daily true frequencies,
+	\item we can generate prediction intervals for the uncertainty about daily true frequencies,
 	\item the uncertainty estimates can be carried over to epidemiological models to help create more realistic models.
 \end{itemize}
 
@@ -78,7 +77,7 @@ Suppose for example that on day one, 4 individuals are reported dead for that da
 If additionally, 60 deaths are reported during the second day to have happened during day one, and on the third day, only 40 are reported for day two, we now have conflicting information. From the first-day reports it seemed like more people had died during day two, but the second day-reports gave the opposite indication. The model we propose systematically deals with such data, and handles many other sources of systematic variation in reporting delay. In fact, the Swedish reporting lag follows a calendar pattern. The number of events reported during weekends is much smaller. To account for this, we allow the estimated proportions of daily reported cases to follow a probability distribution taking into consideration what type of day it is.
 
 \chapter{Applying the model to COVID-19 in Sweden}
-We propose a Bayesian version of the removal model that assumes an overdispersed binomial distribution for the daily observations of deaths in Sweden in COVID-19. We then calculate the posterior distribution, prediction median and 95\% uncertainty intervals of the expected deaths from the reported deaths on each specific day. The method and algorithm is thoroughly described in the Supplementary Information.
+We propose a Bayesian version of the removal model that assumes an overdispersed binomial distribution for the daily observations of deaths in Sweden in COVID-19. We then calculate the posterior distribution, prediction median and 95\% prediction intervals of the expected deaths from the reported deaths on each specific day. The method and algorithm is thoroughly described in the Supplementary Information.
 
 To get accurate estimates we apply two institution-specific corrections. First, we only count workdays as constituting reporting delay, as very few deaths are reported during weekends. Second, we apply a constant bias correction to account for the fact that Swedish deaths come from two distinct populations with different trends: deaths in hospitals, and in elderly care.
 
@@ -103,9 +102,9 @@ Figure~\ref{fig:four_dates} depicts four randomly chosen dates where the model i
     \label{fig:four_dates}
 \end{figure}
 
-Figure~\ref{fig:model_metrics} shows model performance compared to the benchmark for three difference performance metrics. All three graphs are based on predictions of reported deaths within 14 days, and show how performance increases as more data has been reported. Each data point is the average of all dates where predictions can be evaluated. SCRPS is a measure of accuracy that rewards precision, similar to a Brier score (see definition in Appendix). The central plot shows the width of the prediction intervals, and the rightmost one the proportion of PI´s that cover the true value.
+Figure~\ref{fig:model_metrics} shows model performance compared to the benchmark for three difference performance metrics. All three graphs are based on predictions of reported deaths within 14 days, and show how performance increases as more data has been reported. Each data point is the average of all dates where predictions can be evaluated. SCRPS is a measure of accuracy that rewards precision, it is a proper scoring rule like the continuous probability rank score or the Brier score (see definition in Appendix) \cite{bolin2019scale}. The central plot shows the width of the prediction intervals, and the rightmost one the proportion of PI´s that cover the true value.
 
-Benchmark and model point estimates are similarly close to the truth. The model produces tighter confidence intervals however, except during the very first day when only a single report is available.
+Benchmark and model point estimates are similarly close to the truth. The model produces tighter prediction intervals however, they are too tight between day 8-5 lags to reporting, see Figure \ref{fig:model_metrics}, this is likely due to that Swedish Public Health Agency does a database search during only certain days to match people reported dead to Covid infected. This type of reporting is currently not implemented in the model hence the poorer performance during these lags. 
 
 \begin{figure}
     \centering
@@ -123,12 +122,12 @@ Nevertheless, the method also has its limitations. As presented, the model assum
 
 
 
-Moreover, deaths are reported from two distinct populations that seem to follow different trends. At the time of writing, the daily deaths in elderly care, reported with a longer delay, seem to be decreasing slower than hospital deaths. But statistics offer only aggregate numbers, prohibiting us from modeling two distinct processes. However, wew have noted a clear decline in proportions of deaths reported the two first working days. In early april .\% of deaths where reported within the first two working days wheras in late may only \% where reported during the same time interval. We adress this by assuming that the two deaths from the two first working days comes from a different population then the remainder of days.
+Moreover, deaths are reported from two distinct populations that seem to follow different trends. At the time of writing, the daily deaths in elderly care, reported with a longer delay, seem to be decreasing slower than hospital deaths. But statistics offer only aggregate numbers, prohibiting us from modeling two distinct processes. However, we have noted a clear decline in proportions of deaths reported the two first working days. For example the number of deaths occurring at the second of April $\approx 30\%$ of deaths where reported within the first two working days whereas for the eighteens of May only $\approx 10\%$ where reported during the two first working days. We address this by assuming that the deaths reported during the two first working days comes from a different population then the remainder of days.
 
 Another limitation is that the model assumes that the number of new reported deaths for a given day cannot be negative, which is not actually true, due to miscount or misclassification of days. The number of such cases is very small, however, and its removal should not make much difference. The central assumption of the model is that the proportions deaths reported each day is fixed (up to the known covariates). If actual reporting standards change over time, the model will not be able to account for this. But reporting likely becomes faster as the crisis infrastructure improves. One can imagine that after a while the reporting improves, or is changed, if this is not accounted for by a covariate in the model, it will report incorrect numbers. Of course, there might be unknown variables that we have failed to incorporate, but at the least the model is an improvement from the estimates using moving averages. When the covariates to the reporting delay pattern are known, the model can incorporate them and provide more accurate predictions. 
 
 \chapter{Conclusion}
-In this paper, we provide a simple method to accurately nowcast daily Covid-19 statistics that are reported with delay. By systematically modelling the delay, policy makers can avoid dangerous illusory downward trends. Our model also gives precise uncertainty intervals, making sure users of these statistics are aware of the fast-paced changes that are possible during this pandemic.
+In this paper, we provide a method to accurately nowcast daily Covid-19 statistics that are reported with delay. By systematically modelling the delay, policy makers can avoid dangerous illusory downward trends. Our model also gives precise uncertainty intervals, making sure users of these statistics are aware of the fast-paced changes that are possible during this pandemic.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % APPENDIX
