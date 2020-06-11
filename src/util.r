@@ -116,6 +116,65 @@ sample.deathsBB <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, 
 #  true.dat  - (int) how many days after recording should one sample
 #  prior     - (function) should  return log of prior density (use N and i)
 ##
+sample.deathsBB_bi <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, true.day = 0 ,
+                               p_null,
+                               pi_null,
+                            use.prior=FALSE,
+                            prior=NULL){
+
+  N <- length(deaths)
+  acc <- rep(0,N)
+  for(i in 1:N){
+    if(i > true.day){
+      alpha_i     = alpha[i,i:N]
+      beta_i      = beta[i,i:N]
+      Reported_i  = Reported[i,i:N]
+      index = is.na(Reported_i)==F
+      alpha_i  = alpha_i[index]
+      beta_i  = beta_i[index]
+      Reported_i  = Reported_i[index]
+      if(length(Reported_i)>0){
+        lik_i <- loglikDeathsGivenProbBB_bi(deaths[i],alpha_i , beta_i, pi_null,p_null, Reported_i)
+      }else{
+        lik_i <- 0
+      }
+      if(use.prior==T)
+        lik_i <- lik_i + prior(deaths[i], i)
+      for(j in 1:samples){
+        death_star <- sample((deaths[i]-alpha.MCMC[i]):(deaths[i]+alpha.MCMC[i]), 1)
+        if(length(Reported_i)>0){
+          lik_star <- loglikDeathsGivenProbBB_bi(death_star, alpha_i , beta_i, pi_null,p_null, Reported_i)
+        }else{
+          lik_star <- 0
+        }
+        if(use.prior==T)
+          lik_star <- lik_star + prior(death_star, i)
+        if(is.nan(lik_star))
+          next
+        if(log(runif(1)) < lik_star-lik_i){
+          lik_i = lik_star
+          deaths[i] <- death_star
+          acc[i] = acc[i] + 1
+        }
+      }
+    }
+  }
+  return(list(deaths=deaths, acc = acc))
+}
+
+
+##
+# sample reported deaths after rep.day (if Inf) predicit day using Beta binomial dist
+#
+#  samples  - (int) how many samples should be done for each N (cheap)
+#  deaths   - (N x 1) true number of deaths each day
+#  alpha     - (N x N) matrix of beta binom parameter (only upper triangular part relevant)
+#  beta      - (N x N) matrix of beta binom parameter (only upper triangular part relevant)
+#  Reported - (N x N) matrix of reported deaths cumlative (only upper triangular relevant)
+#  alpha.MCMC    - (N x 1) stepsizes
+#  true.dat  - (int) how many days after recording should one sample
+#  prior     - (function) should  return log of prior density (use N and i)
+##
 sample.deathsBB_negbin <- function(samples, deaths, alpha, beta, Reported, alpha.MCMC, true.day = 0 ,
                                    theta,
                                    phi){
@@ -323,6 +382,60 @@ fill.ReportBB.postlag <- function(deaths, Alpha, Beta, Reported, dates, lag){
 
     for(j in min(which(index)):length(Reported_i)){
       p <- rbeta(1, Alpha_i[j], Beta_i[j])
+      rep_prev <- Reported_i[j-1]
+      if( death_i - rep_prev>0 ){
+        Reported_i[j] <- rbinom(1, size=death_i - rep_prev, prob = p) + rep_prev
+      }else{Reported_i[j] <- rep_prev}
+
+    }
+    Reported[i,(i+k):m] = Reported_i
+  }
+  return(Reported)
+}
+
+##
+# fill report using binimoal beta post lag
+#
+# deaths       - (N x 1) number of estimated deaths
+# Alpha        - (N x m) parameter for Beta Bin
+# Beta         -  (N x m) parameter for Beta Bin
+# dates        - (m x 1) dates reported
+# Reported     - (N x m) reported so far and na for non reported
+# lag          - (int)   lag = 0 is only first non-holiday, lag = 1 two non holidays
+##
+fill.ReportBB.postlag_bi <- function(deaths,
+                                     Alpha,
+                                     Beta,
+                                     pi_null,
+                                     p_null,
+                                     Reported,
+                                     dates,
+                                     lag){
+  N <- length(deaths)
+  m <- dim(Alpha)[2]
+  holidays <- weekdays(dates)%in%c("Sunday","Saturday") | c(dates)%in%c(holidays.Sweden)
+  for(i in 1:N){
+    k <- which.max(cumsum(holidays[i:m]==F)==(lag+1))-1
+    if(k==0)
+      k <- m - i
+    if(k+i >= m)
+      next
+
+    death_i <- deaths[i] +  Reported[i,(i+k)]
+    # use i instead of i+1 to get the latest size
+    Alpha_i         = Alpha[i,(i+k):m]
+    Beta_i          = Beta[i,(i+k):m]
+    Reported_i  = Reported[i,(i+k):m]
+    index = is.na(Reported_i)==T
+    if(sum(index)==0)
+      next
+
+    for(j in min(which(index)):length(Reported_i)){
+      if(runif(1) >pi_null){
+        p <- rbeta(1, Alpha_i[j], Beta_i[j])
+      }else{
+        p <- p_null
+      }
       rep_prev <- Reported_i[j-1]
       if( death_i - rep_prev>0 ){
         Reported_i[j] <- rbinom(1, size=death_i - rep_prev, prob = p) + rep_prev
@@ -668,6 +781,90 @@ loglik <- function(beta,death.remain, report.new, X, sigma){
 ##
 #####
 
+
+##
+# likelihood observations given deaths and probabilites
+# model is:
+# newreport[upper.tri] \sim   BB(deaths[upper.tri], exp(X\beta_1), exp(X\beta_2))
+#
+#' @return obj - list
+#'               $loglik  - logliklihood
+#'               $grad    - gradient
+##
+loglikProbBB_bi <- function(beta, death.remain, report.new, X_mu, X_M, pi_null, p_null, z){
+
+  p <- dim(X_mu)[2]
+  p1 <- dim(X_M)[2]
+  beta_mu    <- beta[1:p]
+  beta_M     <- beta[p + (1:p1)]
+  N <- dim(report.new)[1]
+
+  index <- upper.tri(death.remain,diag = T)
+  y = report.new[index]
+  n = death.remain[index]
+  index = is.na(y)==F & is.na(n)==F
+  X_mu    <- X_mu[index,]
+  X_M     <- X_M[index,]
+  mu      <- 1/(1+exp(-X_mu%*%beta_mu ))
+  M       <- exp(X_M%*%beta_M)
+
+  alpha <- M * mu
+  beta  <- M * (1-mu)
+  y <- y[index]
+  n <- n[index]
+
+  if(is.na(z[1]))
+    z = rep(0,length(y))
+  index_z   <- z==0
+  y_lik     <- y[index_z]
+  n_lik     <- n[index_z]
+  alpha_lik <- alpha[index_z]
+  beta_lik  <- beta[index_z]
+  mu_lik     <- mu[index_z]
+  M_lik     <- M[index_z]
+  if(max(beta)>100)
+    return(list(loglik = -Inf, grad = 0))
+
+
+  lik_obs <- dBB(y, size = n, alpha = alpha, beta = beta, log.p=T)
+  lik <- sum(lik_obs)
+  if(is.na(lik))
+    return(list(loglik = -Inf, grad = 0))
+
+  ##
+  # prior
+  ##
+  lik <- lik
+  grad_lik <- grad_dBB(y_lik, size = n_lik, alpha = alpha_lik, beta = beta_lik)
+
+  grad_mu <- (M_lik*mu_lik * (1-mu_lik) * grad_lik$grad_alpha)
+  grad_mu <- (grad_mu - (M_lik * mu_lik * (1-mu_lik) * grad_lik$grad_beta))
+  grad_mu    <- t(X_mu[index_z==T,])%*%grad_mu
+  grad_M <- (M_lik*mu_lik * grad_lik$grad_alpha)
+  grad_M <- grad_M + (M_lik * (1-mu_lik) * grad_lik$grad_beta)
+  grad_M <- t(X_M[index_z==T,])%*%grad_M
+  grad =  c(as.vector(grad_mu),as.vector(grad_M))
+  if(sum(is.na(grad))>0)
+    return(list(loglik = -Inf, grad = 0))
+
+
+  ##
+  # sample mixture
+  ##
+  lik_null <- dbinom(y, n, p_null, log=T)
+  p_null   <- log(pi_null) + lik_null
+  p_full  <-  log(1-pi_null)   + lik_obs
+  p_max   <- apply(cbind(p_null,p_full),1, max)
+  p0 <- exp(p_null - p_max)
+  p0 <- p0/(p0 + exp(p_full-p_max))
+  z <- as.vector(1*  (runif(length(p0)) <= p0))
+  pi <- rbeta(1, 5+ sum(z==1), 5 + sum(z==0))
+  p  <- rbeta(1, 1 + sum(y[z==1]), 20+ sum(n[z==1])-sum(y[z==1]))
+
+  return(list(loglik = lik, grad = grad, p_null= p, pi_null = pi, z = z))
+}
+
+
 ##
 # likelihood observations given deaths and probabilites
 # model is:
@@ -751,23 +948,30 @@ loglikProbBB_param2 <- function(beta, death.remain, report.new, X, calcH=F){
   y <- y[index]
   n <- n[index]
 
+  if(max(beta)>120)
+    return(list(loglik = -Inf, grad = 0))
+
+
+
   lik <- sum(dBB(y, size = n, alpha = alpha, beta = beta, log.p=T))
   if(is.na(lik))
     return(list(loglik = -Inf, grad = 0))
 
-  lik <- lik - 2*sum(exp(beta_2))
+  lik <- lik #- 2*sum(exp(beta_2))
   grad_lik <- grad_dBB(y, size = n, alpha = alpha, beta = beta)
 
   grad_mu <- (M*mu * (1-mu) * grad_lik$grad_alpha)
   grad_mu <- t(X)%*%(grad_mu - (M * mu * (1-mu) * grad_lik$grad_beta))
   grad_M <- (M*mu * grad_lik$grad_alpha)
   grad_M <- grad_M + (M * (1-mu) * grad_lik$grad_beta)
-  grad_M <- t(X)%*%grad_M - 2*exp(beta_2)
+  grad_M <- t(X)%*%grad_M #- 2*exp(beta_2)
   grad =  c(as.vector(grad_mu),as.vector(grad_M))
   if(sum(is.na(grad))>0)
     return(list(loglik = -Inf, grad = 0))
   return(list(loglik = lik, grad = grad))
 }
+
+
 
 
 ##
@@ -804,6 +1008,10 @@ loglikProbBB_mixedeffect <- function(beta, death.remain, report.new, X_mu, X_M, 
   y <- y[index]
   n <- n[index]
 
+  if(max(beta)>120)
+    return(list(loglik = -Inf, grad = 0))
+
+
   lik <- sum(dBB(y, size = n, alpha = alpha, beta = beta, log.p=T))
   if(is.na(lik))
     return(list(loglik = -Inf, grad = 0))
@@ -816,7 +1024,7 @@ loglikProbBB_mixedeffect <- function(beta, death.remain, report.new, X_mu, X_M, 
   ##
   # prior
   ##
-  lik <- lik - sum(exp(beta_M))
+  #lik <- lik - sum(exp(beta_M))
   grad_lik <- grad_dBB(y, size = n, alpha = alpha, beta = beta)
 
   grad_mu <- (M*mu * (1-mu) * grad_lik$grad_alpha)
@@ -825,7 +1033,7 @@ loglikProbBB_mixedeffect <- function(beta, death.remain, report.new, X_mu, X_M, 
   grad_mu    <- t(X_mu)%*%grad_mu
   grad_M <- (M*mu * grad_lik$grad_alpha)
   grad_M <- grad_M + (M * (1-mu) * grad_lik$grad_beta)
-  grad_M <- t(X_M)%*%grad_M - exp(beta_M)
+  grad_M <- t(X_M)%*%grad_M #- exp(beta_M)
   grad =  c(as.vector(grad_mu),as.vector(grad_M),as.vector(grad_mixed))
   if(sum(is.na(grad))>0)
     return(list(loglik = -Inf, grad = 0))
@@ -979,6 +1187,55 @@ loglikDeathsGivenProbBB <- function(death, alpha, beta, report){
                  log.p=T)))
 }
 
+
+##
+# log liklihood of obseving report given death and prob
+# density is Beta binomial
+#  deaths  - (int) true number of deaths
+#  alpha       - (n x 1) bb parameter 1
+#  beta        - (n x 1) bb parameter 2
+#  report  - (n x 1) reported deaths culmative each date
+##
+loglikDeathsGivenProbBB_bi <- function(death, alpha, beta, pi_null,p_null,report){
+
+  if(death < max(report,na.rm=T))
+    return(-Inf)
+  n <- length(alpha)
+  if(is.na(report[1])){
+    #we dont have data from day one
+
+    ndeaths <- diff(report[is.na(report)==F])
+    report_adj <- report[1:(n-1)]
+    report_adj <- report_adj[is.na(report_adj)==F]
+  }else{
+    ndeaths <- c(report[1],diff(report))
+    if(n>1){
+      report_adj <- c(0, report[1:(n-1)])
+    }else{
+      report_adj <- 0
+    }
+  }
+
+  ndeaths[ndeaths <0 ] = 0
+  p <- rep(0, length(ndeaths))
+
+  log1 <- dBB(x =ndeaths,
+              size = death - report_adj,
+              alpha = alpha[is.na(alpha)==F],
+              beta = beta[is.na(alpha)==F],
+              log.p=T)
+  #p_ <- rep(0,length(log1))
+  #p_[1:min(2,length(ndeaths))] =log1[1:min(2,length(ndeaths))]
+  #if(length(ndeaths)>2){
+  #  p1 <- log(1-pi_null) + log1[3:length(ndeaths)]
+  #  p2 <- log(pi_null) + dbinom(ndeaths[3:length(ndeaths)], death - report_adj[3:length(ndeaths)],prob=p_null,log = T)
+  #  p_[3:length(ndeaths)] <- log( exp(p1) + exp(p2))
+  #}
+  p1 <- log(1-pi_null) + log1
+  p2 <- log(pi_null) +  dbinom(ndeaths, death - report_adj,prob=p_null,log = T)
+  p_ <- log( exp(p1) + exp(p2))
+  return(sum(p_))
+}
 
 ###
 #
@@ -1162,8 +1419,7 @@ setup_data_postlag2 <- function(N, lag, params, dates_report){
   Xhol <- buildXholiday(N,holidays - (holiday.yesterday*holidays==T))
   Xhol.sunday <- buildXholiday(N,holiday.yesterday*holidays==T)
   Xhol.yesterday <-buildXholiday(N,holiday.yesterday - (holiday.yesterday*holidays==T) )
-  X.Wednesday <-buildXholiday(N, weekdays(dates_report)%in%c('Wednesday') )
-  X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday,X.Wednesday)
+  X <- cbind(X, Xhol, Xhol.sunday, Xhol.yesterday)
 
   return(X)
 }
@@ -1171,7 +1427,7 @@ setup_data_postlag2 <- function(N, lag, params, dates_report){
 setup_data_mixture_cov <- function(N, lag, dates_report){
 
     X_ <- matrix(0, nrow=N, ncol = N)
-    holidays <- weekdays(dates_report)%in%c("Sunday","Saturday") | c(dates_report)%in%c(holidays.Sweden)
+    holidays <- weekdays(dates_report)%in%c("Sunday")
     for(i in 1:N){
       k <- which.max(cumsum(holidays[i:N]==F)==(lag+1))-1
       if(i+k < N)

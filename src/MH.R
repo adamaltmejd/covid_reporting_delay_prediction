@@ -175,7 +175,6 @@ MH_LCN_Hessian <- function(MH_obj,...)
     MH_obj$R_old   = R
     MH_obj$accept  = 1
     MH_obj$grad_old <- res$grad
-    MH_obj$accept_count <- MH_obj$accept_count  +1
 
     return(MH_obj)
   }
@@ -225,7 +224,6 @@ MH_MALA_Hessian <- function(MH_obj,...)
     MH_obj$L_old   = t(R)
     MH_obj$accept  = 1
     MH_obj$grad_old <- res$grad
-    MH_obj$accept_count <- MH_obj$accept_count  +1
 
     return(MH_obj)
   }
@@ -282,10 +280,8 @@ MH_MALA <- function(MH_obj,...)
     MH_obj$lik_old = lik_star
     MH_obj$accept  = 1
     MH_obj$grad_old <- res$grad
-    MH_obj$accept_count <- MH_obj$accept_count  +1
     MH_obj$res <- res
 
-    return(MH_obj)
   }
   return(MH_obj)
 }
@@ -320,14 +316,20 @@ MH_SA <- function(MH_obj, option = 1)
       MH_obj$Sigma  <- (MH_obj$thetaM- MH_obj$theta)%*%t(MH_obj$thetaM- MH_obj$theta)
     }
     MH_obj$n_SA  <- MH_obj$n_SA + 1
+
     if(MH_obj$n_SA  == 20 * nrow(MH_obj$Sigma)){
+      #MH_obj$L <- t(chol(MH_obj$Sigma + 0.01*min(diag(MH_obj$Sigma)) * diag(dim(MH_obj$Sigma)[1])))
       MH_obj$L <- t(chol(MH_obj$Sigma))
       MH_obj$sigma <- MH_obj$sigma/sqrt(max(diag(MH_obj$Sigma)))
+
     }
-    if(MH_obj$n_SA > 20 * nrow(MH_obj$Sigma))
-      MH_obj$L <- t(chol(MH_obj$Sigma))
+    if(MH_obj$count %% 50 == 0){
+      if(MH_obj$n_SA > 20 * nrow(MH_obj$Sigma)){
+        #MH_obj$L <- t(chol(MH_obj$Sigma + 0.01*min(diag(MH_obj$Sigma)) * diag(dim(MH_obj$Sigma)[1])))
+        MH_obj$L <- t(chol(MH_obj$Sigma ))
+      }
     }
-  }
+  }}
   if( option == 2)
   {
       if(MH_obj$count %% 50  == 0){

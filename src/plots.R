@@ -47,7 +47,7 @@ ggsave(filename = file.path("output", "plots", "latest_prediction.pdf"),
 # Load data
 benchmark <- read_fst(file.path("data", "processed", "constant_benchmark.fst"), as.data.table = TRUE)
 model <- read_fst(file.path("data", "processed", "model_benchmark.fst"), as.data.table = TRUE)
-benchmark <- benchmark[state >="2020-04-11"]
+benchmark <- benchmark[state >="2020-04-21"]
 
 # Fix data tables so they look the same
 reported_dead <- benchmark[, .(state, date, days_left = as.integer(days_left), reported_dead)]
@@ -127,7 +127,7 @@ plot_data[, type := factor(type)]
 
 # Figure 1 - Pick 4 dates at random to plot
 set.seed(1234)
-example_dates <- sample(seq(as.Date("2020-04-15"), model[days_left == 13, max(date)], 1), 4)
+example_dates <- sample(seq(as.Date("2020-04-21"), model[days_left == 13, max(date)], 1), 4)
 plot <- day_plot(plot_data[date %in% example_dates],
                  reported_dead[date %in% example_dates],
                  "")
