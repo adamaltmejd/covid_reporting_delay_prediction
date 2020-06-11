@@ -99,7 +99,7 @@ set_default_theme <- function() {
             # Panels
             plot.background = element_rect(fill = "#FFFFFF", color = NA), # bg of the plot
             # plot.background = element_rect(fill = "#f5f5f5", color = NA), # bg of the plot
-            plot.margin = unit(c(2, 2, 2, 2), "pt"),
+            plot.margin = unit(c(5, 5, 5, 5), "pt"),
             panel.border = element_blank(),
             panel.grid.major = element_line(linetype = "dotted", color = "#CCCCCC", size = 0.3),
             panel.grid.minor = element_line(linetype = "dotted", color = "#CECECE", size = 0.2),
