@@ -1,104 +1,4 @@
-% \documentclass[11pt, a4paper]{article}
 
-% \usepackage{upref,amsmath,amssymb,amsthm}
-% \usepackage{amsmath}
-% \usepackage{graphicx}
-% %\usepackage{caption}
-% \usepackage[normalem]{ulem}
-% %\documentclass[12pt,a4paper]{article}
-% %\usepackage{lipsum}
-% \usepackage{amsmath,amssymb,upref,amsthm,eucal}
-% %\usepackage{pstricks-add}
-% %\usepackage{pst-node}
-% %\usepackage[T1]{fontenc}
-% \usepackage{graphics}
-% \usepackage{mathrsfs}
-% \usepackage{natbib}
-
-% %%%ADDED BY KRYS
-% \usepackage{marginnote} %Package helping with margin notes within equations
-%                         %This package works well with ''pdflatex'' but not so well with standard ''latex''
-%                         %It is enough to comment the second line below to get rid of all margin-notes
-
-
-% %The following was added by K.P.
-% \usepackage[usenames, dvipsnames]{xcolor}
-% \definecolor{darkblue}{HTML}{2C326E}
-% %%%
-% %%%
-% \usepackage{marginnote} %Package helping with margin notes
-% %To change the width of paragraph on the margin
-% \setlength{\marginparwidth}{2.2cm}
-% \newcommand\mn[1]{
-% \marginnote{\tiny #1}
-% }
-
-% \newcommand\omn[1]{
-% \reversemarginpar
-% \mn{ #1}
-% \normalmarginpar
-% }
-% %% Label's name on the margin.
-% %% To remove label's names from margin simply comment the third line.
-% %% It is important not to use any 'Latex' meaningful sequences of characters in labeling.
-% %% For example `_` would lead to subscripting in the shown label.
-% \newcommand\labmarg[1]{
-% \label{#1}\mbox{} %\mbox{} is a trick to make it work in subsection environment
-% \mn{#1}
-% }
-
-% %\theoremstyle{plain}
-% \newtheorem{theorem}{Theorem}
-% \newtheorem{lemma}[theorem]{Lemma}
-% \newtheorem{remark}[theorem]{Remark}
-% \newtheorem{proposition}[theorem]{Proposition}
-% %\newtheorem{example}{example}
-
-% %\theoremstyle{definition}
-% \newtheorem{definition}[theorem]{Definition}%[section]
-% %\newtheorem{definition}{Definition}[subsection]
-% \theoremstyle{remark}
-% \newtheorem{example}{Example}
-
-% \DeclareMathOperator{\ran}{Ran}
-% \DeclareMathOperator{\cov}{Cov}
-% \DeclareMathOperator{\vect}{vec}
-% \DeclareMathOperator{\tr}{tr}
-% \DeclareMathOperator{\var}{Var}
-% \DeclareMathOperator{\spant}{Span}
-% \newcommand{\XB}{\mathbf{X}}
-% \newcommand{\YB}{\mathbf{Y}}
-% \newcommand{\UB}{\mathbf{U}}
-% \newcommand{\VB}{\mathbf{V}}
-% \newcommand{\PB}{\mathbf{P}}
-% \newcommand{\PH}{\mathbf{h}}
-% \newcommand{\obsy}{\mathscr{Y}}
-% \newcommand{\eps}{{\epsilon}}
-% \newcommand{\calH}{{\cal H}}
-% %%
-% % JW added
-% %%
-% \newcommand{\jw}[1]{\textcolor{red}{#1}}
-\newcommand{\mv}[1]{{\boldsymbol{\mathrm{#1}}}}
-% \usepackage{cleveref}
-% \newcommand{\Ordo}{\mathcal{O}}
-% \newcommand{\E}{\mathbb{E}}
-% \usepackage{algorithm}
-% \usepackage{algpseudocode}% http://ctan.org/pkg/algorithmicx
-% \algnewcommand{\ffor}[1]{\State\algorithmicfor\ #1\ \algorithmicdo}
-% \algnewcommand{\Endffor}{\unskip\ \algorithmicend\ \algorithmicfor}
-
-% \newtheorem{thm}{Theorem}[section]
-% \newtheorem{alg}[thm]{Algorithm}
-
-% \usepackage{array,multirow,graphicx}
-% \newtheorem{claim}[theorem]{Claim}
-% \begin{document}
-
-
-% \title{Supp}
-
-%  \maketitle
 
 \section{Model}
 
@@ -178,13 +78,13 @@ For the hyperparameter $\sigma^2$ we impose a inverse Gamma distribution, this p
 \subsection{Full model}
 Putting the likelihood and priors together we get the following hierarchical Bayesian model
 \begin{align*}
-\sigma^2 &\sim \Gamma^{-1}(0.01,0.01) \\
+\sigma^2 &\sim \Gamma(1,0.01) \\
 \alpha_k &\sim U[0,\infty] \\
 \beta_k &\sim U[0,\infty] \\
 \alpha_k^H &\sim U[0,\infty] \\
 \beta_k^H &\sim U[0,\infty] \\
-\log(\lambda_i) - \log(\lambda_{i-1}) &\sim N(0,\sigma^2)\\
-d_i| \lambda_i  &\sim Po(\lambda_i) \\
+\log(\mu_i) - \log(\mu{i-1}) &\sim N(0,\sigma^2)\\
+d_i| \lambda_i  &\sim NegBin(\mu_i,\phi) \\
 p_{i,j}|  \mv{\alpha},\mv{\beta}, \mv{\alpha}^H,\mv{\beta}^H &\sim Beta(\alpha^H_j\alpha_{min(j-i,k)},\beta^H_j\beta_{min(j-i,k)}) \\
 r_{i,j}|d_i,\mv{r}_{1,1:j},p &\sim Bin(d_i - \sum_{k=1}^{j-1}r_{i,k}, p_{i,j}),
 \end{align*}
