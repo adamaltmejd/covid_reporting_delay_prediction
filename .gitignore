@@ -1,6 +1,7 @@
 # Model temp files
 *.rds
 data/processed/model_refit.fst
+data/processed/model_lag_refit.fst
 data/processed/model1_refit.fst
 data/processed/model2_refit.fst
 data/processed/model3_refit.fst
