@@ -8,6 +8,7 @@ source("src/functions.R")
 
 #
 w <- 11 # plot width (inches)
+my_palette <- c("#d1ae90", "#046C9A", "#D69C4E", "#ABDDDE", "#000000") # wes_palette("Darjeeling2") # (replaced #ECCBAE)
 
 # Plot 1 = Predictions and current stats
 deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
@@ -78,7 +79,7 @@ model[is.na(target), predicted_deaths := model[!is.na(target), unique(target), b
 
 # Plot a specific day
 day_plot <- function(DT, reported, plot.title) {
-    colors <- c("#ECCBAE", "#046C9A", "gray50")
+    colors <- c("#d1ae90", "#046C9A", "gray50")
     colors <- setNames(colors, c(levels(DT$type), "Reported"))
 
     if (any(DT[!is.na(target), uniqueN(target) != 1, by = date][, V1])) {
@@ -106,7 +107,7 @@ day_plot <- function(DT, reported, plot.title) {
         # Theming
         set_default_theme() +
         # scale_fill_manual(values = fill_colors, limits = label_order, drop = FALSE) +
-        # scale_color_manual(values = wes_palette("Darjeeling2")) +
+        # scale_color_manual(values = my_palette) +
         scale_color_manual(values = colors) +
         scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(1, 5))) +
         labs(title = plot.title,
@@ -174,7 +175,7 @@ plot <- ggplot(data = plot_data, aes(x = factor(days_left), color = type, group 
     geom_point(aes(y = value)) +
     facet_wrap(~variable, scales = "free_y") +
     set_default_theme() +
-    scale_color_manual(values = wes_palette("Darjeeling2")) +
+    scale_color_manual(values = my_palette) +
     labs(#title = "Model metrics",
          #subtitle = "",
          #caption = "",
@@ -200,7 +201,7 @@ plot_data <- rbindlist(list(
 plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
     set_default_theme() +
-    scale_color_manual(values = wes_palette("Darjeeling2")) +
+    scale_color_manual(values = my_palette) +
     labs(#title = "Model metrics",
          #subtitle = "",
          #caption = "",
@@ -230,7 +231,7 @@ plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group 
     geom_line() + geom_point() +
     # facet_wrap(~days_left) +
     set_default_theme() +
-    scale_color_manual(values = wes_palette("Darjeeling2")) +
+    scale_color_manual(values = my_palette) +
     labs(#title = "Model metrics",
          #subtitle = "",
          #caption = "",
