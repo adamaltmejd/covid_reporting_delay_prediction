@@ -8,11 +8,12 @@ source("src/functions.R")
 
 #
 w <- 11 # plot width (inches)
+my_palette <- c("#d1ae90", "#046C9A", "#D69C4E", "#ABDDDE", "#000000") # wes_palette("Darjeeling2") # (replaced #ECCBAE)
 
 # Plot 1 = Predictions and current stats
 deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
 model_predict <- read_fst(file.path("data", "processed", "model_latest.fst"), as.data.table = TRUE)
-DT1 <- model_predict[date >= Sys.Date() - 28]
+DT1 <- model_predict[date %between% c("2020-05-20", "2020-06-03")]
 DT2 <- deaths_dt[!is.na(N) & !is.na(date) & publication_date == max(model_predict[, date])]
 DT2[, avg := frollmean(N, 7, algo = "exact", align = "right")]
 DT2 <- DT2[date > "2020-03-15"]
@@ -78,7 +79,7 @@ model[is.na(target), predicted_deaths := model[!is.na(target), unique(target), b
 
 # Plot a specific day
 day_plot <- function(DT, reported, plot.title) {
-    colors <- c("#ECCBAE", "#046C9A", "gray50")
+    colors <- c("#d1ae90", "#046C9A", "gray50")
     colors <- setNames(colors, c(levels(DT$type), "Reported"))
 
     if (any(DT[!is.na(target), uniqueN(target) != 1, by = date][, V1])) {
@@ -93,11 +94,11 @@ day_plot <- function(DT, reported, plot.title) {
                     group = type)) +
         geom_hline(data = hline, aes(yintercept = V1), color = "grey50") +
         geom_line(data = reported,
-                aes(y = reported_dead, group = "Reported", color = "Reported"), linetype = "dashed") +
+                  aes(y = reported_dead, group = "Reported", color = "Reported"), linetype = "dashed") +
         geom_point(data = reported,
-                aes(y = reported_dead, group = "Reported", color = "Reported")) +
+                   aes(y = reported_dead, group = "Reported", color = "Reported")) +
         # The actual models
-        geom_line(position = position_dodge(width = 0.6)) +
+        geom_line(aes(linetype = type), position = position_dodge(width = 0.6)) +
         geom_point(data = DT[days_left != "0"], position = position_dodge(width = 0.6)) +
         geom_errorbar(data = DT[days_left != "0"], aes(ymin = ci_lower, ymax = ci_upper),
                     width = 0.7, position = position_dodge(width = 0.6)) +
@@ -106,7 +107,7 @@ day_plot <- function(DT, reported, plot.title) {
         # Theming
         set_default_theme() +
         # scale_fill_manual(values = fill_colors, limits = label_order, drop = FALSE) +
-        # scale_color_manual(values = wes_palette("Darjeeling2")) +
+        # scale_color_manual(values = my_palette) +
         scale_color_manual(values = colors) +
         scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(1, 5))) +
         labs(title = plot.title,
@@ -174,7 +175,7 @@ plot <- ggplot(data = plot_data, aes(x = factor(days_left), color = type, group 
     geom_point(aes(y = value)) +
     facet_wrap(~variable, scales = "free_y") +
     set_default_theme() +
-    scale_color_manual(values = wes_palette("Darjeeling2")) +
+    scale_color_manual(values = my_palette) +
     labs(#title = "Model metrics",
          #subtitle = "",
          #caption = "",
@@ -200,7 +201,7 @@ plot_data <- rbindlist(list(
 plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
     set_default_theme() +
-    scale_color_manual(values = wes_palette("Darjeeling2")) +
+    scale_color_manual(values = my_palette) +
     labs(#title = "Model metrics",
          #subtitle = "",
          #caption = "",
@@ -230,7 +231,7 @@ plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group 
     geom_line() + geom_point() +
     # facet_wrap(~days_left) +
     set_default_theme() +
-    scale_color_manual(values = wes_palette("Darjeeling2")) +
+    scale_color_manual(values = my_palette) +
     labs(#title = "Model metrics",
          #subtitle = "",
          #caption = "",
