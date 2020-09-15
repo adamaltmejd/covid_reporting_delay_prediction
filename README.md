@@ -2,6 +2,6 @@
 
 To run the analysis:
 
-* Run data_processing.R to create "deaths__dt.fst"
+* Run data__processing.R to create "deaths__dt.fst"
 * 
 
