@@ -2,6 +2,12 @@
 
 To run the analysis:
 
-* Run data__processing.R to create "deaths__dt.fst"
-* 
+* Run data___processing.R to create "deaths___dt.fst"
+* Run buildData.R
+* Run Beta___GP___lag___benchmark___build.R
 
+
+TODO:
+
+* Update buildData.R so it works for missing days.
+* TODO

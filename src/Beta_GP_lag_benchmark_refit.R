@@ -1,20 +1,30 @@
 ###
 # benchmarking
+# using parameters(theta     - parameters of the detection probabilites
+#                  Death_est - true number of deaths)
+# from Beta_GP_lag_benchmark_build.R to generate
+# preidcition of the reporting
 #
+# load files:
+#  data/processed/processed_data.rds   (buildData.R)
+#  data/simulation_results/param_lagged_YYYY-MM-DD.rdx (Beta_GP_lag_benchmark_build.R)
+#
+# generates files:
+# data/processed/model_latest.fst
+# data/processed/model_lag_refit.fst
+# data/processed/model_benchmark.fst
+# data/processed/model_benchmark_bias.fst
 ###
 library( stringr)
 library(foreach)
 library(tidyr)
 library(fst)
 library(data.table)
-source("src/util.r")
+source(file.path("src","util","util.r"))
 nclust <- 6
 report.day = 14 # how long after death we wish to predicit
 start.predict.day=20
 path.to.files <- file.path("data")
-#files <- list.files('/Users/jonaswallin/Dropbox/temp/simulation_results_beta',
-#                    pattern = "^param",
-#                    full.names = TRUE)
 files <- list.files(paste(path.to.files,"/simulation_results",sep=""),
                              pattern = "^param",
                              full.names = TRUE)

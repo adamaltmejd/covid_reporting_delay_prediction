@@ -1,5 +1,5 @@
 
-source("src/util.r")
+source(file.path("src", "util","util.r"))
 ##
 #'
 #'    lag    - (int)   lag days  (lag = 0 is only first non-holiday, lag = 1 two non holidays)

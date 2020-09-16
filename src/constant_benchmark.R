@@ -1,8 +1,18 @@
+##
+# builds the constant benchmark model
+#
+# load files:
+# data/processed/deaths_dt.fst (data_processing.R)
+#
+# generates the files:
+# data/processed/constant_benchmark.fst
+##
+
 library(data.table)
 library(fst)
 library(tidyr)
 library(ggplot2)
-source("src/util.scores.R")
+source(file.path("src","util","util.scores.R"))
 
 alpha <- 0.1
 

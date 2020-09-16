@@ -1,3 +1,14 @@
+##
+# building base data file from FHM data files
+#
+# reads files:
+#  data/FHM/Folkhalsomyndigheten_Covid19_YYYY-MM-DD.xlsx
+# (external files avialable at <https://github.com/adamaltmejd/covid>)
+#
+# generates the files:
+# /data/processed/deaths_dt.fst
+##
+
 library(data.table)
 library(readxl)
 library(stringr)

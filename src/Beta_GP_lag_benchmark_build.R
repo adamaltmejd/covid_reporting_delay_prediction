@@ -1,15 +1,24 @@
 ##
-#  building the benchmark prediction parameters for the full model
+#  builds and stores the parameters
+#  (theta    - parameter of the detection probabilites
+#  Death_est - estimated through MCMC)
+#  needed for the benchmark
 #  need to run Beta_GP_benchmark.R
+#
+#  load file:
+#  data/processed/processed_data.rds (buildData.R)
+
+#  generates the files:
+#  data/simulation_results/param_lagged_YYYY-MM-DD.rdx
 ##
 library(foreach)
 library(doParallel)
 library(tidyr)
-source(file.path("src", "util.r"))
-source(file.path("src", "MH.R"))
-source(file.path("src", "functions.R"))
-source(file.path("src", "GPutil.R"))
-source(file.path("src","lagged" ,"MLbeta.R"))
+source(file.path("src", "util","util.r"))
+source(file.path("src", "util","MH.R"))
+source(file.path("src", "util","functions.R"))
+source(file.path("src", "util","GPutil.R"))
+source(file.path("src","util","MLbeta.R"))
 nclust <- 6
 lag <- 1
 MCMC_sim <- 15000

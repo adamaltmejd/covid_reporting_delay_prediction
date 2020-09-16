@@ -3,6 +3,7 @@
 #  need to run Beta_GP_benchmark.R
 ##
 library(foreach)
+library(tidyr)
 library(doParallel)
 source(file.path("src", "util.r"))
 source(file.path("src", "MH.R"))
@@ -10,27 +11,16 @@ source(file.path("src", "functions.R"))
 source(file.path("src", "GPutil.R"))
 source(file.path("src", "modelbenchmarkutil_poisson.R"))
 nclust <- 4
-MCMC_sim <- 20000
+MCMC_sim <- 15000
 burnin_p = 0.5
 deaths_sim <- 5
 maxusage.day = 20 #must be less then N
-unique.days  = 6
+unique.days  = 2
 true.day = 5
-start.predict.day = 40#16 # more then unique days
+start.predict.day = 11#16 # more then unique days
 
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
-Reported_T = result$detected
-N_T <- dim(Reported_T)[1]
-
-deaths_est_T <- apply(Reported_T, 1, max, na.rm=T)
-
-data_T <- newDeaths(deaths_est_T,
-                   Reported_T,
-                   maxusage.day =maxusage.day)
-X_T <- setup_data(N_T, maxusage.day, result$dates_report, unique.days)
-predicition.list <-list()
-
-
+N_T <- dim(result$detected)[1]
 cl <- parallel::makeCluster(nclust,setup_strategy = "sequential", outfile="")
 doParallel::registerDoParallel(cl)
 foreach(j = start.predict.day:N_T)  %dopar% {
@@ -45,7 +35,7 @@ foreach(j = start.predict.day:N_T)  %dopar% {
                                deaths_sim = deaths_sim)
 
   save(res_save,
-       file = file.path("data", "simulation_results_old", paste0("param_", result$dates_report[j], ".rds")))
+       file = file.path("data", "simulation_results_model1", paste0("param_", result$dates_report[j], ".rds")))
 }
 
 parallel::stopCluster(cl)

@@ -1,10 +1,26 @@
+##
+# generate the figures for the article x
+#
+# read files:
+# data/processed/deaths_dt.fst           (data_processing.R)
+# data/processed/model_latest.fst        (Beta_GP_lag_benchmark_build.R)
+# data/processed/constant_benchmark.fst  (constant_benchmark.R)
+# data/processed/model_benchmark.fst.fst (Beta_GP_lag_benchmark_build.R)
+#
+# generates files:
+# output/plots/SCRPS_over_weekdays.pdf
+# output/plots/daily/prediction_YYYY-MM-DD.pdf
+# output/plots/SCRPS_over_states.pdf
+# output/plots/model_metrics.pdf
+##
+
 library(data.table)
 library(fst)
 library(forcats)
 library(ggplot2)
 library(hrbrthemes)
 library(wesanderson)
-source("src/functions.R")
+source(file.path("src", "util","functions.R"))
 
 #
 w <- 11 # plot width (inches)
