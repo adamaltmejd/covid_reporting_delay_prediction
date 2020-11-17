@@ -638,10 +638,12 @@ buildXday <- function(N){
 #'
 #' Reported -  (N x N) number of reported deaths
 #' dates    -  (N x 1) dates of reporting
-#' lag      -  (int)   how long after to report (lag = 0 is only first non-holiday, lag = 1 two non holidays)
+#' lag      -  (int)   how long after to report (lag = 0 is only first non-holiday, lag = 1 two non holidays,
+#' dates_not_reported - (N x 1) dayes with no reporting in
 #'
 ##
-splitlag <- function(Reported_T, dates, lag){
+splitlag <- function(Reported_T, dates, lag,
+                     dates_not_reported){
 
   holidays <- weekdays(dates)%in%c("Sunday","Saturday") | c(dates)%in%c(holidays.Sweden)
   N <- dim(Reported_T)[1]
@@ -662,7 +664,8 @@ splitlag <- function(Reported_T, dates, lag){
   }
   return(list(Reported_O = Reported_O,
               Reported_T = Reported_T,
-              day_completed = day_completed) )
+              day_completed = day_completed,
+              dates_not_reported = dates_not_reported) )
 }
 
 ##

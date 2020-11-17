@@ -2,15 +2,19 @@
 source(file.path("src", "util","util.r"))
 ##
 #'
-#'    lag    - (int)   lag days  (lag = 0 is only first non-holiday, lag = 1 two non holidays)
-#'    theta0 - (p x 1) inital guess of parameters
+#'@param    lag    - (int)   lag days  (lag = 0 is only first non-holiday, lag = 1 two non holidays, etc...)
+#'@param    npar   - (int)   number of days with unique values to estimate parameters on
+#'@param    theta0 - (p x 1) inital guess of parameters
 ##
 ML_betaBin <- function(result,
                        lag,
                        npar = 2,
                        theta0 = NULL){
 
-    report <- splitlag(result$detected,as.Date(result$dates_report) ,lag)
+    report <- splitlag(result$detected,
+                       as.Date(result$dates_report) ,
+                       lag,
+                       result$dates_not_reported)
     report_lag <- report$Reported_T
     deaths_est_T <- apply(report$Reported_T, 1, max, na.rm=T)
 
@@ -24,20 +28,25 @@ ML_betaBin <- function(result,
             IndexX[i,i:(which.max(data_T$death.remain[i,]==0)-2)] =T
         }
     }
+    IndexX[,result$dates_not_reported]=F
     X <- X[IndexX[upper.tri(data_T$death.remain,diag = T)],]
     index <- upper.tri(data_T$death.remain,diag = T) & IndexX
     y = data_T$report.new[index ]
     n = data_T$death.remain[index ]
-    index = is.na(y)==F & is.na(n)==F
+    index = is.na(y)==F & is.na(n)==F & n>0
     X <- as.matrix(X[index,])
     y <- y[index]
+
     n <- n[index]
     p <- dim(X)[2]
     if(is.null(theta0))
         theta0 <- rep(0,2*p)
-    res <- optim(theta0, function(x){-log_bb(x, y, n, X)  + sum(exp(x[(p+1):(2*p)]))})
-    while(res$convergence>0)
-        res <- optim(res$par,function(x){-log_bb(x, y, n, X) + sum(exp(x[(p+1):(2*p)]))})
+    #res <- optim(theta0, function(x){-log_bb(x, y, n, X)  + sum(exp(x[(p+1):(2*p)]))})
+    res <- optim(theta0, function(x){-log_bb(x, y, n, X)})
+    while(res$convergence>0){
+        #res <- optim(res$par,function(x){-log_bb(x, y, n, X) + sum(exp(x[(p+1):(2*p)]))})
+        res <- optim(res$par,function(x){-log_bb(x, y, n, X)})
+    }
     if(res$convergence>0){
         print('warning non convergence')
     }else{
