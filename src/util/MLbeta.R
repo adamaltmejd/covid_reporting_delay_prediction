@@ -5,11 +5,13 @@ source(file.path("src", "util","util.r"))
 #'@param    lag    - (int)   lag days  (lag = 0 is only first non-holiday, lag = 1 two non holidays, etc...)
 #'@param    npar   - (int)   number of days with unique values to estimate parameters on
 #'@param    theta0 - (p x 1) inital guess of parameters
+#'@param    latest_days_not_report - (int) dont use the latest day due to bias in the estimate of N
 ##
 ML_betaBin <- function(result,
                        lag,
                        npar = 2,
-                       theta0 = NULL){
+                       theta0 = NULL,
+                       latest_days_not_report = 10){
 
     report <- splitlag(result$detected,
                        as.Date(result$dates_report) ,
@@ -29,6 +31,7 @@ ML_betaBin <- function(result,
         }
     }
     IndexX[,result$dates_not_reported]=F
+    IndexX[(N-latest_days_not_report):N,]=F
     X <- X[IndexX[upper.tri(data_T$death.remain,diag = T)],]
     index <- upper.tri(data_T$death.remain,diag = T) & IndexX
     y = data_T$report.new[index ]
@@ -65,10 +68,14 @@ ML_betaBin_post <- function(result,
                        lag,
                        maxusage.day,
                        npars,
-                       theta0 = NULL){
+                       theta0 = NULL,
+                       latest_days_not_report = 10){
 
     N <- dim(result$detected)[2]
-    report <- splitlag(result$detected,as.Date(result$dates_report) ,lag)
+    report <- splitlag(result$detected,
+                       as.Date(result$dates_report)
+                       ,lag
+                       ,result$dates_not_reported)
     report_lag <- report$Reported_O
     deaths_est_T <- apply(report$Reported_O[1:N,], 1, max, na.rm=T)
     report_lag <- report$Reported_O[1:N,1:N]
@@ -82,6 +89,8 @@ ML_betaBin_post <- function(result,
             IndexX[i,] =T
         }
     }
+    IndexX[,result$dates_not_reported]=F
+    IndexX[(N-latest_days_not_report):N,]=F
     X <- X[IndexX[upper.tri(data_O$death.remain,diag = T)],]
 
     index <- upper.tri(data_O$death.remain,diag = T) & IndexX
@@ -94,9 +103,11 @@ ML_betaBin_post <- function(result,
     p <- dim(X)[2]
     if(is.null(theta0))
         theta0 <- rep(0,2*p)
-    res <- optim(theta0, function(x){-log_bb(x, y, n, X)  + sum(exp(x[(p+1):(2*p)]))})
+    #res <- optim(theta0, function(x){-log_bb(x, y, n, X)  + sum(exp(x[(p+1):(2*p)]))})
+    res <- optim(theta0, function(x){-log_bb(x, y, n, X)  })
     while(res$convergence>0){
-        res <- optim(res$par,function(x){-log_bb(x, y, n, X)  + sum(exp(x[(p+1):(2*p)]))})
+        #res <- optim(res$par,function(x){-log_bb(x, y, n, X)  + sum(exp(x[(p+1):(2*p)]))})
+        res <- optim(res$par,function(x){-log_bb(x, y, n, X)  })
     }
     if(res$convergence>0){
         print('warning non convergence')
