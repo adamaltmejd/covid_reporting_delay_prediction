@@ -46,3 +46,10 @@ res_post <- ML_betaBin_post(result_j,
 param_alpha_post <-cbind(param_alpha_post, res_post$alpha_X)
 param_beta_post <-cbind(param_beta_post, res_post$beta_X)
 }
+# pret X = X, Xhol, Xhol.sunday, Xhol.yesterday, X*X_hol
+# post X = X, Xhol, Xhol.sunday, Xhol.yesterday
+mu_1 <- 1/(1+exp(-param_alpha[1,]))
+mu_2 <- 1/(1+exp(-param_alpha_post[1,]))
+par(mfrow=c(2,1))
+plot(mu_1)
+plot(mu_2)

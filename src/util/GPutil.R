@@ -54,6 +54,24 @@ prior_GP <- function(theta, L){
 }
 
 #'
+#' General Gaussian prior with a an extra prior at step 1 of
+#'
+#'  @param theta -    (nx1) the processes
+#'  @param L        - (nxn) cholesky preicison factor
+#'  @param mu_sigma - (2x1) mu sigma^2
+prior_GP_p <- function(theta, L, mu_sigma){
+  Q = t(L)%*%L
+  theta[1] = theta[1] - mu_sigma[1]
+  Q[1,1] <- Q[1,1] + 1/mu_sigma[2]^2
+  lik <- -1/2 * (t(theta)%*%Q%*%theta)
+  
+  grad <-  -(Q%*%theta)
+  Hessian <- - Q
+  return(list(loglik = lik, grad = grad, Hessian = Hessian))
+}
+
+
+#'
 #' General Gaussian prior
 #'
 #'  @param theta - (nx1) the processes

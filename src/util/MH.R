@@ -47,7 +47,7 @@ MALAiter <- function(MH_obj, calcLik = F,...)
   if(calcLik){
     res <- MH_obj$Lik(MH_obj$theta,...)
     MH_obj$grad_old <- res$grad
-    MH_obj$lik_old  <- res$loglik
+    MH_obj$lik_old  <- as.vector(res$loglik)
     MH_obj$res <- res
   }
 
@@ -259,7 +259,7 @@ MH_MALA <- function(MH_obj,...)
     theta_star <- as.vector(mu_old + MH_obj$sigma * (MH_obj$L%*%rnorm(length(MH_obj$theta))))
   }
   res <- MH_obj$Lik(theta_star,...)
-  lik_star <- res$loglik
+  lik_star <- as.vector(res$loglik)
   if(lik_star == -Inf) { return(MH_obj) }
 
 
