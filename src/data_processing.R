@@ -23,9 +23,10 @@ can_be_numeric <- function(x) {
 }
 
 get_record_date <- function(f) {
-    require(readxl)
     sheets <- excel_sheets(f)
-    return(as.Date(sub("^FOHM ", "", sheets[length(sheets)]), format="%d %b %Y"))
+    ret <- as.Date(sub("^FOHM ", "", sheets[length(sheets)]), format="%d %b %Y")
+    if (is.na(ret)) ret <- as.Date(sub("^FOHM ", "", sheets[grep("FOHM", sheets)]), format="%d %b %Y")
+    return(ret)
 }
 
 load_fhm_deaths <- function(f) {
@@ -42,7 +43,7 @@ load_fhm_deaths <- function(f) {
 
     setnames(DT, c("date", "N"))
 
-    DT[date == "Uppgift saknas" | date %in%c("uppgift saknas","Uppgift saknaa"), date := NA]
+    DT[(tolower(date) %in% c("uppgift saknas", "uppgift saknaa", "uppgift saknas+a1")), date := NA]
 
     if (can_be_numeric(DT[, date])) {
         DT[, date := as.Date(as.numeric(date), origin = "1899-12-30")]
@@ -53,6 +54,7 @@ load_fhm_deaths <- function(f) {
     # Ensure starting point is March 1st, and that all dates have a value
     publication_date <- get_record_date(f)
     DT <- merge(DT, data.table(date = seq(as.Date("2020-03-01"), publication_date, by = 1)), all = TRUE)
+
     DT[is.na(N), N := 0]
 
     DT[, publication_date := publication_date]
