@@ -1,5 +1,5 @@
 require(Matrix)
-holidays.Sweden <- as.Date(c("2020-04-10","2020-04-13","2020-05-01","2020-05-21"))
+holidays.Sweden <- as.Date(c("2020-04-10","2020-04-13","2020-05-01","2020-05-21","2020-06-19","2020-06-20"))
 
 ##
 # sample reported deaths after rep.day (if Inf) predicit day
@@ -651,12 +651,16 @@ splitlag <- function(Reported_T, dates, lag,
   Reported_O = Reported_T
   day_completed <- rep(1,N)
   for(i in 1:N){
+    # which day is lag +1 number of days before holiday
     k <- which.max(cumsum(holidays[i:N2]==F)==(lag+1))-1
     if(k==0)
       k <- N2-i
     Reported_O[i, i:min(i+k, N2)] <- NA
     if(k+i<N2){
-      Reported_O[i,  (i+k+1):N2] <- Reported_O[i,  (i+k+1):N2] - Reported_T[i,  (i+k)]
+      Reported_T_temp =  Reported_T[i,  (i+k)]
+      if(is.na(Reported_T_temp)) # has been no reporting those days
+        Reported_T_temp = 0
+      Reported_O[i,  (i+k+1):N2] <- Reported_O[i,  (i+k+1):N2] -Reported_T_temp
       Reported_T[i, (i+k+1):N2]  <- NA
     }else{
       day_completed[i] <- 0

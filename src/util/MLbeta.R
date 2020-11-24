@@ -140,24 +140,24 @@ log_bb<- function(theta, y, n,X){
 
 ##
 #' running the data for obsevations after the lag
-#' result -
-#' true.day     - (int) days not estimated
-#'  lag         - (int)   lag days  (lag = 0 is only first non-holiday, lag = 1 two non holidays)
-#' maxusage.day - (int) how many reports days to use for each death
-#' MCMC_sim     - (int) how many simulations
-#' burnin_p     - ([0,1]) how many burnins to run in percantage of MCMC_sim
+#' result       - data
+#' alpha_beta   - parameter for beta_binomial distribuiton
+#' npars         - number of parameters used for alpha_beta model
+#' true.day     - treat all days prior to true.day as fixed
+#' maxusage.day - only use data up to maxusage.day to estimate data
+#'                death reported after maxusage.day are ignored
 ##
 BetaGP_lag_post_fast <- function(
                                     result,
+                                    alpha_Beta,
                                     lag,
-                                    true.day,
-                                    maxusage.day,
-                                    MCMC_sim,
-                                    burnin_p,
-                                    deaths_sim,
+                                    npars,
                                     theta_prior,
-                                    prior = 0,
-                                    npars = 2){
+                                    true.day = 0,
+                                    maxusage.day = 30,
+                                    MCMC_sim  = 1000,
+                                    burnin_p = 0.5,
+                                    deaths_sim = 30){
     N_T <- length(result$dates)
     deaths_est_T <- apply(result$detected, 1, max, na.rm=T)
     report <- splitlag(result$detected,
@@ -165,14 +165,12 @@ BetaGP_lag_post_fast <- function(
                        lag,
                        result$dates_not_reported)
     
-    X_T <- setup_data_postlag2(j, lag, npars, result_j$dates_report)
-    deaths_est <- apply(report_j$Reported_O, 1, function(x) { if(all(is.na(x))){return(0)};
+    X_T <- setup_data_postlag2(N_T, lag, npars, result$dates_report)
+    deaths_est <- apply(report$Reported_O, 1, function(x) { if(all(is.na(x))){return(0)};
         max(x,na.rm=T)})
     X_mu <- X_T
-    #X_mixed <- setup_data_mixed_effect(N, 2, result$dates_report[1:N])
-    
+    X_M  <- X_T
     p  <- dim(X_mu)[2]
-    #X_M  <- cbind(rep(1,dim(X_mu)[1]),rowSums(X_mu[,4:5])>0)
     p1 <- dim(X_M)[2]
     
     
@@ -215,7 +213,6 @@ BetaGP_lag_post_fast <- function(
     Beta <- matrix(NA, ncol=N_T, nrow=N_T)
     P <- matrix(NA, ncol=N_T, nrow=N_T)
     theta_GP <-  matrix(NA, nrow=MCMC_sim, ncol = length(MH_obj_GP$theta))
-    Thetas <- matrix(NA, nrow=MCMC_sim, ncol = length(MH_obj$theta))
     GPprior <- rep(0, MCMC_sim)
     Death_est <- matrix(NA, nrow=MCMC_sim, ncol=N_T)
     alpha.MCMC <- rep(4, N_T)
@@ -233,12 +230,8 @@ BetaGP_lag_post_fast <- function(
                       maxusage.day)
     
     
-    pi_null <- MH_obj$res$pi_null
-    z_null  <- MH_obj$res$z
-    p_null  <- MH_obj$res$p_null
-    
-    beta_mu    <- alpha_Beta$theta[1:p]
-    beta_M     <- alpha_Beta$theta[p + (1:p1)]
+    beta_mu    <- alpha_Beta$alpha_X
+    beta_M     <- alpha_Beta$beta_X
     mu <- 1/(1+exp(-X_mu%*%beta_mu))
     M  <- exp(X_M%*%beta_M)
     Alpha[upper.tri(data_$report.new,diag=T)] <- M * mu
@@ -260,36 +253,35 @@ BetaGP_lag_post_fast <- function(
         
         
         
-        prior_N <- function(N, i){ dnegbin(N, as.vector(exp(A%*%MH_obj_GP$theta))[i],phi) }
-        res <- sample.deathsBB_bi(deaths_sim,
+        #replace
+        res <- sample.deathsBB_negbin(deaths_sim,
                                   deaths_est,
                                   Alpha,
                                   Beta,
-                                  report_j$Reported_O,
+                                  report$Reported_O,
                                   alpha.MCMC,
                                   true.day = true.day,
-                                  p_null = p_null,
-                                  pi_null = pi_null,
-                                  use.prior=T,
-                                  prior=prior_N)
+                                  theta = as.vector(exp(A%*%MH_obj_GP$theta)),
+                                  phi  =phi)
         deaths_est <- res$deaths
         data_ <-newDeaths(deaths_est,
-                          report_j$Reported_O,
+                          report$Reported_O,
                           maxusage.day)
         ##
         # build tau sampler
         ##
         
         L_theta          <- L%*%MH_obj_GP$theta
-        sigma2 <- rGIG(p = -length(L_theta)/2 +2,0.01,sum(L_theta^2))
-        tau   <- 1/sigma2 #rgamma(1, shape=length(L_theta)/2 + 0.001, scale = sum(L_theta^2)/2 + 0.001)
+        #sigma2 <- rGIG(p = -length(L_theta)/2 +2,0.01,sum(L_theta^2))
+        tau   <- 100 #1/sigma2 #rgamma(1, shape=length(L_theta)/2 + 0.001, scale = sum(L_theta^2)/2 + 0.001)
         L_in <- sqrt(tau) * L
         
         MH_obj_GP <- MALAiter(MH_obj_GP, TRUE,
                               N = deaths_est,
                               L = L_in,
                               phi = phi,
-                              A = A)
+                              A = A,
+                              theta_prior  =theta_prior)
         phi_res <- sample.phi(phi,
                               deaths_est,
                               as.vector(A%*%MH_obj_GP$theta),
@@ -302,25 +294,18 @@ BetaGP_lag_post_fast <- function(
             alpha.MCMC[res$acc/deaths_sim < 0.3] <- alpha.MCMC[res$acc/deaths_sim < 0.3] -1
             alpha.MCMC[alpha.MCMC<1] <- 1
         }else{
-            p_vec[i-burnin + 1] <- p_null
-            pi_vec[i-burnin + 1] <- pi_null
-            Thetas[i-burnin + 1,] <- MH_obj$theta
             Death_est[i-burnin + 1,] <-res$deaths
             theta_GP[i-burnin + 1,] <-  as.vector(MH_obj_GP$theta)
             Gp.prior[i-burnin + 1]  <- tau
             phis[i-burnin + 1]  <- phi
         }
     }
-    res_save <- list(Thetas = Thetas,
-                     Death_est = Death_est,
+    res_save <- list(Death_est = Death_est,
                      theta_GP = theta_GP,
                      true.day = true.day,
                      maxusage.day = maxusage.day,
                      GP.prior      = Gp.prior,
                      phis = phis,
-                     p_vec = p_vec,
-                     pi_vec = pi_vec,
-                     date  = result$dates_report[j],
                      lag = lag,
                      j = j,
                      A=  A,
@@ -460,7 +445,7 @@ BetaGP_lag_fast <- function(result,
         L_theta          <- L%*%MH_obj_GP$theta
         
         sigma2 <- 1#rGIG(p = -length(L_theta)/2 +1,0.001,sum(L_theta^2))
-        tau   <- 1/sigma2 #rgamma(1, shape=length(L_theta)/2 + 0.001, scale = sum(L_theta^2)/2 + 0.001)
+        tau   <- 100 #rgamma(1, shape=length(L_theta)/2 + 0.001, scale = sum(L_theta^2)/2 + 0.001)
         #tau   <- rgamma(1, shape=length(L_theta)/2 + 0.001, scale = sum(L_theta^2)/2 + 0.001)
         L_in <- sqrt(tau) * L
         
