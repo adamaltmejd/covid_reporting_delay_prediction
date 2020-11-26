@@ -13,7 +13,7 @@ source(file.path("src", "util","functions.R"))
 source(file.path("src", "util","GPutil.R"))
 source(file.path("src","util","MLbeta.R"))
 lag <- 1
-days_to_pred <- 40
+days_to_pred <- 100
 
 predicition.list <-list()
 result <- readRDS(file.path("data", "processed", "processed_data.rds"))
@@ -25,7 +25,7 @@ param_alpha <- c()
 param_beta  <- c()
 param_alpha_post <- c()
 param_beta_post  <- c()
-for(j in  40:length(result$dates)){
+for(j in  (length(result$dates)-80):length(result$dates)){
 start_  <- max(1,j-days_to_pred)
 result_j <- result
 
@@ -33,12 +33,12 @@ result_j$detected     <- result_j$detected[start_:j,start_:j]
 result_j$dates        <- result_j$dates[start_:j]
 result_j$dates_report <-  result_j$dates_report[start_:j]
 result_j$dates_not_reported <- result_j$dates_not_reported[start_:j]
-res <-  ML_betaBin(result_j,
-                   lag,
-                   npar)
+#res <-  ML_betaBin(result_j,
+#                   lag,
+#                   npar)
 
-param_alpha <-cbind(param_alpha, res$alpha_X)
-param_beta <-cbind(param_beta, res$beta_X)
+#param_alpha <-cbind(param_alpha, res$alpha_X)
+#param_beta <-cbind(param_beta, res$beta_X)
 res_post <- ML_betaBin_post(result_j,
                             lag,
                             30,
@@ -48,8 +48,9 @@ param_beta_post <-cbind(param_beta_post, res_post$beta_X)
 }
 # pret X = X, Xhol, Xhol.sunday, Xhol.yesterday, X*X_hol
 # post X = X, Xhol, Xhol.sunday, Xhol.yesterday
-mu_1 <- 1/(1+exp(-param_alpha[1,]))
+#mu_1 <- 1/(1+exp(-param_alpha[1,]))
 mu_2 <- 1/(1+exp(-param_alpha_post[1,]))
+mu_3 <- 1/(1+exp(-param_alpha_post[2,]))
 par(mfrow=c(2,1))
-plot(mu_1)
 plot(mu_2)
+plot(mu_3)

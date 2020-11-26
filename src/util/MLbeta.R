@@ -46,7 +46,7 @@ ML_betaBin <- function(result,
         theta0 <- rep(0,2*p)
     #res <- optim(theta0, function(x){-log_bb(x, y, n, X)  + sum(exp(x[(p+1):(2*p)]))})
     res <- optim(theta0, function(x){-log_bb(x, y, n, X)})
-    for(i in 1:30){
+    for(i in 1:300){
         #res <- optim(res$par,function(x){-log_bb(x, y, n, X)  + sum(exp(x[(p+1):(2*p)]))})
         res <- optim(res$par,function(x){-log_bb(x, y, n, X)  })
         if(res$convergence==0)

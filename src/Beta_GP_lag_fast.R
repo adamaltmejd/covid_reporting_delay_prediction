@@ -60,7 +60,8 @@ res_save <- BetaGP_lag_fast(result_j,
                             MCMC_sim  =MCMC_sim)
 
 res_save$Death_est+res_post$Death_est
-plot(result_j$dates,result_j$detected[,21])
+i <- dim(result_j$detected)[1]
+plot(result_j$dates,result_j$detected[,i],ylim=c(0,80))
 lines(result_j$dates,apply(res_save$Death_est+res_post$Death_est,2,quantile,probs=c(0.5)))
 Death_Q<-apply(res_save$Death_est+res_post$Death_est,2,quantile,probs=c(0.25,0.5,0.75))
-print(rbind(result_j$detected[,21],apply(res_save$Death_est+res_post$Death_est,2,quantile,probs=c(0.25,0.5,0.75))))
+print(rbind(result_j$detected[,i],apply(res_save$Death_est+res_post$Death_est,2,quantile,probs=c(0.25,0.5,0.75))))

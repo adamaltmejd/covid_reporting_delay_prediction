@@ -688,17 +688,23 @@ newDeaths <-function(deaths, reports,maxusage.day = -1){
   ##
   # ugly fix
   ##
+  
   reports_temp <- reports
+  
   for(i in 1:dim(reports_temp)[1]){
-    if(is.na(reports_temp[i,i])==T){
-      if(mean(is.na(reports_temp[i,]))<1){
-        k<-which.max(is.na(reports_temp[i,])==F)
-        reports_temp[i,k-1] = 0
-      }
+    reports_temp[i,1:(i-1)]=0
+    if(is.na(reports_temp[i,i]))
+      reports_temp[i,i] <- 0
+    for(j in i:dim(reports_temp)[2]){
+      if(is.na(reports_temp[i,j]))
+        reports_temp[i,j]= reports_temp[i,j-1]
     }
+    
   }
-  diff.report <- t(diff(t(reports_temp)))
-  newreport[upper.tri(newreport)] <- diff.report[upper.tri(diff.report,T)]
+  reports_temp <- cbind(0,reports_temp)
+  newreport <- t(diff(t(reports_temp)))
+  newreport[is.na(reports)]=NA
+  #newreport[upper.tri(newreport)] <- diff.report[upper.tri(diff.report,T)]
   newreport[newreport<0 & is.na(newreport)==F]=0 #fake
   death.rem <- diag(deaths)
 

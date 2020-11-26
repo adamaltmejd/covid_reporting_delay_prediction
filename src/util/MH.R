@@ -444,7 +444,7 @@ MH_RW <- function(MH_obj,...)
 
   MH_obj$count <- MH_obj$count + 1
 
-  Le <-exists('L', where=MH_obj)
+  Le <- "L" %in% names(MH_obj)  
 
   if(Le==FALSE)
   {
