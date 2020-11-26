@@ -673,6 +673,49 @@ splitlag <- function(Reported_T, dates, lag,
 }
 
 ##
+#' removes observations on weekend, monday, and put diagonal to zero
+#' putting the data into the style of current reporting (2020-11)
+#'  @param reports      - (N x N) reported cumlative deaths
+#'  @param report_dates - (N x 1) dates the data was reported
+#'
+report_clean <- function(reports, report_dates){
+  diag(reports) <- 0
+  holidays <- weekdays(report_dates)%in%c("Monday","Sunday","Saturday") | c(report_dates)%in%c(holidays.Sweden)
+  reports[,holidays] <- NA
+  return(reports)
+}
+
+##
+#' cereate new_cases matrix
+#'  @param reports - (N x N) reported cumlative deaths
+##
+newCases <- function(reports){
+  newreport <- reports
+  #reports_temp[is.na(reports_temp)]=0
+  ##
+  # ugly fix
+  ##
+  
+  reports_temp <- reports
+  
+  for(i in 1:dim(reports_temp)[1]){
+    reports_temp[i,1:(i-1)]=0
+    if(is.na(reports_temp[i,i]))
+      reports_temp[i,i] <- 0
+    for(j in i:dim(reports_temp)[2]){
+      if(is.na(reports_temp[i,j]))
+        reports_temp[i,j]= reports_temp[i,j-1]
+    }
+    
+  }
+  reports_temp <- cbind(0,reports_temp)
+  newreport <- t(diff(t(reports_temp)))
+  newreport[is.na(reports)]=NA
+  #newreport[upper.tri(newreport)] <- diff.report[upper.tri(diff.report,T)]
+  newreport[newreport<0 & is.na(newreport)==F]=0 #fake
+  return(newreport)
+}
+##
 # transforms data,
 # we remove data if negative..
 #

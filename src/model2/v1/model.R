@@ -19,7 +19,7 @@ library(invgamma)
 #' the death is reported
 #' No prior on number of deaths is given
 #' 
-#' @param data - list needs to contain $detected (TxT ) matrix of detected cases
+#' @param data -  (TxT ) of new_cases
 #' @param model_parameters - 
 #'                          [sim]     number of MCMC samples
 #'                          [burnin]  discaredd number of MCMC samples
@@ -30,9 +30,9 @@ library(invgamma)
 #'                         - [Sigma_beta] variance fixed effect parameters    
 #'                         - [a_sigma]    variance parameter for the first seven days           
 #'                         - [b_sigma]    variance parameter after seven days                
-model <- function(data, model_paramters, prior_list, startvalue_list=NULL){
+model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
   
-  
+  dates <- colnames(new_cases)
   mu_beta <- prior_list$mu_beta
   Q_beta <- solve(prior_list$Sigma_beta)
   #sigma prior
@@ -40,11 +40,6 @@ model <- function(data, model_paramters, prior_list, startvalue_list=NULL){
   b_sigma <- prior_list$b_sigma
   
   sim <- model_paramters$sim
-  if(is.null(startvalue_list)){
-    N <-apply(result_j$detected,1,max,na.rm=T)
-  }
-  
-  new_cases <- newDeaths(N,data$detected)$report.new
   
   ##
   # build models for time point distribution,
@@ -52,7 +47,10 @@ model <- function(data, model_paramters, prior_list, startvalue_list=NULL){
   ###
   X_time <- build_X_time(new_cases)
   new_cases[X_time$X_diag==1] <- NA # remove zero first observation
-  new_cases <- new_cases[-dim(new_cases)[1],]
+  
+  dates_keep <- rowSums(is.na(new_cases))<dim(new_cases)[2]
+  new_cases <- new_cases[dates_keep,]
+  
   Gamma_theta <- c(1,5)
   Prob <- function(x){Prob_gamma(x, Gamma_theta)}
   
@@ -109,6 +107,7 @@ model <- function(data, model_paramters, prior_list, startvalue_list=NULL){
   sigma_time <- c(1,1)
   beta_time  <- mu_beta
   N_vec <- matrix(0,nrow=sim, ncol=length(N))
+  colnames(N_vec) <- rownames(new_cases)
   Beta_vec <- matrix(0,nrow=sim, ncol=length(mu_beta))
   sigma_vec <- matrix(0,nrow=sim, ncol=2)
   for(iter in 1:sim){
@@ -168,7 +167,7 @@ model <- function(data, model_paramters, prior_list, startvalue_list=NULL){
 
   result <- list()
   CI <- t(apply(N_vec,2 , quantile, prob=model_parameters$quantile))
-  result$Npost <- data.frame(dates = data$dates[1:dim(N_vec)[2]],
+  result$Npost <- data.frame(dates = rownames(new_cases),
                              mean  = colMeans(N_vec),
                              median  =apply(N_vec,2 , quantile, prob=0.5),
                              lCI   = CI[,1],
