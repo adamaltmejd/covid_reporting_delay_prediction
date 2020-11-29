@@ -5,7 +5,7 @@ library(invgamma)
 ##
 # data input
 ## 
-sim <- 400
+sim <- 40000
 data <- readRDS(file.path("data", "processed", "processed_data.rds"))
 j <- dim(data$detected)[1]
 start_ = j - 31 # run the last 31 days

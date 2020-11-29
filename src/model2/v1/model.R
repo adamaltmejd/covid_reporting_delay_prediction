@@ -1,4 +1,3 @@
-graphics.off()
 library(tidyr)
 source(file.path("src", "util","util.r"))
 source(file.path("src", "util","MH.R"))
@@ -10,6 +9,8 @@ source(file.path("src","model2","v1","regression.R"))
 library(numDeriv)
 library(invgamma)
 
+# For version 2
+# adapt N samples
 
 
 #'
