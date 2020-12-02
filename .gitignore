@@ -1,3 +1,5 @@
+DS_store
+
 # Model temp files
 *.rds
 data/processed/model_refit.fst
