@@ -58,13 +58,14 @@ prior_GP <- function(theta, L){
 #'
 #'  @param theta -    (nx1) the processes
 #'  @param L        - (nxn) cholesky preicison factor
-#'  @param mu_sigma - (2x1) mu sigma^2
-prior_GP_p <- function(theta, L, mu_sigma){
+#'  @param mu_sigma - (2x1) mu sigma^2, tau
+prior_GP_p <- function(theta, L, mu_sigma_tau){
   Q = t(L)%*%L
-  theta[1] = theta[1] - mu_sigma[1]
-  Q[1,1] <- Q[1,1] + 1/mu_sigma[2]^2
+  theta[1] = theta[1] - mu_sigma_tau[1]
+  Q[1,1] <- Q[1,1] + 1/mu_sigma_tau[2]^2
+  Q      <- mu_sigma_tau[3]*Q
   lik <- -1/2 * (t(theta)%*%Q%*%theta)
-  
+
   grad <-  -(Q%*%theta)
   Hessian <- - Q
   return(list(loglik = lik, grad = grad, Hessian = Hessian))
@@ -333,3 +334,33 @@ sample.phi<- function(phi, N, theta, alpha = NULL, samples=10){
  return(list(phi=phi,acc=acc))
 }
 
+##
+#' sampling from a discrete phi with beta prior
+#'
+#' @param phi     - previous value of parameter
+#' @param N       - (n x 1 ) observations of neg bin
+#' @param prior   - (2 x 1) mean, sd for Beta distribution prior
+#' @param theta   - (n x 1) log of parameter value
+#' @param alpha   - (int) sample size
+#' @param samples - (int) how many sample to within each iteration
+##
+sample.phi.prior<- function(phi, N, prior, theta, alpha = NULL, samples=10){
+
+  if(is.null(alpha))
+    alpha <- 10
+  acc <- 0
+  mu = exp(theta)
+  lik_0 <-sum(dnegbin(N, mu, phi))  + dnorm(log(phi), prior[1], prior[2], log = T)
+  for(j in 1:samples){
+    phi_star <- sample((phi-alpha):(phi+alpha), 1)
+    if(phi_star<=0)
+      next
+    lik_star <- sum(dnegbin(N, mu, phi_star)) + dnorm(log(phi_star), prior[1], prior[2], log = T)
+    if(log(runif(1)) < lik_star - lik_0){
+      lik_i = lik_star
+      phi <- phi_star
+      acc <- acc + 1
+    }
+  }
+  return(list(phi=phi,acc=acc))
+}
