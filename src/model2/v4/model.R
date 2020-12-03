@@ -241,15 +241,15 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
         }
       }
     }
-    effort_MH <- MHiter(effort_MH,
-                        calcLik = T,
-                        Time_objs = timePoints_MH,
-                        N = N,
-                        mu = prior_list$mu_lambda,
-                        Sigma = prior_list$Sigma_lambda
-                        )
+    #effort_MH <- MHiter(effort_MH,
+    #                    calcLik = T,
+    #                    Time_objs = timePoints_MH,
+    #                    N = N,
+    #                    mu = prior_list$mu_lambda,
+    #                    Sigma = prior_list$Sigma_lambda
+    #                    )
 
-    Prob <- function(t){Prob_gamma(t, c(1,effort_MH$theta))}
+    #Prob <- function(t){Prob_gamma(t, c(1,effort_MH$theta))}
 
 
 
@@ -298,15 +298,15 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
     Q_temp[1,1]     <- Q1_theta + 1/theta_prior[2]^2
     theta_temp      <- MH_obj_GP$theta
     theta_temp[1]   <- theta_temp[1] - theta_prior[1]
-    Ptheta = pinvgamma(sigma2_theta_max,
-                       shape=dim(Q_temp)[1]/2 + a_sigma_theta,
-                       rate = as.vector(0.5 * t(theta_temp)%*%(Q_temp%*%theta_temp) + b_sigma_theta))
-    sigma2_theta <- qinvgamma(Ptheta*runif(1),
-                              shape=dim(Q_temp)[1]/2 + a_sigma_theta,
-                              rate = as.vector(0.5 * t(theta_temp)%*%(Q_temp%*%theta_temp) + b_sigma_theta))
-    #rinvgamma(1,
-    #                         shape=dim(Q_temp)[1]/2 + a_sigma_theta,
-    #                         rate = as.vector(0.5 * t(theta_temp)%*%(Q_temp%*%theta_temp) + b_sigma_theta))
+    #Ptheta = pinvgamma(sigma2_theta_max,
+    #                   shape=dim(Q_temp)[1]/2 + a_sigma_theta,
+    #                   rate = as.vector(0.5 * t(theta_temp)%*%(Q_temp%*%theta_temp) + b_sigma_theta))
+    #sigma2_theta <- qinvgamma(Ptheta*runif(1),
+    #                          shape=dim(Q_temp)[1]/2 + a_sigma_theta,
+    #                          rate = as.vector(0.5 * t(theta_temp)%*%(Q_temp%*%theta_temp) + b_sigma_theta))
+    sigma2_theta<-rinvgamma(1,
+                             shape=dim(Q_temp)[1]/2 + a_sigma_theta,
+                             rate = as.vector(0.5 * t(theta_temp)%*%(Q_temp%*%theta_temp) + b_sigma_theta))
     theta_prior[3] <- 1/sigma2_theta
 
     if(iter%%50==0 &  iter < model_parameters$burnin){
