@@ -9,8 +9,8 @@ source(file.path("src","model2","v4","model.R"))
 ##
 sim <- 20000
 data <- readRDS(file.path("data", "processed", "processed_data.rds"))
-#j <- 32
-j <- 32#dim(data$detected)[1]-20
+j <- 32
+#j <- dim(data$detected)[1]-10
 start_ = j - 31 # run the last 31 days
 
 report_cleaned <- report_clean(data$detected[start_:j,start_:j],data$dates[start_:j])
@@ -28,7 +28,7 @@ prior_list <- list(mu_beta        = c(0,0,0),
                    a_sigma        = c(3,3),
                    b_sigma        = c(5/2,5/2),
                    mu_lambda      = 5,
-                   Sigma_lambda   = 5,
+                   Sigma_lambda   = 10,
                    mu_GP          = 0,
                    sigma_GP       = 10,
                    mu_phi         = 1,

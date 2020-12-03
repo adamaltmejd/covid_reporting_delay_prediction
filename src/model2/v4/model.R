@@ -232,7 +232,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
 
         Nstar <- sample((N[i]-alpha.MCMC[i]):(N[i]+alpha.MCMC[i] ), 1)
         if(Nstar >= sum(timePoints_MH[[i]]$n.obs)){
-          lik      <- density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, N[i], Prob)   + dnegbin(N, lambda[i],phi)
+          lik      <- density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, N[i], Prob)   + dnegbin(N[i], lambda[i],phi)
           lik_star <-  density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, Nstar, Prob) + dnegbin(Nstar, lambda[i],phi)
           if(log(runif(1)) < lik_star-lik ){
             N[i] <- Nstar
@@ -241,15 +241,15 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
         }
       }
     }
+    effort_MH <- MHiter(effort_MH,
+                        calcLik = T,
+                        Time_objs = timePoints_MH,
+                        N = N,
+                        mu = prior_list$mu_lambda,
+                        Sigma = prior_list$Sigma_lambda
+                        )
 
-    #effort_MH <- MHiter(effort_MH,
-    #                    calcLik = T,
-    #                    Time_objs = timePoints_MH,
-    #                    N = N,
-    #                    mu = prior_list$mu_lambda,
-    #                    Sigma = prior_list$Sigma_lambda
-    #                    )
-    #Prob <- function(t){Prob_gamma(t, c(1,effort_MH$theta))}
+    Prob <- function(t){Prob_gamma(t, c(1,effort_MH$theta))}
 
 
 
