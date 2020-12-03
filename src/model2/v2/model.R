@@ -173,8 +173,8 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
 
         Nstar <- sample((N[i]-alpha.MCMC[i]):(N[i]+alpha.MCMC[i] ), 1)
         if(Nstar >= sum(timePoints_MH[[i]]$n.obs)){
-          lik      <- density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, N[i], Prob) + dnegbin(N[i], 50, 2)
-          lik_star <-  density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, Nstar, Prob)  + dnegbin(Nstar, 50, 2)
+          lik      <- density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, N[i], Prob)
+          lik_star <-  density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, Nstar, Prob)
           if(log(runif(1)) < lik_star-lik ){
             N[i] <- Nstar
             acc_N[i] <- acc_N[i] + 1

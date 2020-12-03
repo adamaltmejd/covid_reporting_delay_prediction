@@ -4,7 +4,7 @@
 #
 ##
 graphics.off()
-store_data_folder <- file.path("data","tmp","model2","v2")
+store_data_folder <- file.path("data","tmp","model2","v3")
 data_files <- list.files(store_data_folder,pattern='Npost*')
 
 data <- c()
@@ -30,7 +30,5 @@ data_temp <- data[index,]
 CI_cov <- (data_temp$Truth >= data_temp$lCI) &(data_temp$Truth <= data_temp$uCI)
 
 x11()
-par(mfrow=c(2,2))
 plot(1:length(CI_cov),cumsum(CI_cov)/(1:length(CI_cov)),xlab='days',ylab='coverage',main='7 days')
-plot(data_temp$Truth,CI_cov)
-plot(data_temp$Truth,data_temp$Truth-data_temp$median)
+

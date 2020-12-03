@@ -71,6 +71,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
     for(i in 1:length(Time_objs)){
       log_lik   <- log_lik +  density_t(Time_objs[[i]]$theta, Time_objs[[i]]$n.obs, N[i], Prob)
     }
+
     lik_prior  <- dmvnorm(x, mu, Sigma, log=T)
     return(list(loglik = log_lik + lik_prior))
   }
@@ -121,21 +122,25 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
 
 
     #setting upp covariates for priro
-    timePoints_MH[[i]]$X <- cbind((X_time$X_t<=7)[i, index_] - X_time$X_first[i, index_],
-                                  (X_time$X_t>7)[i, index_],
+    timePoints_MH[[i]]$X <- cbind((X_time$X_t<=4)[i, index_] - X_time$X_first[i, index_],
+                                  (X_time$X_t>4)[i, index_],
                                   X_time$X_na[i,index_])
     timePoints_MH[[i]]$X_fixed <- t(X_time$X_first[i, index_,drop=F])
     X_full <- rbind(X_full  , timePoints_MH[[i]]$X)
     X_fixed <- rbind(X_fixed, timePoints_MH[[i]]$X_fixed)
 
 
-    timePoints_MH[[i]]$X_sigma <- 1*cbind((X_time$X_t<=7)[i, index_],
-                                          (X_time$X_t>7)[i, index_])
+    timePoints_MH[[i]]$X_sigma <- 1*cbind((X_time$X_t<=4)[i, index_],
+                                          (X_time$X_t>4)[i, index_])
     X_sigma <- rbind(X_sigma,
                      timePoints_MH[[i]]$X_sigma)
-    # for sampling N
-    timePoints_MH[[i]]$N.mcmc <- 10
+
   }
+
+  # for sampling adaptive N sampling
+  alpha.MCMC <- rep(10, dim(new_cases)[1])
+  acc_N      <- rep(0, dim(new_cases)[1])
+
   XXt <- t(X_full)%*%X_full
   Q_post     <- XXt +  Q_beta
   Sigma_post <- solve(Q_post)
@@ -166,7 +171,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
       #ProbMatrix_new[i, timePoints_MH[[i]]$index_non_na] <- Prob(timePoints_MH[[i]]$theta)[1:length(timePoints_MH[[i]]$theta)]
       if(i > model_paramters$N.days.fixed){
         # sampling N
-        Nstar <- sample((N[i]-timePoints_MH[[i]]$N.mcmc):(N[i]+timePoints_MH[[i]]$N.mcmc ), 1)
+       Nstar <- sample((N[i]-alpha.MCMC[i]):(N[i]+alpha.MCMC[i] ), 1)
         if(Nstar >= sum(timePoints_MH[[i]]$n.obs)){
           lik      <- density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, N[i], Prob)
           lik_star <-  density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, Nstar, Prob)
@@ -184,6 +189,13 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
                         )
     Prob <- function(t){Prob_gamma(t, effort_MH$theta)}
     N_vec[iter,] <- N
+
+    if(iter%%50==0&  iter < model_parameters$burnin){
+      alpha.MCMC[acc_N/50 > 0.3] <- alpha.MCMC[acc_N/50 > 0.3] +1
+      alpha.MCMC[acc_N/50 < 0.3] <- alpha.MCMC[acc_N/50 < 0.3] -1
+      alpha.MCMC[alpha.MCMC<1] <- 1
+      acc_N <-acc_N* 0
+    }
     ##
     # sampling latent parameters
     #
