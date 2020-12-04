@@ -1,14 +1,14 @@
 
 graphics.off()
-source(file.path("src","model2","v4","prob_dens.R"))
-source(file.path("src","model2","v4","regression.R"))
-source(file.path("src","model2","v4","model.R"))
+source(file.path("src","model2","v5","prob_dens.R"))
+source(file.path("src","model2","v5","regression.R"))
+source(file.path("src","model2","v5","model.R"))
 
 
 days_run <- 30
 # todo addapt sample N
 ##
-sim <- 1000
+sim <- 200
 data <- readRDS(file.path("data", "processed", "processed_data.rds"))
 j <- days_run+14
 #j <- dim(data$detected)[1]-10
@@ -22,38 +22,33 @@ colnames(new_cases) <- as.character(data$dates[start_:j])
 model_parameters <- list(sim           = sim,
                          burnin        = ceiling(0.5*sim),
                          N.days.fixed  =  3,
-                         quantile      = c(0.1,0.9))
+                         quantile      = c(0.05,0.95))
 
-prior_list <- list(mu_beta        = c(0,0,0),
-                   Sigma_beta     = 1/2*diag(3),
+prior_list <- list(mu_beta        = c(0,0,0,0),
+                   Sigma_beta     = 2*diag(4),
                    a_sigma        = c(3,3),
                    b_sigma        = c(5/2,5/2),
-                   mu_lambda      = 5,
-                   Sigma_lambda   = 5,
                    mu_GP          = 0,
                    sigma_GP       = 10,
                    mu_phi         = 1,
                    sigma_phi      = 1,
                    a_sigma_theta  = 4,
-                   b_sigma_theta  = 0.1*(4-1),
-                   sigma2_theta_max = 0.4806756^2)
+                   b_sigma_theta  = 0.1*(4-1))
 
 result <- model(new_cases, model_parameters, prior_list)
 
 x11()
-par(mfrow=c(3,2))
+par(mfrow=c(4,2))
 plot(result$posteriror_sample$Beta[,1])
 hist(result$posteriror_sample$Beta[,1])
 plot(result$posteriror_sample$Beta[,2])
 hist(result$posteriror_sample$Beta[,2])
 plot(result$posteriror_sample$Beta[,3])
 hist(result$posteriror_sample$Beta[,3])
+plot(result$posteriror_sample$Beta[,4])
+hist(result$posteriror_sample$Beta[,4])
 
 
-x11()
-par(mfrow=c(2,1))
-plot(result$posteriror_sample$lambda)
-hist(result$posteriror_sample$lambda)
 
 x11()
 par(mfrow=c(2,1))

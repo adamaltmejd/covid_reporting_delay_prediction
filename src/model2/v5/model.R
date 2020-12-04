@@ -54,34 +54,14 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
 
 
   #known or fixed covariates
-  beta_fixed <- c(1)
+  #beta_fixed <- c(1)
 
   ###
   #
   # distribution of each death time point
   #
   ##
-  effort_MH <- MH_setup(Dacc_prob=0.3)
-  Gamma_theta <- c(5)
-  effort_MH$sigma <- 0.1
-  effort_MH$theta <- Gamma_theta
-  effort_MH$Lik <- function(x,
-                            Time_objs,
-                            N,
-                            mu,
-                            Sigma) {
-    x <- as.vector(x)
-    if(x<0)
-      return(list(loglik =-Inf))
-    log_lik <- 0
-    Prob <- function(t){Prob_gamma(t, c(1,x))}
-    for(i in 1:length(Time_objs)){
-      log_lik   <- log_lik +  density_t(Time_objs[[i]]$theta, Time_objs[[i]]$n.obs, N[i], Prob)
-    }
-    lik_prior  <- dnorm(x, mu, Sigma, log=T)
-    return(list(loglik = log_lik + lik_prior))
-  }
-  Prob <- function(t){Prob_gamma(t, c(1,effort_MH$theta))}
+  Prob <- function(t){Prob_gamma(t, c(1,5))}
 
 
 
@@ -128,12 +108,13 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
 
 
     #setting upp covariates for priro
-    timePoints_MH[[i]]$X <- cbind((X_time$X_t<=4)[i, index_] - X_time$X_first[i, index_],
+    timePoints_MH[[i]]$X <- cbind(X_time$X_first[i, index_]
+                                  ,(X_time$X_t<=4)[i, index_] - X_time$X_first[i, index_],
                                   (X_time$X_t>4)[i, index_],
                                   X_time$X_na[i,index_])
     timePoints_MH[[i]]$X_fixed <- t(X_time$X_first[i, index_,drop=F])
     X_full <- rbind(X_full  , timePoints_MH[[i]]$X)
-    X_fixed <- rbind(X_fixed, timePoints_MH[[i]]$X_fixed)
+    #X_fixed <- rbind(X_fixed, timePoints_MH[[i]]$X_fixed)
 
 
     timePoints_MH[[i]]$X_sigma <- 1*cbind((X_time$X_t<=4)[i, index_],
@@ -208,7 +189,6 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
   phi_vec          <- matrix(0, nrow = sim, ncol = 1)
   Beta_vec         <- matrix(0, nrow=sim,   ncol=length(mu_beta))
   sigma_vec        <- matrix(0, nrow=sim,   ncol=2)
-  lambda_vec       <- matrix(0, nrow=sim,   ncol=1)
   ProbMatrix_vec   <- matrix(0, nrow=sim,   ncol= N_0*N_0)
   sigma_theta_vec  <- matrix(0, nrow=sim,  ncol = 1)
   for(iter in 1:sim){
@@ -221,12 +201,11 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
       timePoints_MH[[i]] <- MHiter(timePoints_MH[[i]],calcLik = T,
                                    timePoints_MH[[i]]$n.obs,
                                    N = N[i],
-                                   timePoints_MH[[i]]$X%*%beta_time + timePoints_MH[[i]]$X_fixed%*%beta_fixed, #add plus one for first occurence
+                                   timePoints_MH[[i]]$X%*%beta_time,# + timePoints_MH[[i]]$X_fixed%*%beta_fixed,
                                    timePoints_MH[[i]]$X_sigma%*%sigma_time,
                                    Prob)
       report_effort <- c(report_effort, timePoints_MH[[i]]$theta)
       ProbMatrix_new[i, timePoints_MH[[i]]$index_non_na] <- timePoints_MH[[i]]$theta
-      #ProbMatrix_new[i, timePoints_MH[[i]]$index_non_na] <- Prob(timePoints_MH[[i]]$theta)[1:length(timePoints_MH[[i]]$theta)]
       if(i > model_paramters$N.days.fixed){
         # sampling N
 
@@ -241,15 +220,6 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
         }
       }
     }
-    effort_MH <- MHiter(effort_MH,
-                        calcLik = T,
-                        Time_objs = timePoints_MH,
-                        N = N,
-                        mu = prior_list$mu_lambda,
-                        Sigma = prior_list$Sigma_lambda
-                        )
-
-    Prob <- function(t){Prob_gamma(t, c(1,effort_MH$theta))}
 
 
 
@@ -282,7 +252,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
       Sigma_post <- solve(Q_post)
 
       L_post <- t(chol(Sigma_post))
-      report_effort <-  report_effort -  X_fixed%*%beta_fixed
+      #report_effort <-  report_effort -  X_fixed%*%beta_fixed
       mu_hat <- Sigma_post%*%(t(X_full)%*%(Q_obs%*%report_effort) + Q_beta%*%mu_beta)
 
       beta_time     <- mu_hat +   ( L_post%*%rnorm(length(beta_time)))
@@ -298,12 +268,6 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
     Q_temp[1,1]     <- Q1_theta + 1/theta_prior[2]^2
     theta_temp      <- MH_obj_GP$theta
     theta_temp[1]   <- theta_temp[1] - theta_prior[1]
-    #Ptheta = pinvgamma(sigma2_theta_max,
-    #                   shape=dim(Q_temp)[1]/2 + a_sigma_theta,
-    #                   rate = as.vector(0.5 * t(theta_temp)%*%(Q_temp%*%theta_temp) + b_sigma_theta))
-    #sigma2_theta <- qinvgamma(Ptheta*runif(1),
-    #                          shape=dim(Q_temp)[1]/2 + a_sigma_theta,
-    #                          rate = as.vector(0.5 * t(theta_temp)%*%(Q_temp%*%theta_temp) + b_sigma_theta))
     sigma2_theta<-rinvgamma(1,
                              shape=dim(Q_temp)[1]/2 + a_sigma_theta,
                              rate = as.vector(0.5 * t(theta_temp)%*%(Q_temp%*%theta_temp) + b_sigma_theta))
@@ -321,7 +285,6 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
 
     Beta_vec[iter, ] <- beta_time #iXXt%*%t(X_full)%*%log_t
     sigma_vec[iter,] <- sigma_time
-    lambda_vec[iter, ] <- effort_MH$theta
     ProbMatrix_vec[iter,] <- ProbMatrix_new
     N_vec[iter,] <- N
     theta_vec[iter, ]   <- MH_obj_GP$theta
@@ -333,7 +296,6 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
   Beta_vec        <- Beta_vec[model_paramters$burnin:model_paramters$sim, ]
   sigma_vec       <- sigma_vec[model_paramters$burnin:model_paramters$sim,]
   N_vec           <- N_vec[model_paramters$burnin:model_paramters$sim,]
-  lambda_vec      <- lambda_vec[model_paramters$burnin:model_paramters$sim]
   ProbMatrix_vec  <- ProbMatrix_vec[model_paramters$burnin:model_paramters$sim,]
   phi_vec         <- phi_vec[model_paramters$burnin:model_paramters$sim,]
   theta_vec       <- theta_vec[model_paramters$burnin:model_paramters$sim,]
@@ -347,13 +309,12 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
                          Sigma_beta   = cov(Beta_vec),
                          a_sigma      = c(post_sigma_1[1],post_sigma_2[1]),
                          b_sigma      = c(post_sigma_1[2],post_sigma_2[2]),
-                         mu_lambda    = mean(lambda_vec),
-                         Sigma_lambda = sd(lambda_vec),
                          mu_phi       = mean(log(phi_vec)),
                          sigma_phi       = sd(log(phi_vec)),
                          a_sigma_theta = post_sigma_theta[1],
                          b_sigma_theta = post_sigma_theta[2],
-                         sigma2_theta_max = sigma2_theta_max)
+                         mu_GP         = 0,
+                         sigma_GP      = 10)
 
 
   result <- list()
@@ -367,7 +328,6 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
   result$posteriror_list <- posterior_list
   result$posteriror_sample <- list(Beta        = Beta_vec,
                                    sigma      = sigma_vec,
-                                   lambda     = lambda_vec ,
                                    N          = N_vec,
                                    theta      = theta_vec,
                                    phi        = phi_vec,
