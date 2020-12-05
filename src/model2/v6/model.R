@@ -330,6 +330,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
                                    phi        = phi_vec,
                                    ProbMatrix = ProbMatrix_vec,
                                    sigma_theta = sigma_theta_vec)
+  result$X_full <- X_full
   return(result)
 }
 

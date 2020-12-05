@@ -1,3 +1,3 @@
-# model2 v5
+# model2 v6
 
-Built on model 42 but adds GP prior
+Built on model 5 but adds forgetting factor
