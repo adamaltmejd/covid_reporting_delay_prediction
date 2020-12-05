@@ -8,8 +8,8 @@ source(file.path("src","model2","v5","model.R"))
 library(foreach)
 library(doParallel)
 days_run <- 30
-sim <- 200
-n.clust <- 3
+sim <- 40000
+n.clust <- 7
 store_data_folder <- file.path("data","tmp","model2","v5")
 model_parameters <- list(sim           = sim,
                          burnin        = ceiling(0.5*sim),
@@ -32,11 +32,12 @@ prior_list0 <- list(mu_beta        = c(0,0,0,0),
 N_est_true <- apply(data$detected,1,max, na.rm=T)
 N.obs <- length(data$dates)
 
-#cl <- parallel::makeCluster(n.clust)
-#doParallel::registerDoParallel(cl)
-#foreach(j = (days_run+1):(N.obs-30)) %dopar%{
-for(j in (days_run+1):(N.obs-30)){
+cl <- parallel::makeCluster(n.clust)
+doParallel::registerDoParallel(cl)
+foreach(j = (days_run+1):(N.obs-30)) %dopar%{
+#for(j in (days_run+1):(N.obs-30)){
     library(invgamma)
+    library(Matrix)
     start_ = j - days_run # run the last 31 days
 
     if(start_ <= days_run+ 1){
@@ -69,6 +70,6 @@ for(j in (days_run+1):(N.obs-30)){
     saveRDS(Npost, file = paste(store_data_folder,"/Npost_",j,'.rds',sep=""))
     saveRDS(result$posteriror_list, file = paste(store_data_folder,"/prior_",j,'.rds',sep=""))
 }
-#parallel::stopCluster(cl)
+parallel::stopCluster(cl)
 
 

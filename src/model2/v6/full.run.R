@@ -9,7 +9,7 @@ library(foreach)
 library(doParallel)
 days_run <- 30
 sim <- 40000
-n.clust <- 3
+n.clust <- 7
 store_data_folder <- file.path("data","tmp","model2","v6")
 model_parameters <- list(sim           = sim,
                          burnin        = ceiling(0.5*sim),
@@ -19,15 +19,15 @@ model_parameters <- list(sim           = sim,
 data <- readRDS(file.path("data", "processed", "processed_data.rds"))
 
 prior_list0 <- list(mu_beta        = c(0,0,0,0),
-                   Sigma_beta     = 5*diag(4),
-                   a_sigma        = c(3,3),
-                   b_sigma        = c(5/2,5/2),
-                   mu_GP          = 0,
-                   sigma_GP       = 10,
-                   mu_phi         = 1,
-                   sigma_phi      = 1,
-                   a_sigma_theta  = 4,
-                   b_sigma_theta  = 0.1*(4-1))
+                    Sigma_beta     = 5*diag(4),
+                    a_sigma        = c(3,3),
+                    b_sigma        = c(5/2,5/2),
+                    mu_GP          = 0,
+                    sigma_GP       = 10,
+                    mu_phi         = 1,
+                    sigma_phi      = 1,
+                    a_sigma_theta  = 4,
+                    b_sigma_theta  = 0.1*(4-1))
 
 N_est_true <- apply(data$detected,1,max, na.rm=T)
 N.obs <- length(data$dates)
@@ -74,8 +74,6 @@ foreach(j = (days_run+1):(N.obs-30)) %dopar%{
     a_ <- prior_list$a_sigma + 0.5* (result$posteriror_list$a_sigma - prior_list$a_sigma)
     result$posteriror_list$a_sigma <- a_
     result$posteriror_list$b_sigma <- ((result$posteriror_list$a_sigma - 1)/(a_-1) )* result$posteriror_list$b_sigma
-    print(round(a_,2))
-    print(round(result$posteriror_list$Sigma_beta,3))
     ##
     #
     ##

@@ -9,7 +9,7 @@ library(foreach)
 library(doParallel)
 days_run <- 30
 sim <- 40000
-n.clust <- 3
+n.clust <- 6
 store_data_folder <- file.path("data","tmp","model2","v4")
 model_parameters <- list(sim           = sim,
                          burnin        = ceiling(0.5*sim),
@@ -18,7 +18,7 @@ model_parameters <- list(sim           = sim,
 
 data <- readRDS(file.path("data", "processed", "processed_data.rds"))
 
-prior_list <- list(mu_beta        = c(0,0,0),
+prior_list0 <- list(mu_beta        = c(0,0,0),
                    Sigma_beta     = 1/2*diag(3),
                    a_sigma        = c(3,3),
                    b_sigma        = c(5/2,5/2),
@@ -39,6 +39,7 @@ cl <- parallel::makeCluster(n.clust)
 doParallel::registerDoParallel(cl)
 foreach(j = (days_run+1):(N.obs-30)) %dopar%{
     library(invgamma)
+    library(Matrix)
     start_ = j - days_run # run the last 31 days
 
     if(start_ <= days_run+ 1){
