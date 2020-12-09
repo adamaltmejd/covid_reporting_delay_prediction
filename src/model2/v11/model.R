@@ -27,7 +27,8 @@ library(mvtnorm)
 #'                         - [Sigma_beta] variance fixed effect parameters
 #'                         - [a_sigma]    variance parameter for the first seven days
 #'                         - [b_sigma]    variance parameter after seven days
-model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
+#' @param covariates       - covariates for latent processes
+model <- function(new_cases, model_paramters, prior_list, covariates, startvalue_list=NULL){
 
   N_0 <- dim(new_cases)[1]
   dates <- colnames(new_cases)
@@ -142,10 +143,13 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
   # GP prior
   #
   ####
-
+  covariates <- covariates[dates_keep]
   A   <- matrix(0, nrow= dim(new_cases)[1], ncol = 2)
   A[,1] <- 1
-  A[,2] <- 1:dim(new_cases)[1]
+  A[,2] <- covariates
+
+
+
   MH_obj_GP <- MH_setup()
   MH_obj_GP$sigma <- 0.005
     n_theta <- 2

@@ -1,16 +1,16 @@
 
 graphics.off()
-source(file.path("src","model2","v9","prob_dens.R"))
-source(file.path("src","model2","v9","regression.R"))
-source(file.path("src","model2","v9","model.R"))
+source(file.path("src","model2","v11","prob_dens.R"))
+source(file.path("src","model2","v11","regression.R"))
+source(file.path("src","model2","v11","model.R"))
 
 
 days_run <- 30
 # todo addapt sample N
 ##
-sim <- 10000
+sim <- 20000
 data <- readRDS(file.path("data", "processed", "processed_data.rds"))
-j <- dim(data$detected)[1]-31
+j <- 31
 start_ = j - days_run # run the last 31 days
 
 report_cleaned <- report_clean(data$detected[start_:j,start_:j],data$dates[start_:j])
@@ -31,8 +31,14 @@ prior_list <- list(mu_beta        = c(0,0,0,0),
                    theta_Sigma    =  5*diag(2),
                    mu_phi         = 1,
                    sigma_phi      = 1)
+icu_cov  <- readRDS(file.path("data", "processed", "icu_covariates.rds"))
+cov_index <- icu_cov$date%in% as.Date(colnames(new_cases))
+cov_data  <- icu_cov$icu[cov_index]
 
-result <- model(new_cases, model_parameters, prior_list)
+result <- model(new_cases,
+                model_parameters,
+                prior_list,
+                covariates = cov_data)
 
 x11()
 par(mfrow=c(4,2))
@@ -55,9 +61,11 @@ hist(result$posteriror_sample$phi, prob=T)
 curve(dlnorm(x, meanlog=result$posteriror_list$mu_phi, sdlog=result$posteriror_list$sigma_phi),
       col="darkblue", lwd=2, add=TRUE, yaxt="n")
 x11()
-par(mfrow=c(2,1))
-plot(result$posteriror_sample$theta[,1])
-plot(result$posteriror_sample$theta[,2])
+par(mfrow=c(2,2))
+plot(result$posteriror_sample$theta[,1]);
+hist(result$posteriror_sample$theta[,1])
+plot(result$posteriror_sample$theta[,2]);
+hist(result$posteriror_sample$theta[,2])
 x11()
 par(mfrow=c(1,1))
 m<-length(as.Date(result$Npost$dates))

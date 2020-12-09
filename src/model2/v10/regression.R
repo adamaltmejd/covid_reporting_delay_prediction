@@ -20,31 +20,45 @@ build_X_time <- function(cases_remanin){
   X_na <- matrix(0, nrow = n, ncol = m)
   X_t <-  matrix(0, nrow = n, ncol = m)
   X_first <- matrix(0, nrow = n, ncol = m)
+  X_second <- matrix(0, nrow = n, ncol = m)
+  X_third <- matrix(0, nrow = n, ncol = m)
+  X_fourth <- matrix(0, nrow = n, ncol = m)
+  X_rest <- matrix(0, nrow = n, ncol = m)
   for(i in 1:(n-1)){
     X_t[i,i:n] <- 0:(n-i)
     for(j in (i+1):(m)){
       X_na[i,j] <- 1*is.na(cases_remanin[i, j-1])
     }
-    non_na <-which(is.na(cases_remanin[i,])==F & X_diag[i,]==0)
+    non_na <-sort(which(is.na(cases_remanin[i,])==F & X_diag[i,]==0))
     if(length(non_na)>0)
-      X_first[i, min(non_na)] <- 1
+      X_first[i, non_na[1]] <- 1
+    if(length(non_na)>1)
+        X_second[i, non_na[2]] <- 1
+    if(length(non_na)>2)
+        X_third[i, non_na[3]] <- 1
+    if(length(non_na)>3)
+        X_fourth[i, non_na[4]] <- 1
   }
-
+  X_rest = 1*((X_first+X_second+X_third+X_fourth)==0)
   Days <- weekdays(as.Date(colnames(cases_remanin)))
   Tuesday <- matrix(0, nrow = n, ncol = m)
-  Tuesday[Days%in%c("Tuesday")] <- 1
+  Tuesday[,Days%in%c("Tuesday")] <- 1
   Wednesday <- matrix(0, nrow = n, ncol = m)
-  Wednesday[Days%in%c("Wednesday")] <- 1
+  Wednesday[,Days%in%c("Wednesday")] <- 1
   Thursday <- matrix(0, nrow = n, ncol = m)
-  Thursday[Days%in%c("Thursday")] <- 1
+  Thursday[,Days%in%c("Thursday")] <- 1
   Friday <- matrix(0, nrow = n, ncol = m)
-  Friday[Days%in%c("Friday")] <- 1
+  Friday[,Days%in%c("Friday")] <- 1
   return(list(X_ones = X_ones,
               X_diag = X_diag,
               X_na   = X_na,
               X_t    = X_t,
-              X_first = X_first,
-              X_Tuesday = Tuesday,
-              X_Wednesday = Wednesday,
-              X_Thursday = Thursday))
+              first = X_first,
+              second = X_second,
+              third = X_third,
+              fourth = X_fourth,
+              rest   = X_rest,
+              Tuesday = Tuesday,
+              Wednesday = Wednesday,
+              Thursday = Thursday))
 }

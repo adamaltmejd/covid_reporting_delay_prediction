@@ -47,7 +47,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
   sigma_phi<- prior_list$sigma_phi
   sim <- model_paramters$sim
   # start values
-  sigma_time <- c(1,1)
+  sigma_time <- b_sigma/(a_sigma-1)
   beta_time  <- mu_beta
 
 
@@ -59,7 +59,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
   # distribution of each death time point
   #
   ##
-  Prob <- function(t){Prob_gamma(t, c(1,5))}
+  Prob <- function(t){Prob_gamma(t, c(1,10))}
 
 
 
@@ -109,17 +109,22 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
 
 
     #setting upp covariates for priro
-    timePoints_MH[[i]]$X <- cbind(X_time$X_first[i, index_]
-                                  ,(X_time$X_t<=4)[i, index_] - X_time$X_first[i, index_],
-                                  (X_time$X_t>4)[i, index_],
-                                  X_time$X_na[i,index_])
-    timePoints_MH[[i]]$X_fixed <- t(X_time$X_first[i, index_,drop=F])
+    timePoints_MH[[i]]$X <- cbind(X_time$first[i, index_],
+                                  X_time$second[i, index_] +
+                                      X_time$fourth[i, index_]+
+                                  X_time$third[i, index_],
+                                  X_time$rest[i, index_],
+                                  X_time$Tuesday[i,index_],
+                                  X_time$Wednesday[i,index_])
     X_full <- rbind(X_full  , timePoints_MH[[i]]$X)
     #X_fixed <- rbind(X_fixed, timePoints_MH[[i]]$X_fixed)
 
 
-    timePoints_MH[[i]]$X_sigma <- 1*cbind((X_time$X_t<=4)[i, index_],
-                                          (X_time$X_t>4)[i, index_])
+    timePoints_MH[[i]]$X_sigma <- 1*cbind(X_time$first[i, index_],
+                                           X_time$second[i, index_] +
+                                               X_time$fourth[i, index_]+
+                                               X_time$third[i, index_],
+                                           X_time$rest[i, index_])
     X_sigma <- rbind(X_sigma,
                      timePoints_MH[[i]]$X_sigma)
     if(i > dim(new_cases)[1]-14){
@@ -187,7 +192,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
   theta_vec        <- matrix(0, nrow=sim,   ncol=n_theta)
   phi_vec          <- matrix(0, nrow = sim, ncol = 1)
   Beta_vec         <- matrix(0, nrow=sim,   ncol=length(mu_beta))
-  sigma_vec        <- matrix(0, nrow=sim,   ncol=2)
+  sigma_vec        <- matrix(0, nrow=sim,   ncol=length(a_sigma))
   ProbMatrix_vec   <- matrix(0, nrow=sim,   ncol= N_0*N_0)
   t_vec            <- matrix(NA, nrow=sim, ncol= dim(new_cases)[1] * max_t)
   for(iter in 1:sim){
@@ -291,14 +296,21 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
   phi_vec         <- phi_vec[model_paramters$burnin:model_paramters$sim,]
   theta_vec       <- theta_vec[model_paramters$burnin:model_paramters$sim,]
   t_vec           <- t_vec[model_paramters$burnin:model_paramters$sim,]
-  post_sigma_1 <- ml_inversegamma(sigma_vec[,1]^2)
+  a_vec <- c()
+  b_vec <- c()
+  for(i in 1:dim(sigma_vec)){
+      post_sigma_1 <- ml_inversegamma(sigma_vec[,1]^2)
+      a_vec <- c(a_vec,post_sigma_1[1])
+      b_vec <- c(b_vec,post_sigma_1[2])
+  }
+
   post_sigma_2 <- ml_inversegamma(sigma_vec[,2]^2)
 
 
   posterior_list <- list(mu_beta      = colMeans(Beta_vec),
                          Sigma_beta   = cov(Beta_vec),
-                         a_sigma      = c(post_sigma_1[1],post_sigma_2[1]),
-                         b_sigma      = c(post_sigma_1[2],post_sigma_2[2]),
+                         a_sigma      = a_vec,
+                         b_sigma      = b_vec,
                          mu_phi       = mean(log(phi_vec)),
                          sigma_phi       = sd(log(phi_vec)),
                          theta_mu      = colMeans(theta_vec),
