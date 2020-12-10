@@ -77,10 +77,6 @@ plot(lag,w)
 
 i <- 8
 X <- icu_cov[,i]
-index <- X>0
-X <- X[index]
-y <- Cov_analysis$deaths[index]
-glm.fit <- glm(y~x,poisson, data= data.frame(y=y,x=X))
 
 
 icu_cov <- data.frame(date= dates[dates%in%Cov_analysis$dates], icu = X)
