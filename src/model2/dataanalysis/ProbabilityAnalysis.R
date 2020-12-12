@@ -5,7 +5,7 @@ source(file.path("src","model2","v5","regression.R"))
 source(file.path("src","model2","v5","model.R"))
 
 graphics.off()
-data <- readRDS(file.path("data", "processed", "processed_data.rds"))
+#data <- readRDS(file.path("data", "processed", "processed_data.rds"))
 data <- readRDS(file.path("data", "processed", "processed_data_icu.rds"))
 
 
@@ -32,8 +32,8 @@ x11()
 par(mfrow=c(2,2))
 plot(dates[N>N_min],apply(Prob[N>N_min,1,drop=F],1,sum))
 plot(dates[N>N_min],apply(Prob[N>N_min,1:2,drop=F],1,sum))
-plot(dates[N>N_min],apply(Prob[N>N_min,1:3,drop=F],1,sum))
-plot(dates[N>N_min],apply(Prob[N>N_min,1:4, drop=F],1,sum))
+plot(dates[N>N_min],apply(Prob[N>N_min,1:4,drop=F],1,sum))
+plot(dates[N>N_min],apply(Prob[N>N_min,5:10, drop=F],1,sum))
 if(0){
 x11()
 index <- weekdays(data$dates)%in%"Tuesday"

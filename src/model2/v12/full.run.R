@@ -2,15 +2,15 @@
 #
 
 
-source(file.path("src","model2","v9","prob_dens.R"))
-source(file.path("src","model2","v9","regression.R"))
-source(file.path("src","model2","v9","model.R"))
+source(file.path("src","model2","v12","prob_dens.R"))
+source(file.path("src","model2","v12","regression.R"))
+source(file.path("src","model2","v12","model.R"))
 library(foreach)
 library(doParallel)
 days_run <- 30
 sim <- 40000
 n.clust <- 7
-store_data_folder <- file.path("data","tmp","model2","v9")
+store_data_folder <- file.path("data","tmp","model2","v12")
 model_parameters <- list(sim           = sim,
                          burnin        = ceiling(0.5*sim),
                          N.days.fixed  =  3,
@@ -49,15 +49,7 @@ foreach(j = (days_run+1):(N.obs-30)) %dopar%{
     rownames(new_cases) <- as.character(data$dates[start_:j])
     colnames(new_cases) <- as.character(data$dates[start_:j])
 
-    #CLEARN NEW CASEES
-    if(dim(new_cases)[1]>days_run){
-        for(i in 1:dim(new_cases)[1]){
-            if(i + days_run <= dim(new_cases)[1] ){
-                index=(i+days_run):dim(new_cases)[1]
-                new_cases[i, index]=NA
-            }
-        }
-    }
+
     result <- model(new_cases, model_parameters, prior_list)
     result$posteriror_list$n_obs <- prior_list$n_obs + days_run
 
