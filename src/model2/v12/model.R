@@ -28,7 +28,7 @@ library(mvtnorm)
 #'                         - [a_sigma]    variance parameter for the first seven days
 #'                         - [b_sigma]    variance parameter after seven days
 #' @param covariates       - covariates for latent processes
-model <- function(new_cases, model_paramters, prior_list, covariates,beta_covarites=c( 0.8886356, 0.9882732) ,startvalue_list=NULL){
+model <- function(new_cases, model_parameters, prior_list, covariates,beta_covarites=c( 0.8886356, 0.9882732) ,startvalue_list=NULL){
 
   N_0 <- dim(new_cases)[1]
   dates <- colnames(new_cases)
@@ -44,7 +44,7 @@ model <- function(new_cases, model_paramters, prior_list, covariates,beta_covari
 
 
 
-  sim <- model_paramters$sim
+  sim <- model_parameters$sim
   # start values
   sigma_time <- c(1,1)
   beta_time  <- mu_beta
@@ -176,7 +176,7 @@ model <- function(new_cases, model_paramters, prior_list, covariates,beta_covari
       report_effort <- c(report_effort, timePoints_MH[[i]]$theta)
       t_vec[iter, max_t*(i-1)+ (1:sum(timePoints_MH[[i]]$index_non_na))] <- (timePoints_MH[[i]]$theta - timePoints_MH[[i]]$X%*%beta_time)
       ProbMatrix_new[i, timePoints_MH[[i]]$index_non_na] <- Prob(timePoints_MH[[i]]$theta)[1:(length(timePoints_MH[[i]]$theta))]
-      if(i > model_paramters$N.days.fixed){
+      if(i > model_parameters$N.days.fixed){
         # sampling N
 
         Nstar <- sample((N[i]-alpha.MCMC[i]):(N[i]+alpha.MCMC[i] ), 1)
@@ -233,11 +233,11 @@ model <- function(new_cases, model_paramters, prior_list, covariates,beta_covari
     N_vec[iter,] <- N
 
   }
-  Beta_vec        <- Beta_vec[model_paramters$burnin:model_paramters$sim, ]
-  sigma_vec       <- sigma_vec[model_paramters$burnin:model_paramters$sim,]
-  N_vec           <- N_vec[model_paramters$burnin:model_paramters$sim,]
-  ProbMatrix_vec  <- ProbMatrix_vec[model_paramters$burnin:model_paramters$sim,]
-  t_vec           <- t_vec[model_paramters$burnin:model_paramters$sim,]
+  Beta_vec        <- Beta_vec[model_parameters$burnin:model_parameters$sim, ]
+  sigma_vec       <- sigma_vec[model_parameters$burnin:model_parameters$sim,]
+  N_vec           <- N_vec[model_parameters$burnin:model_parameters$sim,]
+  ProbMatrix_vec  <- ProbMatrix_vec[model_parameters$burnin:model_parameters$sim,]
+  t_vec           <- t_vec[model_parameters$burnin:model_parameters$sim,]
   post_sigma_1 <- ml_inversegamma(sigma_vec[,1]^2)
   post_sigma_2 <- ml_inversegamma(sigma_vec[,2]^2)
 

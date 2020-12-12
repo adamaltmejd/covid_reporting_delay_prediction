@@ -24,7 +24,7 @@ run.model.all <- function(deaths, icu){
     #i icu_covariates  updateras filer
     cov_ <- icu_covariates(deaths, icu)
 
-    store_data_folder <- file.path("data","tmp","model2","v12")
+    store_data_folder <- file.path("data","tmp","model2","v13")
 
     ####
 
@@ -48,9 +48,9 @@ run.model.all <- function(deaths, icu){
 
     for(j in (days_run+1):length(deaths$dates)){
         start_ = j - days_run # run the last 31 days
-        day_is_run = file.exits(paste(store_data_folder,"/Npost_",j,'.rds',sep=""))
+        day_is_run = file.exists(paste(store_data_folder,"/Npost_",j,'.rds',sep=""))
         if(day_is_run==F){
-            print('running day  = ', as.character(deaths$dates[j]),sep="")
+            cat('running day  = ', as.character(deaths$dates[j]),'\n',sep="")
             if(start_ <= days_run+ 1){
                 prior_list <- prior_list0
                 prior_list$n_obs <- 0
@@ -58,10 +58,10 @@ run.model.all <- function(deaths, icu){
                 prior_list <- readRDS(paste(store_data_folder,"/prior_",start_-1,'.rds',sep=""))
             }
 
-            report_cleaned <- report_clean(data$detected[start_:j,start_:j],data$dates[start_:j])
+            report_cleaned <- report_clean(deaths$detected[start_:j,start_:j],deaths$dates[start_:j])
             new_cases <- newCases(report_cleaned)
-            rownames(new_cases) <- as.character(data$dates[start_:j])
-            colnames(new_cases) <- as.character(data$dates[start_:j])
+            rownames(new_cases) <- as.character(deaths$dates[start_:j])
+            colnames(new_cases) <- as.character(deaths$dates[start_:j])
 
             cov_index <- cov_$theta_cov$date%in% as.Date(colnames(new_cases))
             cov_data  <- cov_$theta_cov$theta[cov_index]
