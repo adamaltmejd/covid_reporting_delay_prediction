@@ -1,7 +1,7 @@
 # simple stan code for data
 #
 ##
-library(mgcv)
+library(gamm4)
 lag <- 0:14
 #rstan_options(auto_write = TRUE)
 
@@ -32,7 +32,7 @@ theta <- theta2 <- rep(0,length(icu_est))
 i <- 51
 data.list <- list(date=1:i,
                   Y = icu_est[1:i])
-model.fit <- gam(Y~s(date),data=data.listfamily  =poisson)
+model.fit <- gam(Y~s(date),data=data.list,family  =poisson)
 theta[1:i] <- log(model.fit$fitted.values)[1:i]
 for(i in 52:length(icu_est)){
     print(i)

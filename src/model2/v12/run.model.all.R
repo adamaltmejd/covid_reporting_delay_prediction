@@ -90,7 +90,8 @@ run.model.all <- function(deaths, icu){
             ##
             #
             ##
-            Npost <- cbind(data$dates[j],result$Npost, N_est_true[as.character(data$dates)%in%as.character(result$Npost$dates)])
+            N_est_true <- apply(deaths$detected,1,max,na.rm=T)
+            Npost <- cbind(deaths$dates[j],result$Npost, N_est_true[as.character(deaths$dates)%in%as.character(result$Npost$dates)])
             colnames(Npost)[c(1,7)] <- c("State",'Truth')
             saveRDS(Npost, file = paste(store_data_folder,"/Npost_",j,'.rds',sep=""))
             saveRDS(result$posteriror_list, file = paste(store_data_folder,"/prior_",j,'.rds',sep=""))
