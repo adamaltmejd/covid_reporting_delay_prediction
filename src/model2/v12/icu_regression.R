@@ -3,7 +3,7 @@
 #
 #
 ####
-library(INLA)
+library(mgcv)
 
 
 
@@ -52,26 +52,23 @@ icu_covariates <- function(deaths, icu){
     if(is.null(icu_cov)){
         data.list <- list(date=1:51,
                           Y = icu_est[1:51])
-        model_smooth <- inla(Y ~  f(date, model = "rw2"),
-                             data = data.list,
-                             family = "poisson")
+        model.fit <- gam(Y~s(date), data=data.list, family = poisson)
         icu_cov = data.frame(date=dates[1:51],
-                            theta=model_smooth$summary.fixed$"0.5quant"+model_smooth$summary.random$date$"0.5quant"[1:51])
+                            theta=log(model.fit$fitted.values)[1:51])
     }
     for(i in 52:length(icu_est)){
-        cat('running estimate for day = ', as.character(dates[i]),'\n')
         if(dates[i]%in% icu_cov$date ==T)
             next
+
+        cat('running covariate estimate for day = ', as.character(dates[i]),'\n')
         data.list <- list(date=1:i,
                           Y = icu_est[1:i])
 
-        model_smooth <- inla(Y ~  f(date, model = "rw2"),
-                             data = data.list,
-                             family = "poisson")
+        model.fit <- gam(Y~s(date), data=data.list, family = poisson)
 
         icu_cov <- rbind(icu_cov,
                          c(as.character(dates[i]),
-                           model_smooth$summary.fixed$"0.5quant"+model_smooth$summary.random$date$"0.5quant"[i]))
+                           log(model.fit$fitted.values)[i]))
 
     }
     icu_cov$theta <- as.numeric(icu_cov$theta)
