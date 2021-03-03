@@ -1,11 +1,8 @@
 \documentclass[a4paper,11pth]{article}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-%\usepackage{babel}
-%\usepackage[protrusion=true,expansion=true,final,babel]{microtype}
-%\usepackage[babel]{csquotes}
-%\usepackage{babel}
-\usepackage{natbib}
+\usepackage[square,numbers]{natbib}
+%\usepackage[style=nature]{biblatex}
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{booktabs}
 \usepackage{graphicx}
@@ -44,14 +41,15 @@ In this paper we describe a statistical methodology for nowcasting the surveilla
 To help motivate why such forecasting is needed, we now turn to the case of Sweden, and illustrate how this method and can provide more reliable and relevant data to decision-makers in the midst of a pandemic. We stress, however, that the model is flexible by design and that it could easily be applied to other countries and surveillance data as well.
 
 \subsection{The current situation of COVID-19 in Sweden}
-The Swedish Public Health Agency updates the COVID-19 statistics daily\footnote{The data is published on \url{https://www.folkhalsomyndigheten.se/smittskydd-beredskap/utbrott/aktuella-utbrott/covid-19/bekraftade-fall-i-sverige/}.}. During frequently re-occurring press conference, they present updates on the number of deaths, admissions to hospitals and intensive care, as well as case counts.
+The Swedish Public Health Agency updates the COVID-19 statistics daily (the data is published on https://www.folkhalsomyndigheten.se/smittskydd-beredskap
+/utbrott/aktuella-utbrott/covid-19/bekraftade-fall-i-sverige/).. During frequently re-occurring press conference, they present updates on the number of deaths, admissions to hospitals and intensive care, as well as case counts.
 
 One of the reasons for following these indicators is to enable public health professionals and the public to observe the evolving patterns of the epidemic \citep{Anderson2020_how_will}. In relation to policy, it is of specific interest to understand if the growth rates changes, which could indicate the need for a policy response. However, in each daily report only a proportion of the number of recent deaths is yet known, and this bias produces makes the recent data presented less useful.
 
 The death counts strongly suffer from the longer reporting delays. In their daily press conference, the Swedish Public Health Agency warns for this by stopping the reported 7-day moving average trend line 10 days before the latest date. But not only are deaths often reported far further back than 10 days, a bar plot still shows the latest information, creating a false impression of sense of a downward trend. In fact, in the Swedish situation, this might be the reason why the number of daily deaths have been underestimated repeatedly. As an example illustrating this, at the peak of the Swedish outbreak in the spring 2020, deaths were initially believed to level out at around 60 per day, but after all cases had been reported more than two weeks later, the actual number was close to 120 \citep{Ohman2020_antalet_virusdoda}.
 
 \section{The removal method}
-To correct for the reporting delays we propose to use the removal method, developed in animal management \citep{Pollock1991_review_papers}, to present an estimate of the actual frequencies at a given day and their uncertainty. The method has a long history dating back at least to the 1930s \citep{Leslie1939_attempt_determine}. However, the first refined mathematical treatment of the method is credited to \citet{Moran1951_mathematical_theory}, more modern derivatives exits today \citep{Matechou2016_open_models}. It is a commonly applied method today when analyzing age cohorts in fishery and wildlife management.
+To correct for the reporting delays we propose to use the removal method, developed in animal management \citep{Pollock1991_review_papers}, to present an estimate of the actual frequencies at a given day and their uncertainty. The method has a long history dating back at least to the 1930s \citep{Leslie1939_attempt_determine}. However, the first refined mathematical treatment of the method is credited to \cite{Moran1951_mathematical_theory}, more modern derivatives exits today \citep{Matechou2016_open_models}. It is a commonly applied method today when analyzing age cohorts in fishery and wildlife management.
 
 The removal method has three major advantages over the simplistic approach to just reporting moving averages:
 
@@ -67,7 +65,7 @@ Suppose for example that on day one, 4 individuals are reported dead for that da
 
 If additionally, 60 deaths are reported during the second day to have happened during day one, and on the third day, only 40 are reported for day two, we now have conflicting information. From the first-day reports it seemed like more people had died during day two, but the second day-reports gave the opposite indication. The model we propose systematically deals with such data, and handles many other sources of systematic variation in reporting delay. In fact, the Swedish reporting lag follows a calendar pattern. The number of events reported during weekends is much smaller. To account for this, we allow the estimated proportions of daily reported cases to follow a probability distribution taking into consideration what type of day it is.
 
-We note that a similar method has been proposed for delay adjusted reporting, but without using the removal method \cite{lawless1994adjustments}. In \cite{lawless1994adjustments} the author developed the Occurred But Not Reported method (OBNR), which can give a frequentist point estimate of the number of deaths, and under a Poisson distributional assumption, generate prediction intervals. A Bayesian version of this method for nowcasting was developed in \cite{hohle2014bayesian}.
+We note that a similar method has been proposed for delay adjusted reporting, but without using the removal method \citep{lawless1994adjustments}. In \cite{lawless1994adjustments} the author developed the Occurred But Not Reported method (OBNR), which can give a frequentist point estimate of the number of deaths, and under a Poisson distributional assumption, generate prediction intervals. A Bayesian version of this method for nowcasting was developed in \cite{hohle2014bayesian}.
 
 \section{Applying the model to COVID-19 in Sweden}
 We propose a Bayesian version of the removal model that assumes an overdispersed binomial distribution for the daily observations of deaths in Sweden in COVID-19. We then calculate the posterior distribution, prediction median and 95\% prediction intervals of the expected deaths from the reported deaths on each specific day. The method and algorithm is thoroughly described in the Supplementary Information.
@@ -112,9 +110,18 @@ The authors declare no conflict of interest.
 \newpage
 
 % Author contributions
-\bibliographystyle{chicago}
+\bibliographystyle{unsrt}
 \bibliography{bibliography}
 \input{contributions.tex}%
+
+\newpage
+\section{Figure legends}
+Figure 1. Swedish Covid-19 deaths as of 2020-06-04 and model predictions.
+
+Figure 2. Model accuracy over time for four dates, compared to a benchmark.
+
+Figure 3. Model accuracy over time for four dates, compared to benchmark.
+
 
 \newpage
 
