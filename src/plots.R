@@ -58,7 +58,7 @@ plot <- ggplot(data = DT1, aes(x = date, y = predicted_deaths)) +
          x = "Death date",
          y = "Number of deaths")
 
-ggsave(filename = file.path("output", "paper", "plots", "latest_prediction.pdf"),
+ggsave(filename = file.path("output", "plots", "latest_prediction.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
 
 
@@ -150,7 +150,7 @@ plot <- day_plot(plot_data[date %in% example_dates],
                  reported_dead[date %in% example_dates],
                  "")
                  #"Predicting the number of deaths in a given day reported within 14 days.")
-ggsave(filename = file.path("output", "paper", "plots", "lag_prediction_by_date.pdf"),
+ggsave(filename = file.path("output", "plots", "lag_prediction_by_date.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w)
 
 # For verification, plot each date as well
@@ -160,7 +160,7 @@ for (i in seq_along(dates)) {
     plot <- day_plot(plot_data[date == dates[i]],
                      reported_dead[date == dates[i]],
                      plot.title = dates[i])
-    ggsave(filename = file.path("output", "paper", "plots", "daily", paste0("prediction_", dates[i], ".pdf")),
+    ggsave(filename = file.path("output", "plots", "daily", paste0("prediction_", dates[i], ".pdf")),
            plot = plot, device = cairo_pdf, width = w, height = w)
 }
 #
@@ -199,7 +199,7 @@ plot <- ggplot(data = plot_data, aes(x = factor(days_left), color = type, group 
          x = "Days of lag to predict",
          y = "")
 
-ggsave(filename = file.path("output", "paper", "plots", "model_metrics.pdf"),
+ggsave(filename = file.path("output", "plots", "model_metrics.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
 
 #
@@ -225,7 +225,7 @@ plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = ty
          x = "Last date included in the model",
          y = "SCRPS")
 
-ggsave(filename = file.path("output", "paper", "plots", "SCRPS_over_states.pdf"),
+ggsave(filename = file.path("output", "plots", "SCRPS_over_states.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
 
 #
@@ -255,5 +255,5 @@ plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group 
          x = "Weekday",
          y = "")
 
-ggsave(filename = file.path("output", "paper", "plots", "SCRPS_over_weekdays.pdf"),
+ggsave(filename = file.path("output", "plots", "SCRPS_over_weekdays.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
