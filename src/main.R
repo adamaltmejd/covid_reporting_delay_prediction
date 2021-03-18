@@ -1,3 +1,10 @@
+# Required packages
+library(data.table)
+library(lubridate)
+library(fst)
+library(readxl)
+library(stringr)
+
 ##
 # run file to create and reproduce the figures in the article
 # make sure that correct updated FHM files exist at data/FHM/
