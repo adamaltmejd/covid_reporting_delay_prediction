@@ -4,7 +4,7 @@
 #
 ##
 graphics.off()
-store_data_folder <- file.path("data","tmp","model2","v13")
+store_data_folder <- file.path("data","tmp","model2","v12")
 data_files <- list.files(store_data_folder,pattern='Npost*')
 
 data <- c()
@@ -14,7 +14,8 @@ for(file in data_files){
 data$df <- as.Date(data$State)-as.Date(data$dates)
 
 days = 1:14
-data <- data[order(data$State),]
+data <- data[order(data$State,decreasing = T),]
+data <- data[1:2000,]
 for(day in days){
     index <- data$df==day
     data_temp <- data[index,]
@@ -29,7 +30,7 @@ for(day in days){
     cat(' (',round(mean(CI_under),2),',',round(mean(CI_over),2),")" ,sep="")
     cat('\n')
 }
-day_ <- 2
+day_ <- 7
 index <- data$df==day_
 data_temp <- data[index,]
 #data_temp <- data_temp[80:sum(index),]

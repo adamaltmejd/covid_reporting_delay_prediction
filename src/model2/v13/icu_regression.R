@@ -26,7 +26,7 @@ icu_covariates <- function(deaths, icu){
     if(file.exists(icu_cov_name)==T)
         icu_cov  <- readRDS(icu_cov_name)
 
-    icu_pre <-read_excel(path = file.path("data", "Folkhalsomyndigheten_Covid19.xlsx"),
+    icu_pre <-read_excel(path = file.path("data", "FHM", "Folkhalsomyndigheten_Covid19_2020-12-09.xlsx"),
                          sheet = 3,
                          col_types = c("date", "numeric"),
                          progress = FALSE)
@@ -52,9 +52,9 @@ icu_covariates <- function(deaths, icu){
 
         data.list <- list(date=1:51,
                           Y = icu_est[1:51])
-        model.fit <- gam(Y~s(date), data=data.list, family = poisson)
+        model.fit <- gam(Y~  s(date), data=data.list, family = poisson)
         icu_cov = data.frame(date=dates[1:51],
-                            theta=log(model.fit$fitted.values)[1:51])
+                             theta=log(model.fit$fitted.values)[1:51])
     }
 
     for(i in 52:length(icu_est)){
@@ -65,7 +65,8 @@ icu_covariates <- function(deaths, icu){
         data.list <- list(date=1:i,
                           Y = icu_est[1:i])
 
-        model.fit <- gam(Y~s(date), data=data.list, family = poisson)
+        model.fit <- gam(Y~  s(date), data=data.list, family = nb(), method="REML")
+        print(summary(model.fit))
         icu_cov <- rbind(icu_cov,
                          c(as.character(dates[i]),
                            log(model.fit$fitted.values)[i]))
@@ -85,7 +86,7 @@ icu_covariates <- function(deaths, icu){
                                dates = deaths$dates[1:(N_d-incomplete_deaths)])
     icu_cov_glm <- icu_lag[dates%in%Cov_analysis$dates]
 
-    glm.fit <- glm(y~x,poisson, data= data.frame(y=Cov_analysis$y,x=icu_cov_glm))
+    glm.fit <- gam(y~x,family = nb(), data= data.frame(y=Cov_analysis$y,x=icu_cov_glm), method = "REML")
 
 
 
@@ -94,8 +95,11 @@ icu_covariates <- function(deaths, icu){
 
     return(list(theta_cov = data.frame(dates = dates,
                                        theta = icu_lag),
-                coeff     = glm.fit$coefficients))
+                coeff     = glm.fit$coefficients,
+                model     = glm.fit))
 }
+
+
 
 
 

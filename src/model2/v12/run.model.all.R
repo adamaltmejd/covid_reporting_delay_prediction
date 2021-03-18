@@ -24,7 +24,7 @@ run.model.all <- function(deaths, icu){
     #i icu_covariates  updateras filer
     cov_ <- icu_covariates(deaths, icu)
 
-    store_data_folder <- file.path("data","tmp","model2","v13")
+    store_data_folder <- file.path("data","model")
 
     ####
 
@@ -45,6 +45,8 @@ run.model.all <- function(deaths, icu){
                            theta_Sigma    =  5*diag(2),
                            mu_phi         = 1,
                            sigma_phi      = 1)
+
+    output <- data.frame()
 
     for(j in (days_run+1):length(deaths$dates)){
         start_ = j - days_run # run the last 31 days
@@ -95,6 +97,46 @@ run.model.all <- function(deaths, icu){
             colnames(Npost)[c(1,7)] <- c("State",'Truth')
             saveRDS(Npost, file = paste(store_data_folder,"/Npost_",j,'.rds',sep=""))
             saveRDS(result$posteriror_list, file = paste(store_data_folder,"/prior_",j,'.rds',sep=""))
+        }else{
+            Npost <-readRDS( file = paste(store_data_folder,"/Npost_",j,'.rds',sep=""))
+            report_cleaned <- report_clean(deaths$detected[start_:j,start_:j],deaths$dates[start_:j])
+            new_cases <- newCases(report_cleaned)
+            rownames(new_cases) <- as.character(deaths$dates[start_:j])
+            colnames(new_cases) <- as.character(deaths$dates[start_:j])
+        }
+        Total_repported <- rowSums(new_cases, na.rm=T)
+
+        output_temp <-data.frame(prediction_date  = Npost$State,
+                                 date             = Npost$dates,
+                                 sure_deaths      = Total_repported[names(Total_repported)%in%Npost$dates],
+                                 predicted_deaths = Npost$median-Total_repported[names(Total_repported)%in%Npost$dates],
+                                 predicted_deaths_lCI = Npost$lCI,
+                                 predicted_deaths_uCI = Npost$uCI,
+                                 total                = Npost$media)
+        date_to_predict <- Npost$State[1] + (max(as.Date(Npost$dates))-Npost$State[1]+1):0
+        cov_index <- cov_$theta_cov$date%in% date_to_predict
+        cov_data  <- cov_$theta_cov$theta[cov_index]
+        icu_pred <- qpois(model_parameters$quantile[1],
+                          lambda = exp(cbind(1,cov_data)%*%cov_$coeff ))
+        icu_pred <- cbind(icu_pred, qpois(0.5,
+                                          lambda = exp(cbind(1,cov_data)%*%cov_$coeff )))
+        icu_pred <- cbind(icu_pred, qpois(model_parameters$quantile[2],
+                                lambda = exp(cbind(1,cov_data)%*%cov_$coeff )))
+        output_temp <- rbind(output_temp,
+                             data.frame(
+                                 prediction_date  = Npost$State[1],
+                                 date             = as.character(date_to_predict),
+                                 sure_deaths      = 0,
+                                 predicted_deaths = icu_pred[,2],
+                                 predicted_deaths_lCI = icu_pred[,1],
+                                 predicted_deaths_uCI = icu_pred[,3],
+                                 total                = icu_pred[,2]
+                             ))
+        if(dim(output)[1] == 0){
+                output <- output_temp
+        }else{
+            output <- rbind(output, output_temp)
         }
     }
+    return(output)
 }

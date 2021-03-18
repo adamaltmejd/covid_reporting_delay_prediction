@@ -114,8 +114,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
                                       X_time$fourth[i, index_]+
                                   X_time$third[i, index_],
                                   X_time$rest[i, index_],
-                                  X_time$Tuesday[i,index_],
-                                  X_time$Wednesday[i,index_])
+                                  X_time$Tuesday[i,index_])
     X_full <- rbind(X_full  , timePoints_MH[[i]]$X)
     #X_fixed <- rbind(X_fixed, timePoints_MH[[i]]$X_fixed)
 
@@ -216,8 +215,8 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
 
         Nstar <- sample((N[i]-alpha.MCMC[i]):(N[i]+alpha.MCMC[i] ), 1)
         if(Nstar >= sum(timePoints_MH[[i]]$n.obs)){
-          lik      <- density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, N[i], Prob)   + dnegbin(N[i], lambda[i],phi)
-          lik_star <-  density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, Nstar, Prob) + dnegbin(Nstar, lambda[i],phi)
+          lik      <- density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, N[i], Prob)   #+ dnegbin(N[i], lambda[i],phi)
+          lik_star <-  density_t((timePoints_MH[[i]]$theta), timePoints_MH[[i]]$n.obs, Nstar, Prob) #+ dnegbin(Nstar, lambda[i],phi)
           if(log(runif(1)) < lik_star-lik ){
             N[i] <- Nstar
             acc_N[i] <- acc_N[i] + 1
@@ -264,7 +263,7 @@ model <- function(new_cases, model_paramters, prior_list, startvalue_list=NULL){
       a_hat  <- a_sigma + colSums(X_sigma)/2
       report_effort = report_effort - X_full%*%beta_time
       b_hat  <- b_sigma + 0.5  *t(X_sigma)%*%(report_effort)^2
-      sigma_time    <- sqrt(rinvgamma(2, shape= a_hat, rate=b_hat))
+      sigma_time    <- sqrt(rinvgamma(length(a_hat), shape= a_hat, rate=b_hat))
 
 
     }

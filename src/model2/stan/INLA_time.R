@@ -18,7 +18,7 @@ icu_pre <- data.frame(date = as.Date(icu_pre$Datum_vårdstart),
 
 Reported = icu$detected
 N <- dim(Reported)[1]
-incomplete <- 10 # remove the ten latest
+incomplete <- 8 # remove the ten latest
 incomplete_deaths <- 30
 icu_est <- rep(0,N-incomplete)
 for(j in 1:(N -incomplete)){
@@ -76,5 +76,10 @@ glm.fit <- glm(y~x,poisson, data= data.frame(y=y,x=X))
 lines(Cov_analysis$dates,exp(cbind(1,X)%*%glm.fit$coefficients),col='red',lty=3)
 
 icu_cov <- data.frame(date= dates[dates%in%Cov_analysis$dates], icu = X)
-saveRDS(icu_cov, file.path("data", "processed", "icu_covariates.rds"))
+#saveRDS(icu_cov, file.path("data", "processed", "icu_covariates.rds"))
+
+X <- c(rep(0,i-1), theta)
+dates_pred <- c(dates,dates[length(dates)]+1:7)
+plot(dates_pred,exp(glm.fit$coefficients[1] + glm.fit$coefficients[2]*X),type='l',col='red')
+points(Cov_analysis$dates,Cov_analysis$deaths)
 

@@ -16,7 +16,7 @@ data$df <- as.Date(data$State)-as.Date(data$dates)
 days = 1:14
 
 data <- data[order(data$State),]
-data <- data[1:896,]
+#data <- data[1:200,]
 for(day in days){
     index <- data$df==day
     data_temp <- data[index,]

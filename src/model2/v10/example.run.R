@@ -8,9 +8,9 @@ source(file.path("src","model2","v10","model.R"))
 days_run <- 30
 # todo addapt sample N
 ##
-sim <- 40000
+sim <- 10000
 data <- readRDS(file.path("data", "processed", "processed_data.rds"))
-j <- dim(data$detected)[1] -29
+j <- dim(data$detected)[1] -41
 start_ = j - days_run # run the last 31 days
 
 report_cleaned <- report_clean(data$detected[start_:j,start_:j],data$dates[start_:j])
@@ -23,8 +23,8 @@ model_parameters <- list(sim           = sim,
                          N.days.fixed  =  3,
                          quantile      = c(0.025,0.975))
 
-prior_list <- list(mu_beta        = c(0,0,0,0,0),
-                   Sigma_beta     = 50*diag(5),
+prior_list <- list(mu_beta        = c(0,0,0,0),
+                   Sigma_beta     = 50*diag(4),
                    a_sigma        = c(3,3,3),
                    b_sigma        = c(10/2,10/2,10/2),
                    theta_mu         = c(0,0),
