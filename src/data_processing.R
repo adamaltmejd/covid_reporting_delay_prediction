@@ -13,6 +13,7 @@ library(data.table)
 library(fst)
 library(stringr)
 library(readxl)
+source("src/data_processing_functions.R")
 
 # FHM Deaths
 files <- list.files(file.path("data", "FHM"), full.names = TRUE)
