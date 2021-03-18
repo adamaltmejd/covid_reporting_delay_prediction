@@ -79,7 +79,7 @@ prepare_dt <- function(DT) {
     DT[, date := as.Date(date)]
 
     # Ensure complete time series
-    all_dates <- CJ(date = seq.Date(DT[, min(date)], DT[, max(date)], by = 1),
+    all_dates <- CJ(date = seq.Date(DT[, min(date)], DT[, max(publication_date)], by = 1),
                     publication_date = seq.Date(DT[, min(publication_date)], DT[, max(publication_date)], by = 1))
     all_dates <- all_dates[date <= publication_date]
     DT <- merge(DT, all_dates, by = names(all_dates), all = TRUE)
