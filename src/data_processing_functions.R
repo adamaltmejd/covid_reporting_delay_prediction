@@ -77,6 +77,7 @@ prepare_dt <- function(DT) {
 
     DT[, publication_date := as.Date(publication_date)]
     DT[, date := as.Date(date)]
+    DT[, report_released := TRUE]
 
     # Ensure complete time series
     all_dates <- CJ(date = seq.Date(DT[, min(date)], DT[, max(publication_date)], by = 1),
@@ -89,6 +90,9 @@ prepare_dt <- function(DT) {
 
     # Set missing to zero (happens when a date starts on a day without a report)
     DT[is.na(N), N := 0]
+
+    # No report on dates we add here
+    DT[is.na(report_released), report_released := FALSE]
 
     # Calculate lags
     n_workdays <- Vectorize(function(a, b) {

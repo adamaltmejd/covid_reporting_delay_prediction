@@ -25,14 +25,10 @@ buildData <- function(country = "sweden"){
         deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
         deaths_dt <- deaths_dt[date > "2020-04-01", .(date, publication_date, N)]
     }else if(country=="uk"){
-        deaths_dt <- fread(file.path("data", "uk", "uk.csv"))
+        deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = T)
         deaths_dt <- deaths_dt[, .(date, publication_date, N)]
-        pub_dates <- unique(deaths_dt$publication_date)
-        # uk never publish on the same date
-        deaths_dt <- rbind(deaths_dt,
-                           data.table( publication_date = pub_dates,
-                                       date             = pub_dates,
-                                       N = 0))
+        deaths_dt <- deaths_dt[date >= "2020-09-01", .(date, publication_date, N)]
+
     }
     ##
     #only relevant stuff below
@@ -74,5 +70,10 @@ buildData <- function(country = "sweden"){
                    dates_not_reported = index_NoReport)
     if(country == "sweden"){
         saveRDS(result, file.path("data", "processed", "processed_data.rds"))
+    }else if(country=="uk"){
+        saveRDS(result, file.path("data", "processed", "processed_data_uk.rds"))
     }
 }
+
+buildData("sweden")
+buildData("uk")

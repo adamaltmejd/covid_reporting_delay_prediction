@@ -695,9 +695,9 @@ newCases <- function(reports){
   ##
   # ugly fix
   ##
-  
+
   reports_temp <- reports
-  
+
   for(i in 1:dim(reports_temp)[1]){
     reports_temp[i,1:(i-1)]=0
     if(is.na(reports_temp[i,i]))
@@ -706,7 +706,7 @@ newCases <- function(reports){
       if(is.na(reports_temp[i,j]))
         reports_temp[i,j]= reports_temp[i,j-1]
     }
-    
+
   }
   reports_temp <- cbind(0,reports_temp)
   newreport <- t(diff(t(reports_temp)))
@@ -715,15 +715,31 @@ newCases <- function(reports){
   newreport[newreport<0 & is.na(newreport)==F]=0 #fake
   return(newreport)
 }
+
+#'  returns a vector of how many has deaths are reported at t days after
+#'  @param t       - (int > 0 ) how many days
+#'  @param reports - (N x N) reported cumlative deaths
+deaths_at_t <-function(reports, t){
+
+  N <- dim(reports)[1]
+  dt <- diag(reports[,-(1:t)])
+  dt <- c(dt, rep(NA, N- length(dt)))
+  names(dt) <- rownames(reports)
+  return(dt)
+}
+
 ##
+# how m
 # transforms data,
-# we remove data if negative..
-#
-#  deaths  - (N x 1) how many has died (thruth)
-#  reports - (N x N) reported cumlative deaths
-#  maxusage.day - (int) only use data up to maxusage.days i.e.
-#                       reports[i,i + maxusage.day - 1]
-#
+#' we remove data if negative..
+#'
+#'  @param deaths  - (N x 1) how many has died (thruth)
+#'  @param reports - (N x N) reported cumlative deaths
+#'  @param maxusage.day - (int) only use data up to maxusage.days i.e.
+#'                       reports[i,i + maxusage.day - 1]
+#' @return list
+#'             - death.remain how many remains to be reported
+#'             - report.new   how many are reported
 ##
 newDeaths <-function(deaths, reports,maxusage.day = -1){
   newreport <- reports
@@ -731,9 +747,9 @@ newDeaths <-function(deaths, reports,maxusage.day = -1){
   ##
   # ugly fix
   ##
-  
+
   reports_temp <- reports
-  
+
   for(i in 1:dim(reports_temp)[1]){
     reports_temp[i,1:(i-1)]=0
     if(is.na(reports_temp[i,i]))
@@ -742,7 +758,7 @@ newDeaths <-function(deaths, reports,maxusage.day = -1){
       if(is.na(reports_temp[i,j]))
         reports_temp[i,j]= reports_temp[i,j-1]
     }
-    
+
   }
   reports_temp <- cbind(0,reports_temp)
   newreport <- t(diff(t(reports_temp)))
