@@ -576,21 +576,7 @@ buildXall <- function(N){
   return(sparseMatrix(j=j_base,i=j_base))
 }
 
-##
-# build day effect matrix
-#  nDayEffects - number of speical days effect (1- first day, 2- first + second day)
-#  N - number of days
-#  nDayEffects - how many day covariate effect to create
-##
-buildXdayeffect <- function(N, nDayEffects = 1){
-  nDayEffects <- min(N,nDayEffects)
-  index_days <- toeplitz(c( (1:nDayEffects), rep(0,N -nDayEffects)))
-  index_days <- index_days[upper.tri(index_days,diag=T)]
-  j_ <-  index_days[index_days>0]
-  i_base <- 1:length(index_days)
-  i_ <-  i_base[index_days>0]
-  return(sparseMatrix(i=i_,j=j_ , dims=c(length(index_days), nDayEffects)  ) )
-}
+
 ##
 # build day mixed effect matrix
 #  nDayEffects - number of speical days effect (1- first day, 2- first + second day)
@@ -716,17 +702,6 @@ newCases <- function(reports){
   return(newreport)
 }
 
-#'  returns a vector of how many has deaths are reported at t days after
-#'  @param t       - (int > 0 ) how many days
-#'  @param reports - (N x N) reported cumlative deaths
-deaths_at_t <-function(reports, t){
-
-  N <- dim(reports)[1]
-  dt <- diag(reports[,-(1:t)])
-  dt <- c(dt, rep(NA, N- length(dt)))
-  names(dt) <- rownames(reports)
-  return(dt)
-}
 
 ##
 # how m
@@ -1421,6 +1396,14 @@ death.givenParamBB <- function(alpha, beta, Reported,Predict.day = Inf,sim=c(200
   }
   return(deaths)
 }
+
+###
+#' setup up data uk covarites data,
+#' @param dates_report - (N x 1) which days are reports on
+#' @param predict.day   - (int) how many days back are predictied
+#' @param unique.prob   - (int) how many lags have there own probability
+##
+
 
 ##
 # buidling the X matrix

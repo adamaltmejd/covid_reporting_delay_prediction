@@ -26,7 +26,8 @@ buildData <- function(country = "sweden"){
         deaths_dt <- deaths_dt[date > "2020-04-01", .(date, publication_date, N)]
     }else if(country=="uk"){
         deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = T)
-        deaths_dt <- deaths_dt[, .(date, publication_date, N)]
+        report_dt <- deaths_dt[date >= "2020-09-01", .(date, publication_date,  report_released)]
+
         deaths_dt <- deaths_dt[date >= "2020-09-01", .(date, publication_date, N)]
 
     }
@@ -34,7 +35,7 @@ buildData <- function(country = "sweden"){
     #only relevant stuff below
     ##
     res2 <- deaths_dt %>% tidyr::spread(publication_date, N)
-
+    res_no_report <- report_dt %>% tidyr::spread(publication_date, report_released)
     # dayes with no reporting
     index_NoReport <- res2[,1]$date%in%unique(deaths_dt$publication_date)==F
 
@@ -46,6 +47,10 @@ buildData <- function(country = "sweden"){
     detected[,index_NoReport == F] = as.matrix(res2[,2:dim(res2)[2]])
     colnames(detected) <- as.character((res2[,1]$date))
     rownames(detected) <- as.character((res2[,1]$date))
+    report_released = detected
+    print(dim(res2))
+    print(dim(res_no_report))
+    report_released[,index_NoReport == F] = as.matrix(res_no_report[,2:dim(res_no_report)[2]])
 
 
     repeated = 1
@@ -65,6 +70,7 @@ buildData <- function(country = "sweden"){
         }
     }
     result <- list(detected = detected,
+                   report   = report_released,
                    dates = res2[,1]$date,
                    dates_report=unique(deaths_dt$publication_date),
                    dates_not_reported = index_NoReport)
@@ -74,6 +80,5 @@ buildData <- function(country = "sweden"){
         saveRDS(result, file.path("data", "processed", "processed_data_uk.rds"))
     }
 }
-
-buildData("sweden")
 buildData("uk")
+#buildData("sweden")
