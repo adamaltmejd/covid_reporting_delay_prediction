@@ -1,6 +1,17 @@
 library(fst)
 library(data.table)
 
+# Creates .fst files containing data tables with model predictions for all different states.
+# Each file should have the following columns:
+# * state: date at which the data was recorded
+# * date: the date
+# * days_left: state - date
+# * predicted_deaths: the prediciton of the model
+# * ci_lower: lower CI of prediction
+# * ci_upper: upper CI of prediction
+# * SCRPS: accuracy score
+# * target: the "true" number of deaths within 30 days (that the model was trained to predict)
+
 #####################################
 # Sweden predictions over all dates #
 #####################################
