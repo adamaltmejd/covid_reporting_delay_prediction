@@ -23,11 +23,11 @@ buildData <- function(country = "sweden"){
 
     if(country == "sweden"){
         deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
+        report_dt <- deaths_dt[date > "2020-04-01", .(date, publication_date,  report_released)]
         deaths_dt <- deaths_dt[date > "2020-04-01", .(date, publication_date, N)]
-    }else if(country=="uk"){
+    } else if(country=="uk"){
         deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = T)
         report_dt <- deaths_dt[date >= "2020-09-01", .(date, publication_date,  report_released)]
-
         deaths_dt <- deaths_dt[date >= "2020-09-01", .(date, publication_date, N)]
 
     }
@@ -81,4 +81,4 @@ buildData <- function(country = "sweden"){
     }
 }
 buildData("uk")
-#buildData("sweden")
+buildData("sweden")
