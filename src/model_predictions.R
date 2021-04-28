@@ -1,12 +1,25 @@
 library(fst)
 library(data.table)
 
-###
-# Sweden predictions over all dates
+#####################################
+# Sweden predictions over all dates #
+#####################################
 
-###
-# UK Prediction over all dates
-source(file.path("src", "util", "util_uk.r"))
+# Prepare UK data
+source(file.path("src", "buildData.R"))
+buildData("sweden", file.path("data", "processed", "processed_data_sweden.rds"))
+# Load prepared data
+swe_data <- readRDS(file.path("data", "processed", "processed_data_sweden.rds"))
+
+
+################################
+# UK Prediction over all dates #
+################################
+
+# Prepare UK data
+source(file.path("src", "buildData.R"))
+buildData("uk", file.path("data", "processed", "processed_data_uk.rds"))
+# Load prepared data
 uk_data <- readRDS(file.path("data", "processed", "processed_data_uk.rds"))
 
 zero.report <- uk_data$dates %in% as.Date(c("2021-01-26", "2021-01-28", "2021-03-01"))
@@ -20,5 +33,4 @@ dts <- lapply(
     result = uk_data
 )
 dts_smooth <- lapply(dts, gp.smooth, max.days.to.report = max.days.to.report)
-
 write_fst(rbindlist(dts_smooth), file.path("data", "model_predictions_full_uk.fst"))

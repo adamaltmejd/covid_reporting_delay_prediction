@@ -13,23 +13,21 @@
 #                 the columns represents reports days
 # detected[,i]  - reprsentes reported deaths at rerport dayes dates[i]
 ##
-library(Matrix)
-library(stringr)
-library(dplyr)
-library(fst)
 
-
-buildData <- function(country = "sweden"){
+buildData <- function(country, path){
+    library(Matrix)
+    library(stringr)
+    library(dplyr)
+    library(fst)
 
     if(country == "sweden"){
         deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
         report_dt <- deaths_dt[date > "2020-04-01", .(date, publication_date,  report_released)]
         deaths_dt <- deaths_dt[date > "2020-04-01", .(date, publication_date, N)]
-    } else if(country=="uk"){
+    } else if(country == "uk"){
         deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = T)
         report_dt <- deaths_dt[date >= "2020-09-01", .(date, publication_date,  report_released)]
         deaths_dt <- deaths_dt[date >= "2020-09-01", .(date, publication_date, N)]
-
     }
     ##
     #only relevant stuff below
@@ -74,11 +72,6 @@ buildData <- function(country = "sweden"){
                    dates = res2[,1]$date,
                    dates_report=unique(deaths_dt$publication_date),
                    dates_not_reported = index_NoReport)
-    if(country == "sweden"){
-        saveRDS(result, file.path("data", "processed", "processed_data.rds"))
-    }else if(country=="uk"){
-        saveRDS(result, file.path("data", "processed", "processed_data_uk.rds"))
-    }
+
+    saveRDS(result, path)
 }
-buildData("uk")
-buildData("sweden")
