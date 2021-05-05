@@ -29,6 +29,7 @@ swe_data <- readRDS(file.path("data", "processed", "processed_data_sweden.rds"))
 
 # Prepare UK data
 source(file.path("src", "buildData.R"))
+source(file.path("src","util","util_uk.r"))
 buildData("uk", file.path("data", "processed", "processed_data_uk.rds"))
 # Load prepared data
 uk_data <- readRDS(file.path("data", "processed", "processed_data_uk.rds"))

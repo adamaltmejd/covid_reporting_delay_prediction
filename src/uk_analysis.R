@@ -46,7 +46,7 @@ Pi[upper.tri(Data$report.new,diag=T)]     <- pi
 
 
 
-lag.plot = 1
+lag.plot = 3
 MS.plot = F
 lag.data.simulated <- zero.BB.dist.by.lag(Data,Alpha1, Beta1, Pi , lags = 1:10)
 
