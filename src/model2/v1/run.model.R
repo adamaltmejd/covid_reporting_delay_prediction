@@ -65,6 +65,6 @@ fetch_plot_data <- function(model_results, deaths_dt, target_lag = 14) {
 
 a <- run_model_default("2020-11-26")
 b <- run_model_default("2020-06-20")
-deaths_dt <- read_fst("data/processed/deaths_dt.fst", as.data.table = TRUE)
+deaths_dt <- read_fst("data/processed/deaths_dt_SWE.fst", as.data.table = TRUE)
 
 

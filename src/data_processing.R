@@ -6,7 +6,7 @@
 # (external files avialable at <https://github.com/adamaltmejd/covid>)
 #
 # generates the files:
-# /data/processed/deaths_dt.fst
+# /data/processed/deaths_dt_SWE.fst
 ##
 
 library(data.table)
@@ -21,7 +21,7 @@ dts <- lapply(files, load_fhm_deaths)
 deaths_dt <- rbindlist(dts)
 setkey(deaths_dt, publication_date, date)
 deaths_dt <- prepare_dt(deaths_dt)
-write_fst(deaths_dt, file.path("data", "processed", "deaths_dt.fst"))
+write_fst(deaths_dt, file.path("data", "processed", "deaths_dt_SWE.fst"))
 
 ###
 # Death stats UK
@@ -36,5 +36,5 @@ dts <- lapply(files, load_fhm_icu)
 icu_dt <- rbindlist(dts)
 setkey(icu_dt, publication_date, date)
 icu_dt <- prepare_dt(icu_dt)
-write_fst(icu_dt, file.path("data", "processed", "icu_dt.fst"))
+write_fst(icu_dt, file.path("data", "processed", "icu_dt_SWE.fst"))
 

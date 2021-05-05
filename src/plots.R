@@ -2,7 +2,7 @@
 # generate the figures for the article x
 #
 # read files:
-# data/processed/deaths_dt.fst           (data_processing.R)
+# data/processed/deaths_dt_SWE.fst           (data_processing.R)
 # data/processed/model_latest.fst        (Beta_GP_lag_benchmark_build.R)
 # data/processed/constant_benchmark.fst  (constant_benchmark.R)
 # data/processed/model_benchmark.fst.fst (Beta_GP_lag_benchmark_build.R)
@@ -27,7 +27,7 @@ w <- 11 # plot width (inches)
 my_palette <- c("#d1ae90", "#046C9A", "#D69C4E", "#ABDDDE", "#000000")
 
 # Plot 1 = Predictions and current stats
-deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
+deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
 model_predict <- read_fst(file.path("data", "processed", "model_latest.fst"), as.data.table = TRUE)
 DT1 <- model_predict[date %between% c("2020-05-20", "2020-06-03")]
 DT2 <- deaths_dt[!is.na(N) & !is.na(date) & publication_date == max(model_predict[, date])]

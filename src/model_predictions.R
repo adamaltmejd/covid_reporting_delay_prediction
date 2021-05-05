@@ -9,19 +9,35 @@ library(data.table)
 # * predicted_deaths: the prediciton of the model
 # * ci_lower: lower CI of prediction
 # * ci_upper: upper CI of prediction
-# * SCRPS: accuracy score
+# * CRPS: accuracy score
 # * target: the "true" number of deaths within 30 days (that the model was trained to predict)
 
 #####################################
 # Sweden predictions over all dates #
 #####################################
 
-# Prepare UK data
+# Prepare Swedish data
 source(file.path("src", "buildData.R"))
 buildData("sweden", file.path("data", "processed", "processed_data_sweden.rds"))
 # Load prepared data
 swe_data <- readRDS(file.path("data", "processed", "processed_data_sweden.rds"))
 
+# Build Sweden model
+# TODO
+# zero.report <- swe_data$dates %in% as.Date(c("2021-01-26", "2021-01-28", "2021-03-01"))
+# max.days.to.report <- 30
+# swe_data$report[, zero.report] <- 0
+
+#dt <- swe.prediction(report.dates = as.Date(swe_data$dates_report[swe_data$dates_report >= "2020-10-10"])[10], max.days.to.report = max.days.to.report, result = swe_data)
+#dt_smooth <- gp.smooth(dt, max.days.to.report = max.days.to.report)
+# dts <- lapply(
+#     as.Date(swe_data$dates_report[swe_data$dates_report >= "2020-10-10"]),
+#     FUN = function(x, ...) swe.prediction(report.dates = x, ...),
+#     max.days.to.report = max.days.to.report,
+#     result = swe_data
+# )
+# dts_smooth <- lapply(dts, gp.smooth, max.days.to.report = max.days.to.report)
+# write_fst(rbindlist(dts_smooth), file.path("data", "model_predictions_full_SWE.fst"))
 
 ################################
 # UK Prediction over all dates #
@@ -29,7 +45,7 @@ swe_data <- readRDS(file.path("data", "processed", "processed_data_sweden.rds"))
 
 # Prepare UK data
 source(file.path("src", "buildData.R"))
-source(file.path("src","util","util_uk.r"))
+source(file.path("src", "util", "util_uk.r"))
 buildData("uk", file.path("data", "processed", "processed_data_uk.rds"))
 # Load prepared data
 uk_data <- readRDS(file.path("data", "processed", "processed_data_uk.rds"))
@@ -38,6 +54,9 @@ zero.report <- uk_data$dates %in% as.Date(c("2021-01-26", "2021-01-28", "2021-03
 max.days.to.report <- 30
 uk_data$report[, zero.report] <- 0
 
+#dt <- uk.prediction(report.dates = as.Date(uk_data$dates_report[uk_data$dates_report >= "2020-10-10"])[10], max.days.to.report = max.days.to.report, result = uk_data)
+#dt_smooth <- gp.smooth(dt, max.days.to.report = max.days.to.report)
+
 dts <- lapply(
     as.Date(uk_data$dates_report[uk_data$dates_report >= "2020-10-10"]),
     FUN = function(x, ...) uk.prediction(report.dates = x, ...),
@@ -45,4 +64,4 @@ dts <- lapply(
     result = uk_data
 )
 dts_smooth <- lapply(dts, gp.smooth, max.days.to.report = max.days.to.report)
-write_fst(rbindlist(dts_smooth), file.path("data", "model_predictions_full_uk.fst"))
+write_fst(rbindlist(dts_smooth), file.path("data", "model_predictions_full_UK.fst"))

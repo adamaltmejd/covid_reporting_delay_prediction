@@ -2,7 +2,7 @@
 # builds the constant benchmark model
 #
 # load files:
-# data/processed/deaths_dt.fst (data_processing.R)
+# data/processed/deaths_dt_SWE.fst (data_processing.R)
 #
 # generates the files:
 # data/processed/constant_benchmark.fst
@@ -90,8 +90,12 @@ generate_predictions <- function(deaths_dt) {
     return(predictions)
 }
 
-deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
-DT <- generate_predictions(deaths_dt)
+##########
+# SWEDEN #
+##########
+
+deaths_dt_SWE <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
+DT <- generate_predictions(deaths_dt_SWE)
 
 # For evaluation, try to predict the reported dead 14 days after the death date:
 DT <- DT[prediction_date - date == 14]
@@ -106,6 +110,30 @@ out <- DT[, .(state,
               days_left = 14 - as.integer(state - date),
               ci_upper = predicted_deaths_cum + qnorm(1-alpha/2) * predicted_deaths_SD_cum,
               ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
-              SCRPS = SCRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
+              CRPS = CRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
 
-write_fst(out, file.path("data", "processed", "constant_benchmark.fst"))
+write_fst(out, file.path("data", "processed", "constant_model_predictions_full_SWE.fst"))
+
+######
+# UK #
+######
+
+deaths_dt_UK <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = TRUE)
+DT <- generate_predictions(deaths_dt_UK)
+
+# For evaluation, try to predict the reported dead 14 days after the death date:
+DT <- DT[prediction_date - date == 14]
+DT[, target := reported_dead[state - date == 14], by = prediction_date]
+
+out <- DT[, .(state,
+              date,
+              predicted_deaths = predicted_deaths_cum,
+              predicted_deaths_SD = predicted_deaths_SD_cum,
+              reported_dead,
+              target,
+              days_left = 14 - as.integer(state - date),
+              ci_upper = predicted_deaths_cum + qnorm(1-alpha/2) * predicted_deaths_SD_cum,
+              ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
+              CRPS = CRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
+
+write_fst(out, file.path("data", "processed", "constant_model_predictions_full_UK.fst"))

@@ -3,7 +3,7 @@
 #  main thing done is averaing over overcount of deaths and creates and average of them see line:
 # 36-48
 # load files:
-# data/processed/deaths_dt.fst (data_processing.R)
+# data/processed/deaths_dt_SWE.fst (data_processing.R)
 #
 # generates the files:
 # data/processed/processed_data.rds
@@ -21,7 +21,7 @@ buildData <- function(country, path){
     library(fst)
 
     if(country == "sweden"){
-        deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
+        deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
         report_dt <- deaths_dt[date > "2020-04-01", .(date, publication_date,  report_released)]
         deaths_dt <- deaths_dt[date > "2020-04-01", .(date, publication_date, N)]
     } else if(country == "uk"){

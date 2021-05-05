@@ -1,7 +1,7 @@
 deaths_dt
 
 
-deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt.fst"), as.data.table = TRUE)
+deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
 
 # Include only up to 14 days
 n_days <- 14
