@@ -61,7 +61,7 @@ generate_predictions <- function(deaths_dt) {
     # So for example, with the _state_ of knowledge at date 2020-05-16,
     # we want predict the number of deaths that happened on 2020-05-10 and have
     # been reported until 2020-05-11, 12, etc.
-    predictions <- avg_delay[deaths_dt[date >= "2020-04-02" & publication_date >= "2020-04-14"],
+    predictions <- avg_delay[deaths_dt[date >= "2020-04-02" & publication_date >= "2020-04-30"],
               on = .(state = publication_date), #lag > days_lag),
               by = .EACHI,
               .(date,
@@ -97,9 +97,9 @@ generate_predictions <- function(deaths_dt) {
 deaths_dt_SWE <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
 DT <- generate_predictions(deaths_dt_SWE)
 
-# For evaluation, try to predict the reported dead 14 days after the death date:
-DT <- DT[prediction_date - date == 14]
-DT[, target := reported_dead[state - date == 14], by = prediction_date]
+# For evaluation, try to predict the reported dead 30 days after the death date:
+DT <- DT[prediction_date - date == 30]
+DT[, target := reported_dead[state - date == 30], by = prediction_date]
 
 out <- DT[, .(state,
               date,
@@ -107,7 +107,7 @@ out <- DT[, .(state,
               predicted_deaths_SD = predicted_deaths_SD_cum,
               reported_dead,
               target,
-              days_left = 14 - as.integer(state - date),
+              days_left = 30 - as.integer(state - date),
               ci_upper = predicted_deaths_cum + qnorm(1-alpha/2) * predicted_deaths_SD_cum,
               ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
               CRPS = CRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
@@ -121,9 +121,9 @@ write_fst(out, file.path("data", "processed", "constant_model_predictions_full_S
 deaths_dt_UK <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = TRUE)
 DT <- generate_predictions(deaths_dt_UK)
 
-# For evaluation, try to predict the reported dead 14 days after the death date:
-DT <- DT[prediction_date - date == 14]
-DT[, target := reported_dead[state - date == 14], by = prediction_date]
+# For evaluation, try to predict the reported dead 30 days after the death date:
+DT <- DT[prediction_date - date == 30]
+DT[, target := reported_dead[state - date == 30], by = prediction_date]
 
 out <- DT[, .(state,
               date,
@@ -131,7 +131,7 @@ out <- DT[, .(state,
               predicted_deaths_SD = predicted_deaths_SD_cum,
               reported_dead,
               target,
-              days_left = 14 - as.integer(state - date),
+              days_left = 30 - as.integer(state - date),
               ci_upper = predicted_deaths_cum + qnorm(1-alpha/2) * predicted_deaths_SD_cum,
               ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
               CRPS = CRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
