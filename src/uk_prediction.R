@@ -12,13 +12,16 @@ zero.report <- result$dates%in% as.Date(c("2021-01-26","2021-01-28","2021-03-01"
 max.days.to.report <- 30
 result$report[,zero.report] = 0
 
-
-
+target <- data.frame(reported = result$detected[row(result$detected)+max.days.to.report==col(result$detected)])
+target$dates <- result$dates_report[1:length(target$reported)]
+#remove all index above max
+result$detected[row(result$detected)+max.days.to.report<col(result$detected)]=NA
 #N.est <- sample.uk.deaths(result, max.days.to.report, samples = 1000)
 
 pred <- uk.prediction(result = result,
               max.days.to.report = max.days.to.report,
-              report.dates = c(as.Date("2021-02-28")))
+              report.dates = c(as.Date("2021-02-28")),
+              target= target)
 pred.smooth <- gp.smooth(pred,
                          max.days.to.report = max.days.to.report)
 plot(pred$date,pred$upp, type='l',col='blue')

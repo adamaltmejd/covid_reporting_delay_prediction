@@ -54,6 +54,12 @@ zero.report <- uk_data$dates %in% as.Date(c("2021-01-26", "2021-01-28", "2021-03
 max.days.to.report <- 30
 uk_data$report[, zero.report] <- 0
 
+
+target <- data.frame(reported = result$detected[row(result$detected)+max.days.to.report==col(result$detected)])
+target$dates <- result$dates_report[1:length(target$reported)]
+#remove obs  above max.days to report
+result$detected[row(result$detected)+max.days.to.report<col(result$detected)]=NA
+
 #dt <- uk.prediction(report.dates = as.Date(uk_data$dates_report[uk_data$dates_report >= "2020-10-10"])[10], max.days.to.report = max.days.to.report, result = uk_data)
 #dt_smooth <- gp.smooth(dt, max.days.to.report = max.days.to.report)
 
@@ -61,7 +67,8 @@ dts <- lapply(
     as.Date(uk_data$dates_report[uk_data$dates_report >= "2020-10-10"]),
     FUN = function(x, ...) uk.prediction(report.dates = x, ...),
     max.days.to.report = max.days.to.report,
-    result = uk_data
+    result = uk_data,
+    target = target
 )
 dts_smooth <- lapply(dts, gp.smooth, max.days.to.report = max.days.to.report)
 write_fst(rbindlist(dts_smooth), file.path("data", "model_predictions_full_UK.fst"))

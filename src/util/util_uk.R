@@ -851,20 +851,28 @@ loglikDeathsGivenProbBB <- function(death, alpha, beta, report, prob = NULL){
 #'
 #' @param   max.days.to.report -  after max.days.to.report data is assume known
 #' @param report.dates  - which dates should be data generated for (if null) just latest date
+#' @param target        - $reported (m x 1) true reported
+#'                        $dates    (m x 1) dates
 ##
-uk.prediction <- function(result, max.days.to.report, report.dates =NULL){
+uk.prediction <- function(result,
+                          max.days.to.report,
+                          report.dates =NULL,
+                          target = NULL,
+                          samples = 2000){
 
 
     if(is.null(report.dates)){
         report.dates = max(result$dates_report)
     }
     deaths <- data.table(
-                        date.reported = structure(numeric(0), class = "Date"),
-                        date          = structure(numeric(0), class = "Date"),
-                        mean          = numeric(),
-                        median        =  numeric(),
-                        low           =  numeric(),
-                        upp           =  numeric())
+                        date               = structure(numeric(0), class = "Date"),
+                        state              = structure(numeric(0), class = "Date"),
+                        mean               = numeric(),
+                        predicted_deaths   =  numeric(),
+                        ci_lower                =  numeric(),
+                        ci_upper           =  numeric(),
+                        target             = numeric(),
+                        CRPS               = numeric())
 
     for(i in 1:length(report.dates)){
         result_i  <- result
@@ -875,15 +883,37 @@ uk.prediction <- function(result, max.days.to.report, report.dates =NULL){
         result_i$report             <- result_i$report[1:j_i, 1:j_i]
         result_i$detected           <- result_i$detected[1:j_i, 1:j_i]
 
-        N.est <- sample.uk.deaths(result_i, max.days.to.report, samples = 1000)
+        N.est <- sample.uk.deaths(result_i, max.days.to.report, samples = samples)
         N.quantile <- t(apply(N.est, 2, function(x) {c(mean(x, na.rm=T), quantile(x,probs=c(0.05,0.5,0.95), na.rm=T))}))
+
+        state = as.Date(colnames(N.est))
+        CRPS.i = rep(NA,length(state))
+        target.i = rep(NA,length(state))
+        if(is.null(target) ==F ){
+
+            for(ii in 1:dim(N.est)[2] ){
+                if(state[ii]%in%target$dates){
+
+                    Y = target$reported[which(target$dates ==state[ii])]
+                    Exy = mean(abs(Y - N.est[,ii]))
+                    index = sample(samples)
+                    X1  = N.est[index[1:floor(samples/2)]]
+                    X2 = N.est[index[(floor(samples/2)+1):samples]]
+                    Exx = mean(abs(X1-X2))
+                    target.i[ii] = Y
+                    CRPS.i[ii] = -Exy + 0.5 * Exx
+                }
+            }
+        }
         deaths.i <- data.table(
-            date.reported = report.dates[i],
-            date          = as.Date(colnames(N.est)),
+            date          = report.dates[i],
+            state         = state,
             mean          =  N.quantile[,1],
-            median        =  N.quantile[,3],
-            low           =  N.quantile[,2],
-            upp           =  N.quantile[,4]
+            predicted_deaths        =  N.quantile[,3],
+            ci_lower           =  N.quantile[,2],
+            ci_upper           =  N.quantile[,4],
+            target  = target.i,
+            CRPS = CRPS.i
         )
         deaths <- rbind(deaths, deaths.i)
     }
@@ -933,7 +963,7 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
         theta <- c(0,0,0,0)
     }
 
-    report.date <- unique(death_prediction$date.reported)
+    report.date <- unique(death_prediction$date)
     if(length(report.date)>1)
     {
         cat("error only day is allowed in gp.smooth data for input\n")
@@ -942,12 +972,12 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
 
     model_dt_smooth <- NULL
 
-    index.known <- report.date-death_prediction$date > max.days.to.report
+    index.known <- report.date-death_prediction$state > max.days.to.report
 
-    N <- length(death_prediction$date)
+    N <- length(death_prediction$state)
     death_reported_so_far <- data.frame(
-                                        Deaths  = death_prediction$median[index.known],
-                                        date    = death_prediction$date[index.known])
+                                        Deaths  = death_prediction$predicted_deaths[index.known],
+                                        date    = death_prediction$state[index.known])
 
     time_d  = death_reported_so_far$date - min(death_reported_so_far$date)
     y_d     =  sqrt(death_reported_so_far$Deaths )
@@ -958,11 +988,11 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     # approx model with measumerent error
     # kriging
     ###
-    y_D <- sqrt(death_prediction$median)
-    sigma_y <- (sqrt(death_prediction$upp+1)-sqrt(death_prediction$low+1))/(2*qnorm(0.5+CI_width/2))
+    y_D <- sqrt(death_prediction$predicted_deaths)
+    sigma_y <- (sqrt(death_prediction$ci_upper+1)-sqrt(death_prediction$ci_lower+1))/(2*qnorm(0.5+CI_width/2))
     index.obs = is.na(sigma_y)==F
 
-    D <- as.matrix(dist(death_prediction$date-min(death_prediction$date)))
+    D <- as.matrix(dist(death_prediction$state-min(death_prediction$state)))
     kappa       <- exp(res$par[1])
     nu          <- exp(res$par[2])
     sigma       <- exp(res$par[3])
@@ -977,11 +1007,26 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     Sigma_cond <- Sigma - Sigma[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs],Sigma[index.obs,])
     Sigma_obs_cond <- Sigma_obs - Sigma_obs[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs],Sigma_obs[index.obs,])
 
-    lw <- ceiling((mu_obs+ qnorm(0.5+CI_width/2)*sqrt(diag(Sigma_obs_cond) + 1e-8))^2)
-    uw <- floor(apply(mu_obs- qnorm(0.5+CI_width/2)*sqrt(diag(Sigma_obs_cond) + 1e-8 ),1,function(x){max(0,x)})^2)
+    sd = sqrt(diag(Sigma_obs_cond) + 1e-8)
+    lw <- ceiling((mu_obs+ qnorm(0.5+CI_width/2)*sd )^2)
+    uw <- floor(apply(mu_obs- qnorm(0.5+CI_width/2)*sd,1,function(x){max(0,x)})^2)
     death_prediction$mean <- NA
-    death_prediction$median <- round((mu_obs)^2)
-    death_prediction$low <- lw
-    death_prediction$upp <- uw
+    death_prediction$predicted_deaths <- round((mu_obs)^2)
+    death_prediction$ci_lower <- lw
+    death_prediction$ci_upper <- uw
+    for(i in 1: dim(death_prediction)[1]){
+        if(is.na(death_prediction$target[i])==F)
+        {
+            Y  <- death_prediction$target[i]
+            X1 <- rnorm(1000, mean = mu_obs[i], sd = sd[i])^2
+            X2 <- rnorm(1000, mean = mu_obs[i], sd = sd[i])^2
+            X3 <- rnorm(1000, mean = mu_obs[i], sd = sd[i])^2
+            Exy  = mean(abs(Y-X1))
+            Exx  = mean(abs(X2-X3))
+            death_prediction$CRPS[i] <- -Exy + 0.5 * Exx
+        }
+    }
+
+
     return(death_prediction)
 }
