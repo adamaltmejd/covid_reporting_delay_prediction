@@ -7,10 +7,10 @@
 source(file.path("src","util","util_uk.r"))
 result <- readRDS(file.path("data", "processed", "processed_data_uk.rds"))
 
+zero.report <- result$dates %in% as.Date(c("2021-02-24","2021-02-25","2021-01-26","2021-01-27" ,"2021-01-28", "2021-03-01"))
 max.days.to.report <- 30
-#diag(result$detected[,-(1)] ) = 0
-#diag(result$report[,-(1)] ) = 0
-result$report[,148] = 0
+result$report[, zero.report] <- 0
+
 
 
 N <- deaths_at_t(result$detected, max.days.to.report)
