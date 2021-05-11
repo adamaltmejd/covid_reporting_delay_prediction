@@ -230,7 +230,7 @@ buildXNoreportPrev <- function(report){
 #
 #
 ##
-setup_data.uk <- function(dates_report, Predict.day, unique.prob=NULL, reported =NULL){
+setup_data.swe <- function(dates_report, Predict.day, unique.prob=NULL, reported =NULL){
     N <- length(dates_report)
     if(is.null(reported)){
         X <- buildXdayeffect(N,Predict.day)
@@ -263,12 +263,9 @@ setup_data.uk <- function(dates_report, Predict.day, unique.prob=NULL, reported 
 # setting up the fixed effect matrix
 # for beta
 ##
-X.uk <- function(dates_report, reported){
-    X <- setup_data.uk(dates_report, length(dates_report), 5)
+X.swe <- function(dates_report, reported){
+    X <- setup_data.swe(dates_report, length(dates_report), 5)
     LagOneNoReport <- buildXNoReportLagOne(reported)
-    #X_lag <- X[,14] * LagOneNoReport
-    #X[,14] <- X_lag*X[,3]
-    #colnames(X)[14] <- "lag_2 after 2021-01-27"
     Sunday <- X[,12]
     X[,12] <- X[,13]+X[,12]
     colnames(X)[12] <- "monday or sunday"
@@ -276,11 +273,6 @@ X.uk <- function(dates_report, reported){
     colnames(X)[13] <- "monday lag 4"
     X <- cbind(X, (X[,3] + X[,2])*X[,12] )
     colnames(X)[14] <- "monday or sunday lag 1 or 2"
-    #X <- cbind(X, X_lag)
-    #colnames(X)[16] <- "after 2021-01-27"
-    #X <- cbind(X,X[,14]*X[,3]*Sunday)
-    #colnames(X)[17] <- "sunday lag_2"
-    #X <- X[,c(2,3,4,12,13,14,15,16,17)]
     X <- X[,c(2,3,4,12,13,14)]
 
     X_temp <- cbind(1,X)
@@ -299,8 +291,8 @@ X.uk <- function(dates_report, reported){
 # setting up the fixed effect matrix
 # for beta
 ##
-X.uk.reported <- function(dates_report, reported){
-    X <- setup_data.uk(dates_report, length(dates_report), 5, reported)
+X.swe.reported <- function(dates_report, reported){
+    X <- setup_data.swe(dates_report, length(dates_report), 5, reported)
 
     X <- X[,c(2,3,4,12,13)]
     X <- cbind(1,X)
@@ -318,8 +310,8 @@ X.uk.reported <- function(dates_report, reported){
 #' regresion for zero inflation
 #'
 #'
-X.uk.zero.reported <- function(dates_report, reported){
-    X <- setup_data.uk(dates_report, max.days.to.report, 5, reported)
+X.swe.zero.reported <- function(dates_report, reported){
+    X <- setup_data.swe(dates_report, max.days.to.report, 5, reported)
     X_lag <- X[,14]
     X[,14] <- X[,14]*X[,3]
     colnames(X)[14] <- "lag_3 after 2021-01-27"
@@ -345,7 +337,7 @@ X.uk.zero.reported <- function(dates_report, reported){
 #' regresion for zero inflation
 #'
 #'
-X.uk.zero <- function(dates_report){
+X.swe.zero <- function(dates_report){
     X <- setup_data.uk(dates_report, max.days.to.report, 5)
     X_lag <- X[,14]
     X[,14] <- X[,14]*X[,3]
@@ -382,7 +374,7 @@ X.uk.zero <- function(dates_report){
 #' @param max.days.to.report -  after max.days.to.report data is assume known
 #' @param zero.inflation  - should the model be zero infaltion
 ###
-fit.mu.M.uk <- function(result, max.days.to.report, zero.inflation=FALSE, use.reports = T){
+fit.mu.M.swe <- function(result, max.days.to.report, zero.inflation=FALSE, use.reports = T){
 
 
     N <- deaths_at_t(result$detected, max.days.to.report)
@@ -396,15 +388,15 @@ fit.mu.M.uk <- function(result, max.days.to.report, zero.inflation=FALSE, use.re
     dates_report <- result$dates_report[1:fixed.dates]
     reports <- result$report[1:fixed.dates,1:fixed.dates]
     if(use.reports){
-        X_T <- X.uk.reported(dates_report,reports)
+        X_T <- X.swe.reported(dates_report,reports)
     }else{
-        X_T <- X.uk(dates_report,reports)
+        X_T <- X.swe(dates_report,reports)
     }
     if(zero.inflation){
         if(use.reports){
-            X_zero <- X.uk.zero.reported(dates_report,reports)
+            X_zero <- X.swe.zero.reported(dates_report,reports)
         }else{
-            X_zero <- X.uk.zero(dates_report)
+            X_zero <- X.swe.zero(dates_report)
         }
     }
     index <- upper.tri(Data$death.remain,diag = T)
@@ -469,7 +461,7 @@ fit.mu.M.uk <- function(result, max.days.to.report, zero.inflation=FALSE, use.re
 #' @param samples            - (int) how many mcmcmc samples
 #' @param burnin.perc        - ([0,1]) how many precetentage of samples should be burning
 #' @oaram samples.local      - (int) samples in uniform HMR within MCCMC
-sample.uk.deaths <- function(result,
+sample.swe.deaths <- function(result,
                              max.days.to.report,
                              samples,
                              burnin.perc = 0.1,
@@ -480,8 +472,8 @@ sample.uk.deaths <- function(result,
     Nest <- apply(result$detected,1, max, na.rm=T)
     data_full <- newDeaths(Nest, reports = result$detected, maxusage.day = max.days.to.report)
     n.days <- length(result$dates)
-    beta <- fit.mu.M.uk(result, max.days.to.report, zero.inflation, use.reports = F)
-    X_full <- X.uk(result$dates_report, result$report)
+    beta <- fit.mu.M.swe(result, max.days.to.report, zero.inflation, use.reports = F)
+    X_full <- X.swe(result$dates_report, result$report)
     X_full <- X_full[,beta$index] #remove emptty covariates
     p <- dim(X_full)[2]
     mu <- 1/(1+exp(-X_full%*%beta$mu1 ))
@@ -492,7 +484,7 @@ sample.uk.deaths <- function(result,
                     nrow= n.days)
     Beta  <- Alpha
     if(zero.inflation){
-        X_zero <- X.uk.zero(result$dates_report)
+        X_zero <- X.swe.zero(result$dates_report)
         Prob   <- Alpha
         Prob[upper.tri(data_full$report.new,diag=T)] <- 1/(1+exp(-X_zero%*%beta$pi))
     }
@@ -855,7 +847,7 @@ loglikDeathsGivenProbBB <- function(death, alpha, beta, report, prob = NULL){
 #' @param target        - $reported (m x 1) true reported
 #'                        $dates    (m x 1) dates
 ##
-uk.prediction <- function(result,
+swe.prediction <- function(result,
                           max.days.to.report,
                           report.dates =NULL,
                           target = NULL,
@@ -884,7 +876,7 @@ uk.prediction <- function(result,
         result_i$report             <- result_i$report[1:j_i, 1:j_i]
         result_i$detected           <- result_i$detected[1:j_i, 1:j_i]
 
-        N.est <- sample.uk.deaths(result_i, max.days.to.report, samples = samples)
+        N.est <- sample.swe.deaths(result_i, max.days.to.report, samples = samples)
         N.quantile <- t(apply(N.est, 2, function(x) {c(mean(x, na.rm=T), quantile(x,probs=c(0.05,0.5,0.95), na.rm=T))}))
 
         state = as.Date(colnames(N.est))
