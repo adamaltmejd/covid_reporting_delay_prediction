@@ -23,10 +23,38 @@ buildData("sweden", file.path("data", "processed", "processed_data_sweden.rds"))
 swe_data <- readRDS(file.path("data", "processed", "processed_data_sweden.rds"))
 
 # Build Sweden model
-# TODO
-# zero.report <- swe_data$dates %in% as.Date(c("2021-01-26", "2021-01-28", "2021-03-01"))
-# max.days.to.report <- 30
-# swe_data$report[, zero.report] <- 0
+source(file.path("src","util","util_swe.r"))
+
+max.days.to.report <- 30
+
+swe_data <- readRDS(file.path("data", "processed", "processed_data_sweden.rds"))
+
+#remove data before  2020-07-01
+index <- swe_data$dates_report >= as.Date("2020-07-01")
+swe_data$detected             = swe_data$detected[index,index]
+swe_data$report               = swe_data$report[index,index]
+swe_data$dates                = swe_data$dates[index]
+swe_data$dates_report         = swe_data$dates_report[index]
+swe_data$dates_not_reported   = swe_data$dates_not_reported[index]
+
+
+
+target_swe <- data.frame(reported = swe_data$detected[row(swe_data$detected)+max.days.to.report==col(swe_data$detected)])
+swe_data$dates <- swe_data$dates_report[1:length(target_swe$reported)]
+#remove obs  above max.days to report
+swe_data$detected[row(swe_data$detected)+max.days.to.report<col(swe_data$detected)]=NA
+
+
+dts <- lapply(
+    as.Date(swe_data$dates_report),
+    FUN = function(x, ...) swe.prediction(report.dates = x, ...),
+    max.days.to.report = max.days.to.report,
+    result = swe_data,
+    target = target_swe
+)
+dts_smooth_swe <- lapply(dts, gp.smooth, max.days.to.report = max.days.to.report)
+write_fst(rbindlist(dts_smooth_swe), file.path("data", "model_predictions_full_SWE.fst"))
+
 
 #dt <- swe.prediction(report.dates = as.Date(swe_data$dates_report[swe_data$dates_report >= "2020-10-10"])[10], max.days.to.report = max.days.to.report, result = swe_data)
 #dt_smooth <- gp.smooth(dt, max.days.to.report = max.days.to.report)
@@ -44,21 +72,20 @@ swe_data <- readRDS(file.path("data", "processed", "processed_data_sweden.rds"))
 ################################
 
 # Prepare UK data
-source(file.path("src", "buildData.R"))
 source(file.path("src", "util", "util_uk.r"))
 buildData("uk", file.path("data", "processed", "processed_data_uk.rds"))
 # Load prepared data
 uk_data <- readRDS(file.path("data", "processed", "processed_data_uk.rds"))
 
 zero.report <- uk_data$dates %in% as.Date(c("2021-01-26", "2021-01-28", "2021-03-01"))
-max.days.to.report <- 30
+
 uk_data$report[, zero.report] <- 0
 
 
-target <- data.frame(reported = result$detected[row(result$detected)+max.days.to.report==col(result$detected)])
-target$dates <- result$dates_report[1:length(target$reported)]
+target_uk <- data.frame(reported = uk_data$detected[row(uk_data$detected)+max.days.to.report==col(uk_data$detected)])
+target_uk$dates <- uk_data$dates_report[1:length(target$reported)]
 #remove obs  above max.days to report
-result$detected[row(result$detected)+max.days.to.report<col(result$detected)]=NA
+uk_data$detected[row(uk_data$detected)+max.days.to.report<col(uk_data$detected)]=NA
 
 #dt <- uk.prediction(report.dates = as.Date(uk_data$dates_report[uk_data$dates_report >= "2020-10-10"])[10], max.days.to.report = max.days.to.report, result = uk_data)
 #dt_smooth <- gp.smooth(dt, max.days.to.report = max.days.to.report)
@@ -68,7 +95,7 @@ dts <- lapply(
     FUN = function(x, ...) uk.prediction(report.dates = x, ...),
     max.days.to.report = max.days.to.report,
     result = uk_data,
-    target = target
+    target = target_uk
 )
 dts_smooth <- lapply(dts, gp.smooth, max.days.to.report = max.days.to.report)
 write_fst(rbindlist(dts_smooth), file.path("data", "model_predictions_full_UK.fst"))
