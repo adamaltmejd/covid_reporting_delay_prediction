@@ -338,7 +338,7 @@ X.swe.zero.reported <- function(dates_report, reported){
 #'
 #'
 X.swe.zero <- function(dates_report){
-    X <- setup_data.uk(dates_report, max.days.to.report, 5)
+    X <- setup_data.swe(dates_report, max.days.to.report, 5)
     X_lag <- X[,14]
     X[,14] <- X[,14]*X[,3]
     colnames(X)[14] <- "lag_3 after 2021-01-27"

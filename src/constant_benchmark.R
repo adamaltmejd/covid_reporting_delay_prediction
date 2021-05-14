@@ -21,17 +21,17 @@ generate_predictions <- function(deaths_dt) {
     # So when calculating the average number of deaths added on day 3,
     # include day-3 reports from three weeks back from that date.
     DT <- deaths_dt[days_lag != 0 &
-                   !is.na(days_lag) &
-                   !is.na(date) &
-                   date >= "2020-04-02",
-                   .(date, publication_date, lag = days_lag, n_diff)]
+                    !is.na(days_lag) &
+                    !is.na(date) &
+                    date >= "2020-04-02",
+                    .(date, publication_date, lag = days_lag, n_diff)]
 
-    # To simplify, we assume no additional deaths are added after 28 days.
-    DT <- DT[lag <= 28]
+    # To simplify, we assume no additional deaths are added after 30 days.
+    DT <- DT[lag <= 30]
 
     # Create predictions for each publication date so we can track and evaluate
     # historical predictions
-    report_dates <- seq(as.Date("2020-04-16"), deaths_dt[, max(publication_date)], 1)
+    report_dates <- seq(DT[, min(publication_date)] + 30, DT[, max(publication_date)], 1)
     dts <- vector(mode = "list", length = length(report_dates))
     for (i in seq_along(report_dates)) {
         tmp.delay <- DT[publication_date <= report_dates[i]]

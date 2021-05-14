@@ -120,7 +120,7 @@
       "Version": "1.14.1",
       "Source": "Repository",
       "Repository": "DT",
-      "Hash": "17457fb9775b0c75df44241c4af4ec7b"
+      "Hash": "0ccac30313234821b2e1a3f8da9c8f0f"
     },
     "digest": {
       "Package": "digest",
@@ -465,10 +465,10 @@
     },
     "stringi": {
       "Package": "stringi",
-      "Version": "1.5.3",
+      "Version": "1.6.1",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "a063ebea753c92910a4cca7b18bc1f05"
+      "Hash": "3b9a9c9454b864b08713715396689b9e"
     },
     "stringr": {
       "Package": "stringr",
@@ -479,10 +479,10 @@
     },
     "systemfonts": {
       "Package": "systemfonts",
-      "Version": "1.0.1",
+      "Version": "1.0.2",
       "Source": "Repository",
       "Repository": "CRAN",
-      "Hash": "6e899d7c097698d50ec87b1d8e65f246"
+      "Hash": "f2e17ba09737e2e7e2ec40fc1f9b6e08"
     },
     "tibble": {
       "Package": "tibble",
