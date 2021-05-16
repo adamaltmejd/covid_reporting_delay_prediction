@@ -29,7 +29,7 @@ reports <- result$report[1:fixed.dates,1:fixed.dates]
 Data$report.new[ is.na(reports)==F &reports==0 ] = NA
 dates_report <- result$dates_report[1:fixed.dates]
 X_T <- X.swe(dates_report, reports)
-beta <- fit.mu.M(result, max.days.to.report, zero.inflation=T, use.reports = F)
+beta <- fit.mu.M.swe(result, max.days.to.report, zero.inflation=T, use.reports = F)
 X_T <- X_T[,beta$index ]
 mu1 <- 1/(1+exp(-X_T%*%beta$mu1))
 M1  <- exp(X_T%*%beta$M1)
@@ -52,7 +52,7 @@ Pi[upper.tri(Data$report.new,diag=T)]     <- pi
 
 
 
-lag.plot = 2
+lag.plot = 7
 MS.plot = F
 lag.data.simulated <- zero.BB.dist.by.lag(Data,Alpha1, Beta1, Pi , lags = 1:10)
 

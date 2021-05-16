@@ -250,11 +250,11 @@ setup_data.swe <- function(dates_report, Predict.day, unique.prob=NULL, reported
         X.day <-  buildXholiday(N, day.index)
         X.days <- cbind(X.days, X.day)
     }
-    index.shift <- dates_report>=as.Date("2021-01-27")
-    X.shift <-  buildXholiday(N, index.shift)
+    #index.shift <- dates_report>=as.Date("2021-01-27")
+    #X.shift <-  buildXholiday(N, index.shift)
     X_dim <- dim(X)[2]
-    X <- cbind(X, X.days, X.shift)
-    colnames(X) <- c(paste('lag_',0:(X_dim-1),sep=''), unique.weekdays, 'after 2021-01-27')
+    X <- cbind(X, X.days)
+    colnames(X) <- c(paste('lag_',0:(X_dim-1),sep=''), unique.weekdays)
     return(X)
 
 
@@ -264,16 +264,9 @@ setup_data.swe <- function(dates_report, Predict.day, unique.prob=NULL, reported
 # for beta
 ##
 X.swe <- function(dates_report, reported){
-    X <- setup_data.swe(dates_report, length(dates_report), 5)
+    X <- setup_data.swe(dates_report, length(dates_report), 10)
     LagOneNoReport <- buildXNoReportLagOne(reported)
-    Sunday <- X[,12]
-    X[,12] <- X[,13]+X[,12]
-    colnames(X)[12] <- "monday or sunday"
-    X[,13] <- X[,13]*X[,4]
-    colnames(X)[13] <- "monday lag 4"
-    X <- cbind(X, (X[,3] + X[,2])*X[,12] )
-    colnames(X)[14] <- "monday or sunday lag 1 or 2"
-    X <- X[,c(2,3,4,12,13,14)]
+    X <- X[,c(2:10)]
 
     X_temp <- cbind(1,X)
     colnames(X_temp) <- c("intercept",colnames(X))
@@ -339,18 +332,8 @@ X.swe.zero.reported <- function(dates_report, reported){
 #'
 X.swe.zero <- function(dates_report){
     X <- setup_data.swe(dates_report, max.days.to.report, 5)
-    X_lag <- X[,14]
-    X[,14] <- X[,14]*X[,3]
-    colnames(X)[14] <- "lag_3 after 2021-01-27"
-    X[,12] <- X[,13]+X[,12]
-    colnames(X)[12] <- "monday or sunday"
-    X[,13] <- X[,13]*X[,4]
-    colnames(X)[13] <- "monday lag 4"
-    X <- cbind(X, (X[,3] + X[,2])*X[,12] )
-    colnames(X)[15] <- "monday or sunday lag 2 or 3"
-    X <- cbind(X, X_lag)
-    colnames(X)[16] <- "after 2021-01-27"
-    X <- X[,c(2,3,4,12,13,14,15,16)]
+
+    X <- X[,c(2,3,4)]
 
 
     X <- cbind(1,X)
@@ -430,7 +413,7 @@ fit.mu.M.swe <- function(result, max.days.to.report, zero.inflation=FALSE, use.r
         res.optim <- optim(res.optim$par, lik)
         res.optim <- optim(res.optim$par, lik)
         res.optim <- optim(res.optim$par, lik)
-        res.optim <- optim(res.optim$par, lik, method="BFGS")
+        res.optim <- optim(res.optim$par, lik)
         p1 <- dim(X1)[2]
         p2 <- dim(X2)[2]
         p3 <- dim(X3)[2]
@@ -495,7 +478,7 @@ sample.swe.deaths <- function(result,
 
     data_full$report.new[ is.na(result$report)==F &result$report==0 ] = NA
 
-    alpha.MCMC <- rep(ceiling(0.1*Nest), n.days)
+    alpha.MCMC <- rep(ceiling(0.1*Nest )+2, n.days)
     n.burnin <- ceiling(burnin.perc* samples)
     #burnin
     for(i in 1:(n.burnin)){

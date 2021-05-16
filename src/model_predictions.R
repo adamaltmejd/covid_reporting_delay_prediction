@@ -45,7 +45,7 @@ swe_data$detected[row(swe_data$detected)+max.days.to.report<col(swe_data$detecte
 # swe.prediction(report.dates = start_date + 36, max.days.to.report = max.days.to.report, result = swe_data, target = target_swe)
 
 dts <- lapply(
-    as.Date(swe_data$dates_report[swe_data$dates_report >= start_date + 36]),
+    as.Date(swe_data$dates_report[swe_data$dates_report >= start_date + 90]),
     FUN = function(x, ...) swe.prediction(report.dates = x, ...),
     max.days.to.report = max.days.to.report,
     result = swe_data,

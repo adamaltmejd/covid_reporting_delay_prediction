@@ -503,7 +503,7 @@ sample.uk.deaths <- function(result,
 
     data_full$report.new[ is.na(result$report)==F &result$report==0 ] = NA
 
-    alpha.MCMC <- rep(ceiling(0.1*Nest), n.days)
+    alpha.MCMC <- rep(ceiling(0.1*Nest)+2, n.days)
     n.burnin <- ceiling(burnin.perc* samples)
     #burnin
     for(i in 1:(n.burnin)){
