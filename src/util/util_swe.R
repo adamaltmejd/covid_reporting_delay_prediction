@@ -985,8 +985,8 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     Sigma_obs_cond <- Sigma_obs - Sigma_obs[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs],Sigma_obs[index.obs,])
 
     sd = sqrt(diag(Sigma_obs_cond) + 1e-8)
-    lw <- ceiling((mu_obs+ qnorm(0.5+CI_width/2)*sd )^2)
-    uw <- floor(apply(mu_obs- qnorm(0.5+CI_width/2)*sd,1,function(x){max(0,x)})^2)
+    uw <- ceiling((mu_obs+ qnorm(0.5+CI_width/2)*sd )^2)
+    lw <- floor(apply(mu_obs- qnorm(0.5+CI_width/2)*sd,1,function(x){max(0,x)})^2)
     death_prediction$mean <- NA
     death_prediction$predicted_deaths <- round((mu_obs)^2)
     death_prediction$ci_lower <- lw

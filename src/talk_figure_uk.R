@@ -55,14 +55,24 @@ days <- c("Monday","Sunday")
 data.lag$MS         = weekdays(data.lag$date.reported)%in%days
 lag.data.simulated$MS  =  weekdays(lag.data.simulated$date.reported)%in%days
 
-plot(data.lag[lag==lag.plot & MS == MS.plot,date.reported], data.lag[lag==lag.plot  & MS == MS.plot, y/n], pch=2,ylim = c(-0.1,1), xlim = c(min(data.lag[,date.reported]),max(data.lag[,date.reported])))
-points(lag.data.simulated[lag==lag.plot & MS == MS.plot ,date.reported], lag.data.simulated[lag==lag.plot  & MS == MS.plot,upp/n] ,col='blue')
-points(lag.data.simulated[lag==lag.plot  & MS == MS.plot,date.reported], lag.data.simulated[lag==lag.plot  & MS == MS.plot,low/n] ,col='red')
+#plot(data.lag[lag==lag.plot & MS == MS.plot,date.reported], data.lag[lag==lag.plot  & MS == MS.plot, y/n], pch=2,ylim = c(-0.1,1), xlim = c(min(data.lag[,date.reported]),max(data.lag[,date.reported])))
+#points(lag.data.simulated[lag==lag.plot & MS == MS.plot ,date.reported], lag.data.simulated[lag==lag.plot  & MS == MS.plot,upp/n] ,col='blue')
+#points(lag.data.simulated[lag==lag.plot  & MS == MS.plot,date.reported], lag.data.simulated[lag==lag.plot  & MS == MS.plot,low/n] ,col='red')
 
+par(mfrow=c(1,1))
+dt <- data.lag[lag==lag.plot & MS == MS.plot,cbind(y/n,y,n )]
+dt2 <- lag.data.simulated[lag==lag.plot & MS == MS.plot,cbind(upp/n,low/n )]
+pdf('uk_over_disp0.pdf')
 
-dt <- data.lag[lag==lag.plot,cbind(y/n,y,n)]
+dates <- data.lag[lag==lag.plot & MS == MS.plot, date.reported]
 p<- sum(dt[,'y'])/sum(dt[,'n'])
-plot(dt[,'y']/dt[,'n'])
-lines(qbinom(0.025,dt[,'n'],p)/dt[,'n'])
-lines(qbinom(0.975,dt[,'n'],p)/dt[,'n'])
+plot(dates,dt[,'y']/dt[,'n'],ylab='rep_{t,t+2}/rep_{t,t+30}')
+lines(dates,qbinom(0.025,dt[,'n'],p)/dt[,'n'],col='blue')
+lines(dates,qbinom(0.975,dt[,'n'],p)/dt[,'n'],col='blue')
+dev.off()
 
+pdf('uk_over_disp1.pdf')
+plot(dates,dt[,'y']/dt[,'n'],ylab='rep_{t,t+2}/rep_{t,t+30}')
+lines(dates,dt2[,1],col='blue')
+lines(dates,dt2[,2],col='blue')
+dev.off()

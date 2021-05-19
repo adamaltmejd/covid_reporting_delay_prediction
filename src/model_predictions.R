@@ -56,12 +56,12 @@ write_fst(rbindlist(dts_smooth_swe), file.path("data", "model_predictions_full_S
 
 source(file.path("src", "util", "util_uk.r"))
 uk_data <- readRDS(file.path("data", "processed", "processed_data_uk.rds"))
-zero.report <- uk_data$dates %in% as.Date(c("2021-01-26", "2021-01-28", "2021-03-01"))
-uk_data$report[, zero.report] <- 0
+#zero.report <- uk_data$dates %in% as.Date(c("2021-01-26", "2021-01-28", "2021-03-01"))
+#uk_data$report[, zero.report] <- 0
 
 target_uk <- data.frame(reported = uk_data$detected[row(uk_data$detected)+max.days.to.report==col(uk_data$detected)])
 target_uk$dates <- uk_data$dates_report[1:length(target_uk$reported)]
-target_uk$detected[row(uk_data$detected)+max.days.to.report<col(uk_data$detected)]=NA
+uk_data$detected[row(uk_data$detected)+max.days.to.report<col(uk_data$detected)]=NA
 
 dts_uk <- lapply(
     as.Date(uk_data$dates_report[uk_data$dates_report >= "2020-10-10"]),
