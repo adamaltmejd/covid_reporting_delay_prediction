@@ -840,7 +840,6 @@ swe.prediction <- function(result,
     if(is.null(report.dates)){
         report.dates = max(result$dates_report)
     }
-    print(report.dates)
     deaths <- data.table(
                         date               = structure(numeric(0), class = "Date"),
                         state              = structure(numeric(0), class = "Date"),
