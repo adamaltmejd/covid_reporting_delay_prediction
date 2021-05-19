@@ -840,6 +840,7 @@ swe.prediction <- function(result,
     if(is.null(report.dates)){
         report.dates = max(result$dates_report)
     }
+    print(report.dates)
     deaths <- data.table(
                         date               = structure(numeric(0), class = "Date"),
                         state              = structure(numeric(0), class = "Date"),
@@ -947,7 +948,7 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     }
 
     model_dt_smooth <- NULL
-
+    print(death_prediction$state )
     index.known <- report.date-death_prediction$state > max.days.to.report
 
     N <- length(death_prediction$state)

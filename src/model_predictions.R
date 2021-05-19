@@ -36,7 +36,7 @@ swe_data$dates_report         = swe_data$dates_report[index]
 swe_data$dates_not_reported   = swe_data$dates_not_reported[index]
 
 target_swe <- data.frame(reported = swe_data$detected[row(swe_data$detected)+max.days.to.report==col(swe_data$detected)])
-swe_data$dates <- swe_data$dates_report[1:length(target_swe$reported)]
+target_swe$dates <- swe_data$dates_report[1:length(target_swe$reported)]
 #remove obs above max.days to report
 swe_data$detected[row(swe_data$detected)+max.days.to.report<col(swe_data$detected)]=NA
 
@@ -61,14 +61,14 @@ uk_data$report[, zero.report] <- 0
 
 target_uk <- data.frame(reported = uk_data$detected[row(uk_data$detected)+max.days.to.report==col(uk_data$detected)])
 target_uk$dates <- uk_data$dates_report[1:length(target_uk$reported)]
-uk_data$detected[row(uk_data$detected)+max.days.to.report<col(uk_data$detected)]=NA
+target_uk$detected[row(uk_data$detected)+max.days.to.report<col(uk_data$detected)]=NA
 
-dts <- lapply(
+dts_uk <- lapply(
     as.Date(uk_data$dates_report[uk_data$dates_report >= "2020-10-10"]),
     FUN = function(x, ...) uk.prediction(report.dates = x, ...),
     max.days.to.report = max.days.to.report,
     result = uk_data,
     target = target_uk
 )
-dts_smooth <- lapply(dts, gp.smooth, max.days.to.report = max.days.to.report)
+dts_smooth <- lapply(dts_uk, gp.smooth, max.days.to.report = max.days.to.report)
 write_fst(rbindlist(dts_smooth), file.path("data", "model_predictions_full_UK.fst"))

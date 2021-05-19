@@ -438,7 +438,7 @@ fit.mu.M.uk <- function(result, max.days.to.report, zero.inflation=FALSE, use.re
         res.optim <- optim(res.optim$par, lik)
         res.optim <- optim(res.optim$par, lik)
         res.optim <- optim(res.optim$par, lik)
-        res.optim <- optim(res.optim$par, lik, method="BFGS")
+        res.optim <- optim(res.optim$par, lik)
         p1 <- dim(X1)[2]
         p2 <- dim(X2)[2]
         p3 <- dim(X3)[2]
