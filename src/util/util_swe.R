@@ -947,7 +947,6 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     }
 
     model_dt_smooth <- NULL
-    print(death_prediction$state )
     index.known <- report.date-death_prediction$state > max.days.to.report
 
     N <- length(death_prediction$state)

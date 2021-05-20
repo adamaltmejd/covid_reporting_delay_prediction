@@ -9,7 +9,7 @@ result <- readRDS(file.path("data", "processed", "processed_data_sweden.rds"))
 
 
 #remove data before  2020-07-01
-index <- result$dates_report >= as.Date("2020-07-01")
+index <- result$dates_report <= as.Date("2020-08-01")
 result$detected             = result$detected[index,index]
 result$report               = result$report[index,index]
 result$dates                = result$dates[index]
@@ -52,12 +52,12 @@ Pi[upper.tri(Data$report.new,diag=T)]     <- pi
 
 
 
-lag.plot = 7
+lag.plot = 2
 MS.plot = F
 lag.data.simulated <- zero.BB.dist.by.lag(Data,Alpha1, Beta1, Pi , lags = 1:10)
 
 data.lag <- data.by.lag(Data, lags = 1:10)
-days <- c("Sunday")
+days <- c("Sunday","Saturday","Friday")
 data.lag$MS         = weekdays(data.lag$date.reported)%in%days
 lag.data.simulated$MS  =  weekdays(lag.data.simulated$date.reported)%in%days
 
@@ -65,4 +65,12 @@ plot(data.lag[lag==lag.plot & MS == MS.plot,date.reported], data.lag[lag==lag.pl
 points(lag.data.simulated[lag==lag.plot & MS == MS.plot ,date.reported], lag.data.simulated[lag==lag.plot  & MS == MS.plot,upp/n] ,col='blue')
 points(lag.data.simulated[lag==lag.plot  & MS == MS.plot,date.reported], lag.data.simulated[lag==lag.plot  & MS == MS.plot,low/n] ,col='red')
 
+dt <- data.lag[lag==lag.plot & MS == MS.plot,cbind(y/n,y,n )]
+dates <- data.lag[lag==lag.plot & MS == MS.plot, date.reported]
+p<- sum(dt[,'y'])/sum(dt[,'n'])
+pdf('swe_over_disp0.pdf')
+plot(dates,dt[,'y']/dt[,'n'],ylab='rep_{t,t+2}/rep_{t,t+30}')
+lines(dates,qbinom(0.025,dt[,'n'],p)/dt[,'n'],col='blue')
+lines(dates,qbinom(0.975,dt[,'n'],p)/dt[,'n'],col='blue')
+dev.off()
 
