@@ -40,15 +40,17 @@ target_swe$dates <- swe_data$dates_report[1:length(target_swe$reported)]
 #remove obs above max.days to report
 swe_data$detected[row(swe_data$detected)+max.days.to.report<col(swe_data$detected)]=NA
 
-dts <- lapply(
+dts_swe <- lapply(
     as.Date(swe_data$dates_report[swe_data$dates_report >= start_date + 90]),
     FUN = function(x, ...) swe.prediction(report.dates = x, ...),
     max.days.to.report = max.days.to.report,
     result = swe_data,
     target = target_swe
 )
-dts_smooth_swe <- lapply(dts, gp.smooth, max.days.to.report = max.days.to.report)
-write_fst(rbindlist(dts_smooth_swe), file.path("data", "model_predictions_full_SWE.fst"))
+write_fst(rbindlist(dts_swe), file.path("data", "model_predictions_full_SWE.fst"))
+
+dts_smooth_swe <- lapply(dts_swe, gp.smooth, max.days.to.report = max.days.to.report)
+write_fst(rbindlist(dts_smooth_swe), file.path("data", "model_predictions_full_smooth_SWE.fst"))
 
 ################################
 # UK Prediction over all dates #
@@ -70,5 +72,7 @@ dts_uk <- lapply(
     result = uk_data,
     target = target_uk
 )
-dts_smooth <- lapply(dts_uk, gp.smooth, max.days.to.report = max.days.to.report)
-write_fst(rbindlist(dts_smooth), file.path("data", "model_predictions_full_UK.fst"))
+write_fst(rbindlist(dts_uk), file.path("data", "model_predictions_full_UK.fst"))
+
+dts_smooth_uk <- lapply(dts_uk, gp.smooth, max.days.to.report = max.days.to.report)
+write_fst(rbindlist(dts_smooth_uk), file.path("data", "model_predictions_full_smooth_UK.fst"))
