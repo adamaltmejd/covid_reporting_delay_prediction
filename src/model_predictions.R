@@ -47,10 +47,10 @@ dts_swe <- lapply(
     result = swe_data,
     target = target_swe
 )
-write_fst(rbindlist(dts_swe), file.path("data", "model_predictions_full_SWE.fst"))
+write_fst(rbindlist(dts_swe), file.path("data", "processed", "model_predictions_full_SWE.fst"))
 
 dts_smooth_swe <- lapply(dts_swe, gp.smooth, max.days.to.report = max.days.to.report)
-write_fst(rbindlist(dts_smooth_swe), file.path("data", "model_predictions_full_smooth_SWE.fst"))
+write_fst(rbindlist(dts_smooth_swe), file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"))
 
 ################################
 # UK Prediction over all dates #
@@ -72,7 +72,7 @@ dts_uk <- lapply(
     result = uk_data,
     target = target_uk
 )
-write_fst(rbindlist(dts_uk), file.path("data", "model_predictions_full_UK.fst"))
+write_fst(rbindlist(dts_uk), file.path("data", "processed", "model_predictions_full_UK.fst"))
 
 dts_smooth_uk <- lapply(dts_uk, gp.smooth, max.days.to.report = max.days.to.report)
-write_fst(rbindlist(dts_smooth_uk), file.path("data", "model_predictions_full_smooth_UK.fst"))
+write_fst(rbindlist(dts_smooth_uk), file.path("data", "processed", "model_predictions_full_smooth_UK.fst"))
