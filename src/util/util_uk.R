@@ -873,7 +873,8 @@ uk.prediction <- function(result,
                         ci_lower                =  numeric(),
                         ci_upper           =  numeric(),
                         target             = numeric(),
-                        CRPS               = numeric())
+                        CRPS               = numeric(),
+                        zero.report        = numeric())
 
     for(i in 1:length(report.dates)){
         result_i  <- result
@@ -906,15 +907,17 @@ uk.prediction <- function(result,
                 }
             }
         }
+        zero.report = state%in%result_i$dates[rowSums(result_i$detected, na.rm=T)==0]
         deaths.i <- data.table(
-            date          = report.dates[i],
-            state         = state,
+            date          = state,
+            state         =  report.dates[i],
             mean          =  N.quantile[,1],
             predicted_deaths        =  N.quantile[,3],
             ci_lower           =  N.quantile[,2],
             ci_upper           =  N.quantile[,4],
             target  = target.i,
-            CRPS = CRPS.i
+            CRPS = CRPS.i,
+            zero.report = zero.report
         )
         deaths <- rbind(deaths, deaths.i)
     }
@@ -964,7 +967,7 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
         theta <- c(0,0,0,0)
     }
 
-    report.date <- unique(death_prediction$date)
+    report.date <- unique(death_prediction$state)
     if(length(report.date)>1)
     {
         cat("error only day is allowed in gp.smooth data for input\n")
@@ -973,12 +976,12 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
 
     model_dt_smooth <- NULL
 
-    index.known <- report.date-death_prediction$state > max.days.to.report
+    index.known <- report.date-death_prediction$date > max.days.to.report
 
-    N <- length(death_prediction$state)
+    N <- length(death_prediction$date)
     death_reported_so_far <- data.frame(
                                         Deaths  = death_prediction$predicted_deaths[index.known],
-                                        date    = death_prediction$state[index.known])
+                                        date    = death_prediction$date[index.known])
 
     time_d  = death_reported_so_far$date - min(death_reported_so_far$date)
     y_d     =  sqrt(death_reported_so_far$Deaths )
@@ -991,9 +994,14 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     ###
     y_D <- sqrt(death_prediction$predicted_deaths)
     sigma_y <- (sqrt(death_prediction$ci_upper+1)-sqrt(death_prediction$ci_lower+1))/(2*qnorm(0.5+CI_width/2))
+
+    #remove obs when no reporting
+    y_D[death_prediction$zero.report==T] = NA
+    sigma_y[death_prediction$zero.report==T] = NA
+
     index.obs = is.na(sigma_y)==F
 
-    D <- as.matrix(dist(death_prediction$state-min(death_prediction$state)))
+    D <- as.matrix(dist(death_prediction$date-min(death_prediction$date)))
     kappa       <- exp(res$par[1])
     nu          <- exp(res$par[2])
     sigma       <- exp(res$par[3])

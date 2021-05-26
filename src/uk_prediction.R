@@ -24,10 +24,10 @@ pred <- uk.prediction(result = result,
               target= target)
 pred.smooth <- gp.smooth(pred,
                          max.days.to.report = max.days.to.report)
-plot(pred$state,pred$target,ylim=c(0,max(pred.smooth$ci_lower)))
-lines(pred$state,pred$predicted_deaths, type='l',col='blue')
-lines(pred$state,pred$ci_upper, type='l',col='red')
+plot(pred$date,pred$target,ylim=c(0,max(pred.smooth$ci_lower)))
+lines(pred$date,pred$predicted_deaths, type='l',col='blue')
+lines(pred$date,pred$ci_upper, type='l',col='red')
 
-lines(pred.smooth$state,pred.smooth$ci_upper, type='l',col='green')
-lines(pred.smooth$state,pred.smooth$ci_lower, type='l',col='green')
+lines(pred.smooth$date,pred.smooth$ci_upper, type='l',col='green')
+lines(pred.smooth$date,pred.smooth$ci_lower, type='l',col='green')
 #2021-01-25

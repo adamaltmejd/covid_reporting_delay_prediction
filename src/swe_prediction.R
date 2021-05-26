@@ -31,9 +31,9 @@ pred <- swe.prediction(result = result,
               target= target)
 pred.smooth <- gp.smooth(pred,
                          max.days.to.report = max.days.to.report)
-plot(pred$state,pred$ci_lower, type='l',col='blue',ylim=c(0,140))
-lines(pred$state,pred$ci_upper, type='l',col='red')
+plot(pred$date,pred$ci_lower, type='l',col='blue',ylim=c(0,140))
+lines(pred$date,pred$ci_upper, type='l',col='red')
 
-lines(pred.smooth$state,pred.smooth$ci_lower, type='l',col='green')
-lines(pred.smooth$state,pred.smooth$ci_upper, type='l',col='green')
+lines(pred.smooth$date,pred.smooth$ci_lower, type='l',col='green')
+lines(pred.smooth$date,pred.smooth$ci_upper, type='l',col='green')
 points(target$dates,target$reported)
