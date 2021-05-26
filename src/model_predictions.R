@@ -47,16 +47,10 @@ dts_swe <- lapply(
     result = swe_data,
     target = target_swe
 )
-<<<<<<< HEAD
-dts_smooth_swe <- lapply(dts, gp.smooth, max.days.to.report = max.days.to.report)
-write_fst(rbindlist(dts), file.path("data", "model_predictions_full_SWE.fst"))
-write_fst(rbindlist(dts_smooth_swe), file.path("data", "model_predictions_full_SWE_smooth.fst"))
-=======
 write_fst(rbindlist(dts_swe), file.path("data", "processed", "model_predictions_full_SWE.fst"))
 
 dts_smooth_swe <- lapply(dts_swe, gp.smooth, max.days.to.report = max.days.to.report)
 write_fst(rbindlist(dts_smooth_swe), file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"))
->>>>>>> 368df4d84405f5780bb5370388558059698984d4
 
 ################################
 # UK Prediction over all dates #
@@ -78,14 +72,7 @@ dts_uk <- lapply(
     result = uk_data,
     target = target_uk
 )
-<<<<<<< HEAD
-dts_smooth <- lapply(dts_uk, gp.smooth, max.days.to.report = max.days.to.report)
-write_fst(rbindlist(dts_smooth), file.path("data", "model_predictions_full_UK_smooth.fst"))
-write_fst(rbindlist(dts_uk), file.path("data", "model_predictions_full_UK.fst"))
-#res <- unlist(lapply(dts, function(x){x[date==state+4,(ci_lower<= target)* (ci_upper>= target)]}))
-=======
 write_fst(rbindlist(dts_uk), file.path("data", "processed", "model_predictions_full_UK.fst"))
 
 dts_smooth_uk <- lapply(dts_uk, gp.smooth, max.days.to.report = max.days.to.report)
 write_fst(rbindlist(dts_smooth_uk), file.path("data", "processed", "model_predictions_full_smooth_UK.fst"))
->>>>>>> 368df4d84405f5780bb5370388558059698984d4
