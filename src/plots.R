@@ -83,7 +83,7 @@ save_plot(filename = file.path("output", "paper", "plots", "latest_prediction.pd
 
 # Load data
 min_date <- as.Date("2020-10-10")
-model_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_SWE.fst"), as.data.table = TRUE)
+model_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"), as.data.table = TRUE)
 max_state <- model_SWE[, max(state)]
 model_SWE <- model_SWE[date >= min_date & state <= date + 30 & state <= max_state - 30]
 model_SWE[, days_left := 30 - as.integer(state - date)]
@@ -92,7 +92,7 @@ benchmark_SWE <- benchmark_SWE[date >= min_date & state <= date + 30 & state <= 
 benchmark_SWE[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, CRPS = NA_real_)]
 model_SWE[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, CRPS = NA_real_)]
 
-model_UK <- read_fst(file.path("data", "processed", "model_predictions_full_UK.fst"), as.data.table = TRUE)
+model_UK <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_UK.fst"), as.data.table = TRUE)
 max_state <- model_UK[, max(state)]
 model_UK <- model_UK[date >= min_date & state <= date + 30 & state <= max_state - 30]
 model_UK[, days_left := 30 - as.integer(state - date)]

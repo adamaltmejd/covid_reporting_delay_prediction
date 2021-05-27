@@ -27,7 +27,7 @@ result$detected[row(result$detected)+max.days.to.report<col(result$detected)]=NA
 
 pred <- swe.prediction(result = result,
               max.days.to.report = max.days.to.report,
-              report.dates = c(as.Date("2021-03-20")),
+              report.dates = c(as.Date("2021-02-15")),
               target= target)
 pred.smooth <- gp.smooth(pred,
                          max.days.to.report = max.days.to.report)
