@@ -20,56 +20,89 @@ library(forcats)
 library(ggplot2)
 library(hrbrthemes)
 library(wesanderson)
-source(file.path("src", "util","functions.R"))
+library(extrafont)
+library(cowplot)
+source(file.path("src", "util", "functions.R"))
 
 #
 w <- 11 # plot width (inches)
 my_palette <- c("#d1ae90", "#046C9A", "#D69C4E", "#ABDDDE", "#000000")
 
 # Plot 1 = Predictions and current stats
-deaths_dt <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
-model_predict <- read_fst(file.path("data", "processed", "model_latest.fst"), as.data.table = TRUE)
-DT1 <- model_predict[date %between% c("2020-05-20", "2020-06-03")]
-DT2 <- deaths_dt[!is.na(N) & !is.na(date) & publication_date == max(model_predict[, date])]
-DT2[, avg := frollmean(N, 7, algo = "exact", align = "right")]
-DT2 <- DT2[date > "2020-03-15"]
+latest_prediction <- function(deaths_dt, model_predict) {
+    # Predict over the last 15 days, plot last two months
+    plot_state <- model_predict[, max(state)]
+    model_predict <- model_predict[state == plot_state & date %between% c(plot_state - 15, plot_state)]
 
-colors <- c("gray80", "#ECCBAE")
-colors <- setNames(colors, c("Reported dead", "Model prediction"))
+    deaths_dt[, avg := frollmean(N, 7, algo = "exact", align = "center"), by = publication_date]
+    deaths_dt <- deaths_dt[publication_date == plot_state & date %between% c(plot_state - 60, plot_state)]
 
-plot <- ggplot(data = DT1, aes(x = date, y = predicted_deaths)) +
-    geom_bar(aes(fill = "Model prediction"), stat = "identity") +
-    geom_bar(data = DT2,
-             aes(y = N, fill = "Reported dead"), stat = "identity") +
-    geom_line(data = DT2[!is.na(avg) & date <= max(model_predict[, date]) - 10],
-              aes(y = avg, linetype = "7-day moving average"), color = "grey50") +
-    geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper),
-                  width = 0.4, color = "#e0ac7e") +
-    set_default_theme() +
-    scale_fill_manual(values = colors) +
-    scale_x_date(date_breaks = "3 day", date_labels = "%b %d", expand = expansion(add = 0.8)) +
-    theme(axis.text.x = element_text(angle = 35, hjust = 1.3, vjust = 1.1)) +
-    scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(0, 5))) +
-    labs(#title = paste0("Reported deaths as of ", deaths_dt[, max(publication_date)], " and model prediction"),
-         #subtitle = "",
-         #caption = "",
-         fill = "",
-         linetype = "",
-         x = "Death date",
-         y = "Number of deaths")
+    colors <- c("gray80", "#ECCBAE")
+    colors <- setNames(colors, c("Reported dead", "Model prediction"))
 
-ggsave(filename = file.path("output", "paper", "plots", "latest_prediction.pdf"),
-       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
+    ggplot(data = model_predict, aes(x = date, y = predicted_deaths)) +
+        geom_bar(aes(fill = "Model prediction"), stat = "identity") +
+        geom_errorbar(aes(ymin = ci_lower, ymax = ci_upper),
+                      width = 0.4, color = "#e0ac7e") +
+        geom_bar(data = deaths_dt,
+                aes(y = N, fill = "Reported dead"), stat = "identity") +
+        geom_line(data = deaths_dt[date <= plot_state - 10],
+                  aes(y = avg, linetype = "7-day moving average"), color = "grey50") +
+        set_default_theme() +
+        scale_fill_manual(values = colors) +
+        scale_x_date(date_breaks = "1 week", date_labels = "%b %d", expand = expansion(add = 0.8)) +
+        theme(axis.text.x = element_text(angle = 35, hjust = 1.3, vjust = 1.1)) +
+        scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,10), expand = expansion(add = c(0, 5))) +
+        labs(#title = paste0("Reported deaths as of ", deaths_dt[, max(publication_date)], " and model prediction"),
+            #subtitle = "",
+            #caption = "",
+             fill = "",
+             linetype = "",
+             x = "Death date",
+             y = "Number of deaths")
 
+}
+deaths_dt_SWE <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
+model_predict_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"), as.data.table = TRUE)
+plot_SWE  <- latest_prediction(deaths_dt_SWE, model_predict_SWE)
+# ggsave(filename = file.path("output", "paper", "plots", "latest_prediction_SWE.pdf"),
+#         plot = plot_SWE, device = cairo_pdf, width = w, height = w/1.9)
+
+deaths_dt_UK <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = TRUE)
+model_predict_UK <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_UK.fst"), as.data.table = TRUE)
+plot_UK <- latest_prediction(deaths_dt_UK, model_predict_UK)
+# ggsave(filename = file.path("output", "paper", "plots", "latest_prediction_UK.pdf"),
+#         plot = plot_UK, device = cairo_pdf, width = w, height = w/1.9)
+
+p <- plot_grid(plot_grid(
+    plot_SWE + guides(fill = "none", linetype = "none"),
+    plot_UK + guides(fill = "none", linetype = "none") + ylab(NULL),
+    labels = c("Sweden", "United Kingdom"), label_fontfamily = "EB Garamond",
+    hjust = -0.5, align = "hv",
+    nrow = 1, ncol = 2),
+    get_legend(plot_SWE),
+    nrow = 2, ncol = 1, rel_heights = c(0.9, 0.1)
+)
+save_plot(filename = file.path("output", "paper", "plots", "latest_prediction.pdf"),
+          plot = p, ncol = 2, nrow = 2, base_height = 2.5, device = cairo_pdf)
+
+break
 
 # Load data
-benchmark <- read_fst(file.path("data", "processed", "constant_benchmark.fst"), as.data.table = TRUE)
-model <- read_fst(file.path("data", "processed", "model_benchmark.fst"), as.data.table = TRUE)
-benchmark <- benchmark[state >="2020-04-21"]
+data/processed/constant_model_predictions_full_SWE.fst
+
+benchmark_SWE <- read_fst(file.path("data", "processed", "constant_model_predictions_full_SWE.fst"), as.data.table = TRUE)
+model_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"), as.data.table = TRUE)
+model_SWE_sharp <- read_fst(file.path("data", "processed", "model_predictions_full_SWE.fst"), as.data.table = TRUE)
+benchmark_SWE <- benchmark_SWE[state >= "2020-04-21"]
 
 # Fix data tables so they look the same
-reported_dead <- benchmark[, .(state, date, days_left = as.integer(days_left), reported_dead)]
-benchmark <- benchmark[!is.na(target), .(state, date, target, days_left = as.integer(days_left), ci_upper, ci_lower, predicted_deaths, SCRPS)]
+reported_dead <- benchmark_SWE[, .(state, date, days_left = as.integer(days_left), reported_dead)]
+benchmark_SWE <- benchmark_SWE[!is.na(target), .(state, date, target, days_left = as.integer(days_left), ci_upper, ci_lower, predicted_deaths, CRPS)]
+benchmark_SWE[date == "2021-01-01"]
+model_SWE[date == "2021-01-01" & state %between% list(date, date + 45)]
+model_SWE_sharp[date == "2021-01-01" & state %between% list(date, date + 45)]
+options(max.print = 400)
 model[, days_left := as.integer(days_left)]
 model[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, SCRPS = NA_real_)]
 
