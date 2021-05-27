@@ -8,9 +8,9 @@
 # data/processed/model_benchmark.fst.fst (Beta_GP_lag_benchmark_build.R)
 #
 # generates files:
-# output/plots/SCRPS_over_weekdays.pdf
+# output/plots/CRPS_over_weekdays.pdf
 # output/plots/daily/prediction_YYYY-MM-DD.pdf
-# output/plots/SCRPS_over_states.pdf
+# output/plots/CRPS_over_states.pdf
 # output/plots/model_metrics.pdf
 ##
 
@@ -160,7 +160,7 @@ day_plot <- function(DT, reported, plot.title) {
         geom_errorbar(data = DT[days_left != "0"], aes(ymin = ci_lower, ymax = ci_upper),
                     width = 0.7, position = position_dodge(width = 0.6)) +
         # Converging with a grey point on the last day
-        geom_point(data = DT[days_left == "0" & type == "Historical Avg."], color = "grey50") +
+        geom_point(data = DT[days_left == "0" & type == "Benchmark model"], color = "grey50") +
         # Theming
         set_default_theme() + guides(linetype = "none") +
         scale_color_manual(values = colors) +
@@ -178,9 +178,9 @@ day_plot <- function(DT, reported, plot.title) {
     return(plot)
 }
 
-plot_data_SWE <- rbindlist(list("Constant benchmark" = benchmark_SWE, "Prediction model" = model_SWE), idcol = "type")
+plot_data_SWE <- rbindlist(list("Benchmark model" = benchmark_SWE, "Prediction model" = model_SWE), idcol = "type")
 plot_data_SWE[, type := factor(type)]
-plot_data_UK <- rbindlist(list("Constant benchmark" = benchmark_UK, "Prediction model" = model_UK), idcol = "type")
+plot_data_UK <- rbindlist(list("Benchmark model" = benchmark_UK, "Prediction model" = model_UK), idcol = "type")
 plot_data_UK[, type := factor(type)]
 
 # Figure 1 - Pick 4 dates at random to plot
@@ -224,51 +224,84 @@ break
 ## PLOT 2: Statistics ##
 #
 
-plot_data <- rbindlist(
-    list("Historical Avg." =
-         benchmark[, .(mean(SCRPS, na.rm=T),
+plot_data_SWE <- rbindlist(
+    list("Benchmark model" =
+         benchmark_SWE[, .(mean(CRPS, na.rm=T),
                        mean(ci_upper-ci_lower, na.rm = TRUE),
                        mean((target <= ci_upper) * (target >= ci_lower), na.rm = TRUE)),
                   by = .(days_left)],
-        "Capture-Retain" =
-        model[, .(mean(SCRPS, na.rm=T),
+        "Prediction model" =
+        model_SWE[, .(mean(CRPS, na.rm=T),
                   mean(ci_upper-ci_lower, na.rm = TRUE),
                   mean((target <= ci_upper) * (target >= ci_lower), na.rm = TRUE)),
               by = .(days_left)]
         ), idcol = "type")
 
-setnames(plot_data, c("V1", "V2", "V3"),
-         c("Mean SCRPS", "Mean CI width (numer of deaths)", "Share of CI covers true value"))
-plot_data <- plot_data[days_left != "0"]
+setnames(plot_data_SWE, c("V1", "V2", "V3"),
+         c("Mean CRPS", "Mean CI width (numer of deaths)", "Share of CI covers true value"))
+plot_data_SWE <- plot_data_SWE[days_left != "0"]
 
-plot_data <- melt(plot_data, id.vars = c("type", "days_left"))
+plot_data_SWE <- melt(plot_data_SWE, id.vars = c("type", "days_left"))
 
-plot <- ggplot(data = plot_data, aes(x = factor(days_left), color = type, group = type)) +
+plot <- ggplot(data = plot_data_SWE, aes(x = factor(days_left), color = type, group = type)) +
     geom_line(aes(y = value)) +
     geom_point(aes(y = value)) +
     facet_wrap(~variable, scales = "free_y") +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
-    labs(#title = "Model metrics",
-         #subtitle = "",
-         #caption = "",
-         color = "Model",
+    scale_x_reverse(breaks = scales::extended_breaks(), expand = expansion(add = c(1, 1))) +
+    labs(color = "Model",
          x = "Days of lag to predict",
          y = "")
 
-ggsave2(filename = file.path("output", "paper", "plots", "model_metrics.pdf"),
+ggsave2(filename = file.path("output", "paper", "plots", "model_metrics_SWE.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
 
+plot_data_UK <- rbindlist(
+    list("Benchmark model" =
+         benchmark_UK[, .(mean(CRPS, na.rm=T),
+                       mean(ci_upper-ci_lower, na.rm = TRUE),
+                       mean((target <= ci_upper) * (target >= ci_lower), na.rm = TRUE)),
+                  by = .(days_left)],
+        "Prediction model" =
+        model_UK[, .(mean(CRPS, na.rm=T),
+                  mean(ci_upper-ci_lower, na.rm = TRUE),
+                  mean((target <= ci_upper) * (target >= ci_lower), na.rm = TRUE)),
+              by = .(days_left)]
+        ), idcol = "type")
+
+setnames(plot_data_UK, c("V1", "V2", "V3"),
+         c("Mean CRPS", "Mean CI width (numer of deaths)", "Share of CI covers true value"))
+plot_data_UK <- plot_data_UK[days_left != "0"]
+
+plot_data_UK <- melt(plot_data_UK, id.vars = c("type", "days_left"))
+
+plot <- ggplot(data = plot_data_UK, aes(x = factor(days_left), color = type, group = type)) +
+    geom_line(aes(y = value)) +
+    geom_point(aes(y = value)) +
+    facet_wrap(~variable, scales = "free_y") +
+    set_default_theme() +
+    scale_color_manual(values = my_palette) +
+    scale_x_reverse(breaks = scales::extended_breaks(), expand = expansion(add = c(1, 1))) +
+    labs(color = "Model",
+         x = "Days of lag to predict",
+         y = "")
+
+ggsave2(filename = file.path("output", "paper", "plots", "model_metrics_UK.pdf"),
+       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
+
+
+break
 #
 ## PLOT 3: Performance over time (as more training data becomes availiable) ##
 #
 # Only include dates for which we have all 14 dates
-states <- fintersect(benchmark[!is.na(SCRPS), .N, state][N == 14, .(state)],
-                     model[!is.na(SCRPS), .N, state][N == 14, .(state)])[ , state]
+states <- fintersect(benchmark[!is.na(CRPS), .N, state][N == 14, .(state)],
+                     model[!is.na(CRPS), .N, state][N == 14, .(state)])[ , state]
 
 plot_data <- rbindlist(list(
-    "Historical Avg." = benchmark[state %in% states & days_left != "0", mean(SCRPS), by = state],
-    "Capture-Retain" = model[state %in% states & days_left != "0", mean(SCRPS), by = state]
+    "Benchmark model" = benchmark[state %in% states & days_left != "0", mean(CRPS), by = state],
+    "Prediction model" = model[state %in% states & days_left != "0", mean(CRPS), by = state]
     ), idcol = "type")
 
 plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
@@ -280,25 +313,25 @@ plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = ty
          #caption = "",
          color = "Model",
          x = "Last date included in the model",
-         y = "SCRPS")
+         y = "CRPS")
 
-ggsave2(filename = file.path("output", "paper", "plots", "SCRPS_over_states.pdf"),
+ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
 
 #
 ## PLOT 4: Performance by day-of-week ##
 #
 # Base results on same dates
-dates <- fintersect(benchmark[!is.na(SCRPS), .(date, state)], model[!is.na(SCRPS), .(date, state)])
-plot_data <- rbindlist(list("Historical Avg." = benchmark[dates],
-                            "Capture-Retain" = model[dates]), idcol = "type")
+dates <- fintersect(benchmark[!is.na(CRPS), .(date, state)], model[!is.na(CRPS), .(date, state)])
+plot_data <- rbindlist(list("Benchmark model" = benchmark[dates],
+                            "Prediction model" = model[dates]), idcol = "type")
 
 plot_data[, dayofweek := factor(weekdays(date),
                                 levels = c("Monday", "Tuesday", "Thursday",
                                            "Wednesday", "Friday", "Saturday",
                                            "Sunday"))]
 
-plot_data <- plot_data[days_left != "0", mean(SCRPS), by = .(dayofweek, type)]
+plot_data <- plot_data[days_left != "0", mean(CRPS), by = .(dayofweek, type)]
 
 plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
@@ -312,5 +345,5 @@ plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group 
          x = "Weekday",
          y = "")
 
-ggsave2(filename = file.path("output", "paper", "plots", "SCRPS_over_weekdays.pdf"),
+ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_weekdays.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
