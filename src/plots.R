@@ -114,14 +114,6 @@ benchmark_SWE <- benchmark_SWE[, .(state, date, days_left, target, predicted_dea
 model_UK <- model_UK[, .(state, date, days_left, target, predicted_deaths, ci_lower, ci_upper, CRPS)]
 benchmark_UK <- benchmark_UK[, .(state, date, days_left, target, predicted_deaths, ci_lower, ci_upper, CRPS)]
 
-# Days left as factor
-# reported_dead_SWE[, days_left := forcats::fct_rev(factor(days_left))]
-# reported_dead_UK[, days_left := forcats::fct_rev(factor(days_left))]
-# benchmark_SWE[, days_left := forcats::fct_rev(factor(days_left))]
-# benchmark_UK[, days_left := forcats::fct_rev(factor(days_left))]
-# model_SWE[, days_left := forcats::fct_rev(factor(days_left))]
-# model_UK[, days_left := forcats::fct_rev(factor(days_left))]
-
 # Order correctly
 setkey(reported_dead_SWE, date, state, days_left)
 setkey(reported_dead_UK, date, state, days_left)
@@ -156,11 +148,11 @@ day_plot <- function(DT, reported, plot.title) {
                    aes(y = reported_dead, group = "Reported", color = "Reported")) +
         # The actual models
         geom_line(aes(linetype = type), position = position_dodge(width = 0.6)) +
-        geom_point(data = DT[days_left != "0"], position = position_dodge(width = 0.6)) +
-        geom_errorbar(data = DT[days_left != "0"], aes(ymin = ci_lower, ymax = ci_upper),
+        geom_point(data = DT[days_left != 0], position = position_dodge(width = 0.6)) +
+        geom_errorbar(data = DT[days_left != 0], aes(ymin = ci_lower, ymax = ci_upper),
                     width = 0.7, position = position_dodge(width = 0.6)) +
         # Converging with a grey point on the last day
-        geom_point(data = DT[days_left == "0" & type == "Benchmark model"], color = "grey50") +
+        geom_point(data = DT[days_left == 0 & type == "Benchmark model"], color = "grey50") +
         # Theming
         set_default_theme() + guides(linetype = "none") +
         scale_color_manual(values = colors) +
@@ -178,6 +170,7 @@ day_plot <- function(DT, reported, plot.title) {
     return(plot)
 }
 
+# PLOT DATA
 plot_data_SWE <- rbindlist(list("Benchmark model" = benchmark_SWE, "Prediction model" = model_SWE), idcol = "type")
 plot_data_SWE[, type := factor(type)]
 plot_data_UK <- rbindlist(list("Benchmark model" = benchmark_UK, "Prediction model" = model_UK), idcol = "type")
@@ -239,11 +232,11 @@ plot_data_SWE <- rbindlist(
 
 setnames(plot_data_SWE, c("V1", "V2", "V3"),
          c("Mean CRPS", "Mean CI width (numer of deaths)", "Share of CI covers true value"))
-plot_data_SWE <- plot_data_SWE[days_left != "0"]
+plot_data_SWE <- plot_data_SWE[days_left != 0]
 
 plot_data_SWE <- melt(plot_data_SWE, id.vars = c("type", "days_left"))
 
-plot <- ggplot(data = plot_data_SWE, aes(x = factor(days_left), color = type, group = type)) +
+plot <- ggplot(data = plot_data_SWE, aes(x = days_left, color = type, group = type)) +
     geom_line(aes(y = value)) +
     geom_point(aes(y = value)) +
     facet_wrap(~variable, scales = "free_y") +
@@ -272,11 +265,11 @@ plot_data_UK <- rbindlist(
 
 setnames(plot_data_UK, c("V1", "V2", "V3"),
          c("Mean CRPS", "Mean CI width (numer of deaths)", "Share of CI covers true value"))
-plot_data_UK <- plot_data_UK[days_left != "0"]
+plot_data_UK <- plot_data_UK[days_left != 0]
 
 plot_data_UK <- melt(plot_data_UK, id.vars = c("type", "days_left"))
 
-plot <- ggplot(data = plot_data_UK, aes(x = factor(days_left), color = type, group = type)) +
+plot <- ggplot(data = plot_data_UK, aes(x = days_left, color = type, group = type)) +
     geom_line(aes(y = value)) +
     geom_point(aes(y = value)) +
     facet_wrap(~variable, scales = "free_y") +
@@ -290,32 +283,46 @@ plot <- ggplot(data = plot_data_UK, aes(x = factor(days_left), color = type, gro
 ggsave2(filename = file.path("output", "paper", "plots", "model_metrics_UK.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
 
-
-break
 #
 ## PLOT 3: Performance over time (as more training data becomes availiable) ##
 #
-# Only include dates for which we have all 14 dates
-states <- fintersect(benchmark[!is.na(CRPS), .N, state][N == 14, .(state)],
-                     model[!is.na(CRPS), .N, state][N == 14, .(state)])[ , state]
+# Only include dates for which we have all 30 dates
+states <- fintersect(benchmark_SWE[!is.na(CRPS), .N, state][N == 30, .(state)],
+                     model_SWE[!is.na(CRPS), .N, state][N == 30, .(state)])[ , state]
 
 plot_data <- rbindlist(list(
-    "Benchmark model" = benchmark[state %in% states & days_left != "0", mean(CRPS), by = state],
-    "Prediction model" = model[state %in% states & days_left != "0", mean(CRPS), by = state]
+    "Benchmark model" = benchmark_SWE[state %in% states & days_left != 0, mean(CRPS), by = state],
+    "Prediction model" = model_SWE[state %in% states & days_left != 0, mean(CRPS), by = state]
     ), idcol = "type")
 
 plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
-    labs(#title = "Model metrics",
-         #subtitle = "",
-         #caption = "",
-         color = "Model",
+    labs(color = "Model",
          x = "Last date included in the model",
          y = "CRPS")
 
-ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states.pdf"),
+ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states_SWE.pdf"),
+       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
+
+states <- fintersect(benchmark_UK[!is.na(CRPS), .N, state][N == 30, .(state)],
+                     model_UK[!is.na(CRPS), .N, state][N == 30, .(state)])[ , state]
+
+plot_data <- rbindlist(list(
+    "Benchmark model" = benchmark_UK[state %in% states & days_left != 0, mean(CRPS), by = state],
+    "Prediction model" = model_UK[state %in% states & days_left != 0, mean(CRPS), by = state]
+    ), idcol = "type")
+
+plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
+    geom_line() + geom_point() +
+    set_default_theme() +
+    scale_color_manual(values = my_palette) +
+    labs(color = "Model",
+         x = "Last date included in the model",
+         y = "CRPS")
+
+ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states_UK.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
 
 #
@@ -331,7 +338,7 @@ plot_data[, dayofweek := factor(weekdays(date),
                                            "Wednesday", "Friday", "Saturday",
                                            "Sunday"))]
 
-plot_data <- plot_data[days_left != "0", mean(CRPS), by = .(dayofweek, type)]
+plot_data <- plot_data[days_left != 0, mean(CRPS), by = .(dayofweek, type)]
 
 plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
