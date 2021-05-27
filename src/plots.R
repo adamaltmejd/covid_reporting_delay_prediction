@@ -25,7 +25,6 @@ library(cowplot)
 source(file.path("src", "util", "functions.R"))
 
 #
-w <- 11 # plot width (inches)
 my_palette <- c("#d1ae90", "#046C9A", "#D69C4E", "#ABDDDE", "#000000")
 
 # Plot 1 = Predictions and current stats
@@ -65,13 +64,13 @@ latest_prediction <- function(deaths_dt, model_predict) {
 deaths_dt_SWE <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
 model_predict_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"), as.data.table = TRUE)
 plot_SWE  <- latest_prediction(deaths_dt_SWE, model_predict_SWE)
-# ggsave(filename = file.path("output", "paper", "plots", "latest_prediction_SWE.pdf"),
+# ggsave2(filename = file.path("output", "paper", "plots", "latest_prediction_SWE.pdf"),
 #         plot = plot_SWE, device = cairo_pdf, width = w, height = w/1.9)
 
 deaths_dt_UK <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = TRUE)
 model_predict_UK <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_UK.fst"), as.data.table = TRUE)
 plot_UK <- latest_prediction(deaths_dt_UK, model_predict_UK)
-# ggsave(filename = file.path("output", "paper", "plots", "latest_prediction_UK.pdf"),
+# ggsave2(filename = file.path("output", "paper", "plots", "latest_prediction_UK.pdf"),
 #         plot = plot_UK, device = cairo_pdf, width = w, height = w/1.9)
 
 p <- plot_grid(plot_grid(
@@ -86,41 +85,50 @@ p <- plot_grid(plot_grid(
 save_plot(filename = file.path("output", "paper", "plots", "latest_prediction.pdf"),
           plot = p, ncol = 2, nrow = 2, base_height = 2.5, device = cairo_pdf)
 
-break
-
 # Load data
-data/processed/constant_model_predictions_full_SWE.fst
-
-benchmark_SWE <- read_fst(file.path("data", "processed", "constant_model_predictions_full_SWE.fst"), as.data.table = TRUE)
+min_date <- as.Date("2020-10-10")
 model_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"), as.data.table = TRUE)
-model_SWE_sharp <- read_fst(file.path("data", "processed", "model_predictions_full_SWE.fst"), as.data.table = TRUE)
-benchmark_SWE <- benchmark_SWE[state >= "2020-04-21"]
+max_state <- model_SWE[, max(state)]
+model_SWE <- model_SWE[date >= min_date & state <= date + 30 & state <= max_state - 30]
+model_SWE[, days_left := 30 - as.integer(state - date)]
+benchmark_SWE <- read_fst(file.path("data", "processed", "constant_model_predictions_full_SWE.fst"), as.data.table = TRUE)
+benchmark_SWE <- benchmark_SWE[date >= min_date & state <= date + 30 & state <= max_state - 30]
+benchmark_SWE[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, CRPS = NA_real_)]
+model_SWE[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, CRPS = NA_real_)]
 
-# Fix data tables so they look the same
-reported_dead <- benchmark_SWE[, .(state, date, days_left = as.integer(days_left), reported_dead)]
-benchmark_SWE <- benchmark_SWE[!is.na(target), .(state, date, target, days_left = as.integer(days_left), ci_upper, ci_lower, predicted_deaths, CRPS)]
-benchmark_SWE[date == "2021-01-01"]
-model_SWE[date == "2021-01-01" & state %between% list(date, date + 45)]
-model_SWE_sharp[date == "2021-01-01" & state %between% list(date, date + 45)]
-options(max.print = 400)
-model[, days_left := as.integer(days_left)]
-model[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, SCRPS = NA_real_)]
+model_UK <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_UK.fst"), as.data.table = TRUE)
+max_state <- model_UK[, max(state)]
+model_UK <- model_UK[date >= min_date & state <= date + 30 & state <= max_state - 30]
+model_UK[, days_left := 30 - as.integer(state - date)]
+benchmark_UK <- read_fst(file.path("data", "processed", "constant_model_predictions_full_UK.fst"), as.data.table = TRUE)
+benchmark_UK <- benchmark_UK[date >= min_date & state <= date + 30 & state <= max_state - 30]
+benchmark_UK[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, CRPS = NA_real_)]
+model_UK[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, CRPS = NA_real_)]
 
-# Add a final 14-day prediction to model (just equal to truth)
-# model <- rbindlist(list(model, data.table(state = model[, unique(date)] + 14, date = model[, unique(date)], days_left = 14)), use.names = TRUE, fill = TRUE)
+reported_dead_SWE <- benchmark_SWE[, .(state, date, days_left, reported_dead)]
+reported_dead_UK <- benchmark_UK[, .(state, date, days_left, reported_dead)]
+
+# Select same columns
+model_SWE <- model_SWE[, .(state, date, days_left, target, predicted_deaths, ci_lower, ci_upper, CRPS)]
+benchmark_SWE <- benchmark_SWE[, .(state, date, days_left, target, predicted_deaths, ci_lower, ci_upper, CRPS)]
+model_UK <- model_UK[, .(state, date, days_left, target, predicted_deaths, ci_lower, ci_upper, CRPS)]
+benchmark_UK <- benchmark_UK[, .(state, date, days_left, target, predicted_deaths, ci_lower, ci_upper, CRPS)]
 
 # Days left as factor
-reported_dead[, days_left := forcats::fct_rev(factor(days_left))]
-benchmark[, days_left := forcats::fct_rev(factor(days_left))]
-model[, days_left := forcats::fct_rev(factor(days_left))]
+reported_dead_SWE[, days_left := forcats::fct_rev(factor(days_left))]
+reported_dead_UK[, days_left := forcats::fct_rev(factor(days_left))]
+benchmark_SWE[, days_left := forcats::fct_rev(factor(days_left))]
+benchmark_UK[, days_left := forcats::fct_rev(factor(days_left))]
+model_SWE[, days_left := forcats::fct_rev(factor(days_left))]
+model_UK[, days_left := forcats::fct_rev(factor(days_left))]
 
 # Order correctly
-setkey(reported_dead, date, state, days_left)
-setkey(benchmark, date, state, days_left)
-setkey(model, date, state, days_left)
-
-# Add target as prediction for last day
-model[is.na(target), predicted_deaths := model[!is.na(target), unique(target), by = date][, V1]]
+setkey(reported_dead_SWE, date, state, days_left)
+setkey(reported_dead_UK, date, state, days_left)
+setkey(benchmark_SWE, date, state, days_left)
+setkey(benchmark_UK, date, state, days_left)
+setkey(model_SWE, date, state, days_left)
+setkey(model_UK, date, state, days_left)
 
 #
 ## PLOT 1: Performance per day, PLOT1=4 random dates ##
@@ -154,11 +162,11 @@ day_plot <- function(DT, reported, plot.title) {
         # Converging with a grey point on the last day
         geom_point(data = DT[days_left == "0" & type == "Historical Avg."], color = "grey50") +
         # Theming
-        set_default_theme() +
+        set_default_theme() + guides(linetype = "none") +
         # scale_fill_manual(values = fill_colors, limits = label_order, drop = FALSE) +
         # scale_color_manual(values = my_palette) +
         scale_color_manual(values = colors) +
-        scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,40), expand = expansion(add = c(1, 5))) +
+        scale_y_continuous(breaks = scales::pretty_breaks(), expand = expansion(add = c(1, 5))) +
         labs(title = plot.title,
              #subtitle = "",
              #caption = "",
@@ -168,34 +176,53 @@ day_plot <- function(DT, reported, plot.title) {
 
     if (DT[, uniqueN(date)] > 1) {
         # One plot for each day
-        plot <- plot + facet_wrap(~date)
+        plot <- plot + facet_wrap(~date, scales = "free")
     }
     return(plot)
 }
 
-plot_data <- rbindlist(list("Historical Avg." = benchmark, "Capture-Retain" = model), idcol = "type")
-plot_data[, type := factor(type)]
+plot_data_SWE <- rbindlist(list("Constant benchmark" = benchmark_SWE, "Prediction model" = model_SWE), idcol = "type")
+plot_data_SWE[, type := factor(type)]
+plot_data_UK <- rbindlist(list("Constant benchmark" = benchmark_UK, "Prediction model" = model_UK), idcol = "type")
+plot_data_UK[, type := factor(type)]
 
 # Figure 1 - Pick 4 dates at random to plot
 set.seed(1234)
-example_dates <- sample(seq(as.Date("2020-04-21"), model[days_left == 13, max(date)], 1), 4)
-plot <- day_plot(plot_data[date %in% example_dates],
-                 reported_dead[date %in% example_dates],
+example_dates <- sample(seq(model_UK[, min(date)], model_SWE[, max(date)], 1), 4)
+plot <- day_plot(plot_data_SWE[date %in% example_dates],
+                 reported_dead_SWE[date %in% example_dates],
                  "")
-                 #"Predicting the number of deaths in a given day reported within 14 days.")
-ggsave(filename = file.path("output", "paper", "plots", "lag_prediction_by_date.pdf"),
-       plot = plot, device = cairo_pdf, width = w, height = w)
+ggsave2(filename = file.path("output", "paper", "plots", "lag_prediction_by_date_SWE.pdf"),
+       plot = plot, device = cairo_pdf, width = 7, height = 7)
+
+# Figure 1 - Pick 4 dates at random to plot - UK
+set.seed(1234)
+example_dates <- sample(seq(model_UK[, min(date)], model_UK[, max(date)], 1), 4)
+plot <- day_plot(plot_data_UK[date %in% example_dates],
+                 reported_dead_UK[date %in% example_dates],
+                 "")
+ggsave2(filename = file.path("output", "paper", "plots", "lag_prediction_by_date_UK.pdf"),
+       plot = plot, device = cairo_pdf, width = 7, height = 7)
 
 # For verification, plot each date as well
-dates <- seq(as.Date("2020-04-26"), model[days_left == 13, max(date)], 1)
-
+dates <- seq(model_SWE[, min(date)], model_SWE[, max(date)], 1)
 for (i in seq_along(dates)) {
-    plot <- day_plot(plot_data[date == dates[i]],
-                     reported_dead[date == dates[i]],
+    plot <- day_plot(plot_data_SWE[date == dates[i]],
+                     reported_dead_SWE[date == dates[i]],
                      plot.title = dates[i])
-    ggsave(filename = file.path("output", "paper", "plots", "daily", paste0("prediction_", dates[i], ".pdf")),
-           plot = plot, device = cairo_pdf, width = w, height = w)
+    ggsave2(filename = file.path("output", "paper", "plots", "daily", "SWE", paste0("prediction_", dates[i], ".pdf")),
+           plot = plot, device = cairo_pdf, width = 7, height = 7)
 }
+
+dates <- seq(model_UK[, min(date)], model_UK[, max(date)], 1)
+for (i in seq_along(dates)) {
+    plot <- day_plot(plot_data_UK[date == dates[i]],
+                     reported_dead_UK[date == dates[i]],
+                     plot.title = dates[i])
+    ggsave2(filename = file.path("output", "paper", "plots", "daily", "UK", paste0("prediction_", dates[i], ".pdf")),
+           plot = plot, device = cairo_pdf, width = 7, height = 7)
+}
+
 #
 ## PLOT 2: Statistics ##
 #
@@ -232,7 +259,7 @@ plot <- ggplot(data = plot_data, aes(x = factor(days_left), color = type, group 
          x = "Days of lag to predict",
          y = "")
 
-ggsave(filename = file.path("output", "paper", "plots", "model_metrics.pdf"),
+ggsave2(filename = file.path("output", "paper", "plots", "model_metrics.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
 
 #
@@ -258,7 +285,7 @@ plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = ty
          x = "Last date included in the model",
          y = "SCRPS")
 
-ggsave(filename = file.path("output", "paper", "plots", "SCRPS_over_states.pdf"),
+ggsave2(filename = file.path("output", "paper", "plots", "SCRPS_over_states.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
 
 #
@@ -288,5 +315,5 @@ plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group 
          x = "Weekday",
          y = "")
 
-ggsave(filename = file.path("output", "paper", "plots", "SCRPS_over_weekdays.pdf"),
+ggsave2(filename = file.path("output", "paper", "plots", "SCRPS_over_weekdays.pdf"),
        plot = plot, device = cairo_pdf, width = w, height = w/1.9)
