@@ -62,16 +62,12 @@ latest_prediction <- function(deaths_dt, model_predict) {
 
 }
 deaths_dt_SWE <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
-model_predict_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"), as.data.table = TRUE)
+model_predict_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_SWE.fst"), as.data.table = TRUE)
 plot_SWE  <- latest_prediction(deaths_dt_SWE, model_predict_SWE)
-# ggsave2(filename = file.path("output", "paper", "plots", "latest_prediction_SWE.pdf"),
-#         plot = plot_SWE, device = cairo_pdf, width = w, height = w/1.9)
 
 deaths_dt_UK <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = TRUE)
-model_predict_UK <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_UK.fst"), as.data.table = TRUE)
+model_predict_UK <- read_fst(file.path("data", "processed", "model_predictions_full_UK.fst"), as.data.table = TRUE)
 plot_UK <- latest_prediction(deaths_dt_UK, model_predict_UK)
-# ggsave2(filename = file.path("output", "paper", "plots", "latest_prediction_UK.pdf"),
-#         plot = plot_UK, device = cairo_pdf, width = w, height = w/1.9)
 
 p <- plot_grid(plot_grid(
     plot_SWE + guides(fill = "none", linetype = "none"),
@@ -87,7 +83,7 @@ save_plot(filename = file.path("output", "paper", "plots", "latest_prediction.pd
 
 # Load data
 min_date <- as.Date("2020-10-10")
-model_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"), as.data.table = TRUE)
+model_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_SWE.fst"), as.data.table = TRUE)
 max_state <- model_SWE[, max(state)]
 model_SWE <- model_SWE[date >= min_date & state <= date + 30 & state <= max_state - 30]
 model_SWE[, days_left := 30 - as.integer(state - date)]
@@ -96,7 +92,7 @@ benchmark_SWE <- benchmark_SWE[date >= min_date & state <= date + 30 & state <= 
 benchmark_SWE[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, CRPS = NA_real_)]
 model_SWE[days_left == 0, `:=`(ci_upper = NA_real_, ci_lower = NA_real_, CRPS = NA_real_)]
 
-model_UK <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_UK.fst"), as.data.table = TRUE)
+model_UK <- read_fst(file.path("data", "processed", "model_predictions_full_UK.fst"), as.data.table = TRUE)
 max_state <- model_UK[, max(state)]
 model_UK <- model_UK[date >= min_date & state <= date + 30 & state <= max_state - 30]
 model_UK[, days_left := 30 - as.integer(state - date)]
@@ -212,7 +208,7 @@ for (i in seq_along(dates)) {
     ggsave2(filename = file.path("output", "paper", "plots", "daily", "UK", paste0("prediction_", dates[i], ".pdf")),
            plot = plot, device = cairo_pdf, width = 7, height = 7)
 }
-break
+
 #
 ## PLOT 2: Statistics ##
 #
@@ -248,7 +244,7 @@ plot <- ggplot(data = plot_data_SWE, aes(x = days_left, color = type, group = ty
          y = "")
 
 ggsave2(filename = file.path("output", "paper", "plots", "model_metrics_SWE.pdf"),
-       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
+       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
 
 plot_data_UK <- rbindlist(
     list("Benchmark model" =
@@ -281,7 +277,7 @@ plot <- ggplot(data = plot_data_UK, aes(x = days_left, color = type, group = typ
          y = "")
 
 ggsave2(filename = file.path("output", "paper", "plots", "model_metrics_UK.pdf"),
-       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
+       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
 
 #
 ## PLOT 3: Performance over time (as more training data becomes availiable) ##
@@ -304,7 +300,7 @@ plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = ty
          y = "CRPS")
 
 ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states_SWE.pdf"),
-       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
+       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
 
 states <- fintersect(benchmark_UK[!is.na(CRPS), .N, state][N == 30, .(state)],
                      model_UK[!is.na(CRPS), .N, state][N == 30, .(state)])[ , state]
@@ -323,34 +319,44 @@ plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = ty
          y = "CRPS")
 
 ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states_UK.pdf"),
-       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
+       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
 
 #
 ## PLOT 4: Performance by day-of-week ##
 #
 # Base results on same dates
-dates <- fintersect(benchmark[!is.na(CRPS), .(date, state)], model[!is.na(CRPS), .(date, state)])
-plot_data <- rbindlist(list("Benchmark model" = benchmark[dates],
-                            "Prediction model" = model[dates]), idcol = "type")
-
+dates <- fintersect(benchmark_SWE[!is.na(CRPS), .(date, state)], model_SWE[!is.na(CRPS), .(date, state)])
+plot_data <- rbindlist(list("Benchmark model" = benchmark_SWE[dates],
+                            "Prediction model" = model_SWE[dates]), idcol = "type")
 plot_data[, dayofweek := factor(weekdays(date),
                                 levels = c("Monday", "Tuesday", "Thursday",
                                            "Wednesday", "Friday", "Saturday",
                                            "Sunday"))]
-
 plot_data <- plot_data[days_left != 0, mean(CRPS), by = .(dayofweek, type)]
-
 plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
-    # facet_wrap(~days_left) +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
-    labs(#title = "Model metrics",
-         #subtitle = "",
-         #caption = "",
-         color = "Model",
+    labs(color = "Model",
          x = "Weekday",
          y = "")
+ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_weekdays_SWE.pdf"),
+       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
 
-ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_weekdays.pdf"),
-       plot = plot, device = cairo_pdf, width = w, height = w/1.9)
+dates <- fintersect(benchmark_UK[!is.na(CRPS), .(date, state)], model_UK[!is.na(CRPS), .(date, state)])
+plot_data <- rbindlist(list("Benchmark model" = benchmark_UK[dates],
+                            "Prediction model" = model_UK[dates]), idcol = "type")
+plot_data[, dayofweek := factor(weekdays(date),
+                                levels = c("Monday", "Tuesday", "Thursday",
+                                           "Wednesday", "Friday", "Saturday",
+                                           "Sunday"))]
+plot_data <- plot_data[days_left != 0, mean(CRPS), by = .(dayofweek, type)]
+plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
+    geom_line() + geom_point() +
+    set_default_theme() +
+    scale_color_manual(values = my_palette) +
+    labs(color = "Model",
+         x = "Weekday",
+         y = "")
+ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_weekdays_UK.pdf"),
+       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
