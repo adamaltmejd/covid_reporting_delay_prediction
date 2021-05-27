@@ -112,7 +112,7 @@ out <- DT[, .(state,
               ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
               CRPS = CRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
 
-out[is.nan(CRPS), CRPS := 0]
+out[is.nan(CRPS), CRPS := abs(predicted_deaths - target)]
 write_fst(out, file.path("data", "processed", "constant_model_predictions_full_SWE.fst"))
 
 ######
@@ -136,6 +136,6 @@ out <- DT[, .(state,
               ci_upper = predicted_deaths_cum + qnorm(1-alpha/2) * predicted_deaths_SD_cum,
               ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
               CRPS = CRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
-out[is.nan(CRPS), CRPS := 0]
+out[is.nan(CRPS), CRPS := abs(predicted_deaths - target)]
 
 write_fst(out, file.path("data", "processed", "constant_model_predictions_full_UK.fst"))
