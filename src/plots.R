@@ -115,12 +115,12 @@ model_UK <- model_UK[, .(state, date, days_left, target, predicted_deaths, ci_lo
 benchmark_UK <- benchmark_UK[, .(state, date, days_left, target, predicted_deaths, ci_lower, ci_upper, CRPS)]
 
 # Days left as factor
-reported_dead_SWE[, days_left := forcats::fct_rev(factor(days_left))]
-reported_dead_UK[, days_left := forcats::fct_rev(factor(days_left))]
-benchmark_SWE[, days_left := forcats::fct_rev(factor(days_left))]
-benchmark_UK[, days_left := forcats::fct_rev(factor(days_left))]
-model_SWE[, days_left := forcats::fct_rev(factor(days_left))]
-model_UK[, days_left := forcats::fct_rev(factor(days_left))]
+# reported_dead_SWE[, days_left := forcats::fct_rev(factor(days_left))]
+# reported_dead_UK[, days_left := forcats::fct_rev(factor(days_left))]
+# benchmark_SWE[, days_left := forcats::fct_rev(factor(days_left))]
+# benchmark_UK[, days_left := forcats::fct_rev(factor(days_left))]
+# model_SWE[, days_left := forcats::fct_rev(factor(days_left))]
+# model_UK[, days_left := forcats::fct_rev(factor(days_left))]
 
 # Order correctly
 setkey(reported_dead_SWE, date, state, days_left)
@@ -163,16 +163,13 @@ day_plot <- function(DT, reported, plot.title) {
         geom_point(data = DT[days_left == "0" & type == "Historical Avg."], color = "grey50") +
         # Theming
         set_default_theme() + guides(linetype = "none") +
-        # scale_fill_manual(values = fill_colors, limits = label_order, drop = FALSE) +
-        # scale_color_manual(values = my_palette) +
         scale_color_manual(values = colors) +
-        scale_y_continuous(breaks = scales::pretty_breaks(), expand = expansion(add = c(1, 5))) +
+        scale_y_continuous(breaks = scales::extended_breaks(), expand = expansion(add = c(1, 5))) +
+        scale_x_reverse(breaks = scales::extended_breaks(), expand = expansion(add = c(1, 1))) +
         labs(title = plot.title,
-             #subtitle = "",
-             #caption = "",
-            color = "Model",
-            x = "Days of lag to predict",
-            y = "Number of deaths")
+             color = "Model",
+             x = "Days of lag to predict",
+             y = "Number of deaths")
 
     if (DT[, uniqueN(date)] > 1) {
         # One plot for each day
@@ -222,7 +219,7 @@ for (i in seq_along(dates)) {
     ggsave2(filename = file.path("output", "paper", "plots", "daily", "UK", paste0("prediction_", dates[i], ".pdf")),
            plot = plot, device = cairo_pdf, width = 7, height = 7)
 }
-
+break
 #
 ## PLOT 2: Statistics ##
 #
