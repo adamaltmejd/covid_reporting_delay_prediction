@@ -79,7 +79,7 @@ generate_predictions <- function(deaths_dt) {
     predictions[, `:=`(predicted_deaths_cum = reported_dead + cumsum(tmp.deaths_added),
                        predicted_deaths_SD_cum = sqrt(cumsum(tmp.deaths_added_sd^2))), # assuming independently normal
                 by = .(state, date)]
-    predictions[predicted_deaths_SD_cum == 0, predicted_deaths_SD_cum := NA_real_]
+    #predictions[predicted_deaths_SD_cum == 0, predicted_deaths_SD_cum := NA_real_]
 
     # Don't include predictions states where we already know more than we are predicting
     predictions <- predictions[state - date < prediction_date - date + 1]
@@ -112,6 +112,7 @@ out <- DT[, .(state,
               ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
               CRPS = CRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
 
+out[is.nan(CRPS), CRPS := 0]
 write_fst(out, file.path("data", "processed", "constant_model_predictions_full_SWE.fst"))
 
 ######
@@ -135,5 +136,6 @@ out <- DT[, .(state,
               ci_upper = predicted_deaths_cum + qnorm(1-alpha/2) * predicted_deaths_SD_cum,
               ci_lower = predicted_deaths_cum + qnorm(alpha/2) * predicted_deaths_SD_cum,
               CRPS = CRPS(target, predicted_deaths_cum, predicted_deaths_SD_cum))]
+out[is.nan(CRPS), CRPS := 0]
 
 write_fst(out, file.path("data", "processed", "constant_model_predictions_full_UK.fst"))
