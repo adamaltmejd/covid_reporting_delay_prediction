@@ -62,11 +62,11 @@ latest_prediction <- function(deaths_dt, model_predict) {
 
 }
 deaths_dt_SWE <- read_fst(file.path("data", "processed", "deaths_dt_SWE.fst"), as.data.table = TRUE)
-model_predict_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_SWE.fst"), as.data.table = TRUE)
+model_predict_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"), as.data.table = TRUE)
 plot_SWE  <- latest_prediction(deaths_dt_SWE, model_predict_SWE)
 
 deaths_dt_UK <- read_fst(file.path("data", "processed", "deaths_dt_UK.fst"), as.data.table = TRUE)
-model_predict_UK <- read_fst(file.path("data", "processed", "model_predictions_full_UK.fst"), as.data.table = TRUE)
+model_predict_UK <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_UK.fst"), as.data.table = TRUE)
 plot_UK <- latest_prediction(deaths_dt_UK, model_predict_UK)
 
 p <- plot_grid(plot_grid(
