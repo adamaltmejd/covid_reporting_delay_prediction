@@ -882,7 +882,9 @@ swe.prediction <- function(result,
                 }
             }
         }
-        zero.report = state%in%result_i$dates[rowSums(result_i$detected, na.rm=T)==0]
+        zero_dates <- result_i$dates[rowSums(result_i$detected, na.rm=T)==0] # take out zero reporitng
+        zero_dates <- zero_dates[report.dates[i]-zero_dates < 10] # if more then ten days prob zero
+        zero.report = state%in%zero_dates
         deaths.i <- data.table(
             date          = state,
             state         =  report.dates[i],
@@ -912,7 +914,7 @@ swe.prediction <- function(result,
 ##
 likelihood_death <- function(x, D, y){
     kappa       <- exp(x[1])
-    nu          <- exp(x[2])
+    nu          <- 3/(1+exp(x[2]))
     sigma       <- exp(x[3])
     sigma_noise <- exp(x[4])
     mu          <- x[5]
@@ -940,8 +942,8 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
 
     #transform <- function(x){log(pmax(x,1))}
     #itransform <- function(x){exp(x)}
-    transform <- function(x){x^{1/3}}
-    itransform <- function(x){x^3}
+    transform <- function(x){x^{1/2}}
+    itransform <- function(x){x^2}
 
     if(is.null(theta)){
         theta <- c(0,0,0,0,0)
@@ -966,7 +968,7 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     y_d     =  transform(death_reported_so_far$Deaths )
     D_d     = as.matrix(dist(time_d))
     res     = optim(theta, function(x){-likelihood_death(x, D_d, y_d)})
-
+    res     = optim(res$par, function(x){-likelihood_death(x, D_d, y_d)})
     ###
     # approx model with measumerent error
     # kriging
@@ -976,15 +978,15 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
 
 
     #remove obs when no reporting
-    y_D[death_prediction$zero.report] = NA
-    sigma_y[death_prediction$zero.report] = NA
+    y_D[death_prediction$zero.report==1] = NA
+    sigma_y[death_prediction$zero.report==1] = NA
 
 
     index.obs = is.na(sigma_y)==F
 
     D <- as.matrix(dist(death_prediction$date-min(death_prediction$date)))
     kappa       <- exp(res$par[1])
-    nu          <- exp(res$par[2])
+    nu          <- 3/(1+exp(res$par[2]))
     sigma       <- exp(res$par[3])
     sigma_noise <- exp(res$par[4])
     mu_0        <- res$par[5]
@@ -999,8 +1001,8 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     Sigma_obs_cond <- Sigma_obs - Sigma_obs[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs],Sigma_obs[index.obs,])
 
     sd = sqrt(diag(Sigma_obs_cond) + 1e-8)
-    uw <- ceiling(itransform(mu_obs+ qnorm(0.5+CI_width/2)*sd ))
-    lw <- floor(itransform(apply(mu_obs- qnorm(0.5+CI_width/2)*sd,1,function(x){max(0,x)})))
+    uw <- (itransform(mu_obs+ qnorm(0.5+CI_width/2)*sd ))
+    lw <- (itransform(apply(mu_obs- qnorm(0.5+CI_width/2)*sd,1,function(x){max(0,x)})))
     death_prediction$mean <- NA
     death_prediction$predicted_deaths <- round(itransform(mu_obs))
     death_prediction$ci_lower <- lw
