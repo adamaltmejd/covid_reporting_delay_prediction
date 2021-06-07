@@ -70,8 +70,8 @@ model_predict_UK <- read_fst(file.path("data", "processed", "model_predictions_f
 plot_UK <- latest_prediction(deaths_dt_UK, model_predict_UK)
 
 p <- plot_grid(plot_grid(
-    plot_SWE + guides(fill = "none", linetype = "none"),
-    plot_UK + guides(fill = "none", linetype = "none") + ylab(NULL),
+    plot_SWE + guides(fill = "none", linetype = "none") + theme(plot.margin = unit(c(25, 5, 5, 5), "pt")),
+    plot_UK + guides(fill = "none", linetype = "none") + ylab(NULL) + theme(plot.margin = unit(c(25, 5, 5, 5), "pt")),
     labels = c("Sweden", "United Kingdom"), label_fontfamily = "EB Garamond",
     hjust = -0.5, align = "hv",
     nrow = 1, ncol = 2),
@@ -79,7 +79,7 @@ p <- plot_grid(plot_grid(
     nrow = 2, ncol = 1, rel_heights = c(0.9, 0.1)
 )
 save_plot(filename = file.path("output", "paper", "plots", "latest_prediction.pdf"),
-          plot = p, ncol = 2, nrow = 2, base_height = 2.5, device = cairo_pdf)
+          plot = p, ncol = 2, nrow = 1, base_height = 4, device = cairo_pdf)
 
 # Load data
 min_date <- as.Date("2020-10-10")
@@ -156,7 +156,7 @@ day_plot <- function(DT, reported, plot.title) {
         scale_x_reverse(breaks = scales::extended_breaks(), expand = expansion(add = c(1, 1))) +
         labs(title = plot.title,
              color = "Model",
-             x = "Days of lag to predict",
+             x = "Days of lag to predict", # lag prediction distance (days)
              y = "Number of deaths")
 
     if (DT[, uniqueN(date)] > 1) {
@@ -174,21 +174,33 @@ plot_data_UK[, type := factor(type)]
 
 # Figure 1 - Pick 4 dates at random to plot
 set.seed(1234)
-example_dates <- sample(seq(model_UK[, min(date)], model_SWE[, max(date)], 1), 4)
-plot <- day_plot(plot_data_SWE[date %in% example_dates],
+example_dates <- sample(seq(model_UK[, min(date)], model_SWE[, max(date)], 1), 3)
+plot_SWE <- day_plot(plot_data_SWE[date %in% example_dates],
                  reported_dead_SWE[date %in% example_dates],
                  "")
-ggsave2(filename = file.path("output", "paper", "plots", "lag_prediction_by_date_SWE.pdf"),
-       plot = plot, device = cairo_pdf, width = 7, height = 7)
+# ggsave2(filename = file.path("output", "paper", "plots", "lag_prediction_by_date_SWE.pdf"),
+#        plot = plot, device = cairo_pdf, width = 7, height = 7)
 
-# Figure 1 - Pick 4 dates at random to plot - UK
 set.seed(1234)
-example_dates <- sample(seq(model_UK[, min(date)], model_UK[, max(date)], 1), 4)
-plot <- day_plot(plot_data_UK[date %in% example_dates],
+example_dates <- sample(seq(model_UK[, min(date)], model_UK[, max(date)], 1), 3)
+plot_UK <- day_plot(plot_data_UK[date %in% example_dates],
                  reported_dead_UK[date %in% example_dates],
                  "")
-ggsave2(filename = file.path("output", "paper", "plots", "lag_prediction_by_date_UK.pdf"),
-       plot = plot, device = cairo_pdf, width = 7, height = 7)
+# ggsave2(filename = file.path("output", "paper", "plots", "lag_prediction_by_date_UK.pdf"),
+#        plot = plot, device = cairo_pdf, width = 7, height = 7)
+
+# Figure 1 - 3 dates per country
+p <- plot_grid(plot_grid(
+    plot_SWE + guides(fill = "none", linetype = "none", color = "none") + xlab(NULL),
+    plot_UK + guides(fill = "none", linetype = "none", color = "none"),
+    labels = c("Sweden", "United Kingdom"), label_fontfamily = "EB Garamond",
+    hjust = 0, align = "hv",
+    nrow = 2, ncol = 1),
+    get_legend(plot_SWE),
+    nrow = 2, ncol = 1, rel_heights = c(0.9, 0.1)
+)
+save_plot(filename = file.path("output", "paper", "plots", "lag_prediction_by_date.pdf"),
+          plot = p, ncol = 1, nrow = 2, base_height = 5, device = cairo_pdf)
 
 # For verification, plot each date as well
 dates <- seq(model_SWE[, min(date)], model_SWE[, max(date)], 1)
@@ -232,7 +244,7 @@ plot_data_SWE <- plot_data_SWE[days_left != 0]
 
 plot_data_SWE <- melt(plot_data_SWE, id.vars = c("type", "days_left"))
 
-plot <- ggplot(data = plot_data_SWE, aes(x = days_left, color = type, group = type)) +
+plot_SWE <- ggplot(data = plot_data_SWE, aes(x = days_left, color = type, group = type)) +
     geom_line(aes(y = value)) +
     geom_point(aes(y = value)) +
     facet_wrap(~variable, scales = "free_y") +
@@ -243,8 +255,8 @@ plot <- ggplot(data = plot_data_SWE, aes(x = days_left, color = type, group = ty
          x = "Days of lag to predict",
          y = "")
 
-ggsave2(filename = file.path("output", "paper", "plots", "model_metrics_SWE.pdf"),
-       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
+# ggsave2(filename = file.path("output", "paper", "plots", "model_metrics_SWE.pdf"),
+#        plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
 
 plot_data_UK <- rbindlist(
     list("Benchmark model" =
@@ -265,7 +277,7 @@ plot_data_UK <- plot_data_UK[days_left != 0]
 
 plot_data_UK <- melt(plot_data_UK, id.vars = c("type", "days_left"))
 
-plot <- ggplot(data = plot_data_UK, aes(x = days_left, color = type, group = type)) +
+plot_UK <- ggplot(data = plot_data_UK, aes(x = days_left, color = type, group = type)) +
     geom_line(aes(y = value)) +
     geom_point(aes(y = value)) +
     facet_wrap(~variable, scales = "free_y") +
@@ -276,8 +288,21 @@ plot <- ggplot(data = plot_data_UK, aes(x = days_left, color = type, group = typ
          x = "Days of lag to predict",
          y = "")
 
-ggsave2(filename = file.path("output", "paper", "plots", "model_metrics_UK.pdf"),
-       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
+# ggsave2(filename = file.path("output", "paper", "plots", "model_metrics_UK.pdf"),
+#        plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
+
+# Figure 1 - 3 dates per country
+p <- plot_grid(plot_grid(
+    plot_SWE + guides(fill = "none", linetype = "none", color = "none") + xlab(NULL),
+    plot_UK + guides(fill = "none", linetype = "none", color = "none") + theme(plot.margin = unit(c(15, 5, 5, 5), "pt")),
+    labels = c("Sweden", "United Kingdom"), label_fontfamily = "EB Garamond",
+    hjust = 0, align = "hv",
+    nrow = 2, ncol = 1),
+    get_legend(plot_SWE),
+    nrow = 2, ncol = 1, rel_heights = c(0.9, 0.1)
+)
+save_plot(filename = file.path("output", "paper", "plots", "model_metrics.pdf"),
+          plot = p, ncol = 1, nrow = 2, base_height = 5, device = cairo_pdf)
 
 #
 ## PLOT 3: Performance over time (as more training data becomes availiable) ##
@@ -291,16 +316,17 @@ plot_data <- rbindlist(list(
     "Prediction model" = model_SWE[state %in% states & days_left != 0, mean(CRPS), by = state]
     ), idcol = "type")
 
-plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
+plot_SWE <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
+    scale_y_continuous(limits = c(-80, 0)) +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     labs(color = "Model",
-         x = "Last date included in the model",
-         y = "CRPS")
+         x = "",
+         y = "Mean CRPS")
 
-ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states_SWE.pdf"),
-       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
+# ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states_SWE.pdf"),
+#        plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
 
 states <- fintersect(benchmark_UK[!is.na(CRPS), .N, state][N == 30, .(state)],
                      model_UK[!is.na(CRPS), .N, state][N == 30, .(state)])[ , state]
@@ -310,16 +336,30 @@ plot_data <- rbindlist(list(
     "Prediction model" = model_UK[state %in% states & days_left != 0, mean(CRPS), by = state]
     ), idcol = "type")
 
-plot <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
+plot_UK <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
+    scale_y_continuous(limits = c(-80, 0)) +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     labs(color = "Model",
          x = "Last date included in the model",
          y = "CRPS")
 
-ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states_UK.pdf"),
-       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
+# ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_states_UK.pdf"),
+#        plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
+
+p <- plot_grid(plot_grid(
+    plot_SWE + guides(fill = "none", linetype = "none", color = "none") + theme(plot.margin = unit(c(25, 5, 5, 5), "pt")),
+    plot_UK + guides(fill = "none", linetype = "none", color = "none") + ylab(NULL) + theme(plot.margin = unit(c(25, 5, 5, 5), "pt")),
+    labels = c("Sweden", "United Kingdom"), label_fontfamily = "EB Garamond",
+    hjust = 0, align = "hv",
+    nrow = 1, ncol = 2),
+    get_legend(plot_SWE),
+    nrow = 2, ncol = 1, rel_heights = c(0.9, 0.1)
+)
+save_plot(filename = file.path("output", "paper", "plots", "CRPS_over_states.pdf"),
+          plot = p, ncol = 2, nrow = 1, base_width = 5, device = cairo_pdf)
+
 
 #
 ## PLOT 4: Performance by day-of-week ##
@@ -333,15 +373,16 @@ plot_data[, dayofweek := factor(weekdays(date),
                                            "Wednesday", "Friday", "Saturday",
                                            "Sunday"))]
 plot_data <- plot_data[days_left != 0, mean(CRPS), by = .(dayofweek, type)]
-plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
+plot_SWE <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
+    scale_y_continuous(limits = c(-25, 0)) +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     labs(color = "Model",
          x = "Weekday",
-         y = "")
-ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_weekdays_SWE.pdf"),
-       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
+         y = "Mean CRPS")
+# ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_weekdays_SWE.pdf"),
+#        plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
 
 dates <- fintersect(benchmark_UK[!is.na(CRPS), .(date, state)], model_UK[!is.na(CRPS), .(date, state)])
 plot_data <- rbindlist(list("Benchmark model" = benchmark_UK[dates],
@@ -351,12 +392,26 @@ plot_data[, dayofweek := factor(weekdays(date),
                                            "Wednesday", "Friday", "Saturday",
                                            "Sunday"))]
 plot_data <- plot_data[days_left != 0, mean(CRPS), by = .(dayofweek, type)]
-plot <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
+plot_UK <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
+    scale_y_continuous(limits = c(-25, 0)) +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     labs(color = "Model",
          x = "Weekday",
-         y = "")
-ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_weekdays_UK.pdf"),
-       plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
+         y = "Mean CRPS")
+# ggsave2(filename = file.path("output", "paper", "plots", "CRPS_over_weekdays_UK.pdf"),
+#        plot = plot, device = cairo_pdf, width = 5, height = 5/1.9)
+
+p <- plot_grid(plot_grid(
+    plot_SWE + guides(fill = "none", linetype = "none", color = "none") + theme(plot.margin = unit(c(25, 5, 5, 5), "pt")),
+    plot_UK + guides(fill = "none", linetype = "none", color = "none") + ylab(NULL) + theme(plot.margin = unit(c(25, 5, 5, 5), "pt")),
+    labels = c("Sweden", "United Kingdom"), label_fontfamily = "EB Garamond",
+    hjust = 0, align = "hv",
+    nrow = 1, ncol = 2),
+    get_legend(plot_SWE),
+    nrow = 2, ncol = 1, rel_heights = c(0.9, 0.1)
+)
+save_plot(filename = file.path("output", "paper", "plots", "CRPS_over_weekdays.pdf"),
+          plot = p, ncol = 2, nrow = 1, base_width = 5, device = cairo_pdf)
+
