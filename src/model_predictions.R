@@ -26,7 +26,8 @@ buildData("uk", file.path("data", "processed", "processed_data_uk.rds"))
 source(file.path("src","util","util_swe.r"))
 swe_data <- readRDS(file.path("data", "processed", "processed_data_sweden.rds"))
 
-#remove data before  2020-07-01
+#remove data before 2020-07-01
+# (from the first wave as reporting style was different then)
 start_date <- as.Date("2020-07-01")
 index <- swe_data$dates_report >= start_date
 swe_data$detected             = swe_data$detected[index,index]
@@ -41,7 +42,7 @@ target_swe$dates <- swe_data$dates_report[1:length(target_swe$reported)]
 swe_data$detected[row(swe_data$detected)+max.days.to.report<col(swe_data$detected)]=NA
 
 dts_swe <- lapply(
-    as.Date(swe_data$dates_report[swe_data$dates_report >= start_date + 90]),
+    as.Date(swe_data$dates_report[swe_data$dates_report >= "2020-10-10"]),
     FUN = function(x, ...) swe.prediction(report.dates = x, ...),
     max.days.to.report = max.days.to.report,
     result = swe_data,
