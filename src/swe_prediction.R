@@ -27,11 +27,11 @@ result$detected[row(result$detected)+max.days.to.report<col(result$detected)]=NA
 
 pred <- swe.prediction(result = result,
               max.days.to.report = max.days.to.report,
-              report.dates = c(as.Date("2020-11-10")),
+              report.dates = c(as.Date("2021-03-20")),
               target= target)
 pred.smooth <- gp.smooth(pred,
                          max.days.to.report = max.days.to.report)
-plot(pred$date,pred$ci_lower, type='l',col='blue',ylim=c(0,max(pred.smooth$ci_upper)*2))
+plot(pred$date,pred$ci_lower, type='l',col='blue',ylim=c(0,140))
 lines(pred$date,pred$ci_upper, type='l',col='red')
 
 lines(pred.smooth$date,pred.smooth$ci_lower, type='l',col='green')

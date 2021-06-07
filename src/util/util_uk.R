@@ -907,9 +907,7 @@ uk.prediction <- function(result,
                 }
             }
         }
-        zero_dates <- result_i$dates[rowSums(result_i$detected, na.rm=T)==0] # take out zero reporitng
-        zero_dates <- zero_dates[report.dates[i]-zero_dates < 10] # if more then ten days prob zero
-        zero.report = state%in%zero_dates
+        zero.report = state%in%result_i$dates[rowSums(result_i$detected, na.rm=T)==0]
         deaths.i <- data.table(
             date          = state,
             state         =  report.dates[i],
@@ -938,17 +936,16 @@ uk.prediction <- function(result,
 #' @param y data
 ##
 likelihood_death <- function(x, D, y){
-    kappa       <- exp(x[1]) + 10^-2
-    nu          <- 3/(1+exp(x[2]))
+    kappa       <- exp(x[1])
+    nu          <- exp(x[2])
     sigma       <- exp(x[3])
     sigma_noise <- exp(x[4])
-    mu          <- 0#x[5]
     Sigma <- matern.covariance(D, kappa, nu, sigma)
     diag(Sigma)<- diag(Sigma) + sigma_noise^2
     R <- chol(Sigma, pivot=T)
     if(attr(R,"rank" )< length(y))
         return(-Inf)
-    v <- solve(t(R),y[attr(R,"pivot")]-mu)
+    v <- solve(t(R),y[attr(R,"pivot")])
     return( -sum(log(diag(R))) - 0.5*t(v)%*%v)
 }
 
@@ -965,10 +962,7 @@ likelihood_death <- function(x, D, y){
 
 gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_width = 0.95){
 
-    transform <- function(x){log(pmax(x,1))}
-    itransform <- function(x){exp(x)}
-    #transform <- function(x){x^{1/3}}
-    #itransform <- function(x){x^3}
+
     if(is.null(theta)){
         theta <- c(0,0,0,0)
     }
@@ -990,7 +984,7 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
                                         date    = death_prediction$date[index.known])
 
     time_d  = death_reported_so_far$date - min(death_reported_so_far$date)
-    y_d     =  transform(death_reported_so_far$Deaths )
+    y_d     =  sqrt(death_reported_so_far$Deaths )
     D_d     = as.matrix(dist(time_d))
     res     = optim(theta, function(x){-likelihood_death(x, D_d, y_d)})
 
@@ -998,8 +992,8 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     # approx model with measumerent error
     # kriging
     ###
-    y_D <- transform(death_prediction$predicted_deaths)
-    sigma_y <- (transform(death_prediction$ci_upper+0.1)-transform(death_prediction$ci_lower+0.1))/(2*qnorm(0.5+CI_width/2))
+    y_D <- sqrt(death_prediction$predicted_deaths)
+    sigma_y <- (sqrt(death_prediction$ci_upper+1)-sqrt(death_prediction$ci_lower+1))/(2*qnorm(0.5+CI_width/2))
 
     #remove obs when no reporting
     y_D[death_prediction$zero.report==T] = NA
@@ -1008,35 +1002,34 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
     index.obs = is.na(sigma_y)==F
 
     D <- as.matrix(dist(death_prediction$date-min(death_prediction$date)))
-    kappa       <- exp(res$par[1])+ 10^-2
-    nu          <- 3/(1+exp(res$par[2]))
+    kappa       <- exp(res$par[1])
+    nu          <- exp(res$par[2])
     sigma       <- exp(res$par[3])
     sigma_noise <- exp(res$par[4])
-    mu_0 <- 0
     Sigma <- matern.covariance(D, kappa, nu, sigma)
     Sigma_obs <- Sigma
     diag(Sigma_obs)<- diag(Sigma_obs) + sigma_noise^2
     Sigma_Y <- Sigma_obs
     diag(Sigma_Y)[index.obs] <- diag(Sigma_Y)[index.obs] + sigma_y[index.obs]^2
-    mu <- mu_0 + Sigma[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs], y_D[index.obs] - mu_0)
-    mu_obs <- mu_0 + Sigma_obs[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs], y_D[index.obs] - mu_0)
+    mu <- Sigma[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs], y_D[index.obs])
+    mu_obs <- Sigma_obs[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs], y_D[index.obs])
     Sigma_cond <- Sigma - Sigma[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs],Sigma[index.obs,])
     Sigma_obs_cond <- Sigma_obs - Sigma_obs[,index.obs]%*%solve(Sigma_Y[index.obs,index.obs],Sigma_obs[index.obs,])
 
     sd = sqrt(diag(Sigma_obs_cond) + 1e-8)
-    uw <- (itransform(mu_obs+ qnorm(0.5+CI_width/2)*sd ))+0.5
-    lw <- (itransform(apply(mu_obs- qnorm(0.5+CI_width/2)*sd,1,function(x){max(0,x)})))-0.5
+    uw <- ceiling((mu_obs+ qnorm(0.5+CI_width/2)*sd )^2)
+    lw <- floor(apply(mu_obs- qnorm(0.5+CI_width/2)*sd,1,function(x){max(0,x)})^2)
     death_prediction$mean <- NA
-    death_prediction$predicted_deaths <- round(itransform(mu_obs))
+    death_prediction$predicted_deaths <- round((mu_obs)^2)
     death_prediction$ci_lower <- lw
     death_prediction$ci_upper <- uw
     for(i in 1: dim(death_prediction)[1]){
         if(is.na(death_prediction$target[i])==F)
         {
             Y  <- death_prediction$target[i]
-            X1 <- itransform(rnorm(1000, mean = mu_obs[i], sd = sd[i]))
-            X2 <- itransform(rnorm(1000, mean = mu_obs[i], sd = sd[i]))
-            X3 <- itransform(rnorm(1000, mean = mu_obs[i], sd = sd[i]))
+            X1 <- rnorm(1000, mean = mu_obs[i], sd = sd[i])^2
+            X2 <- rnorm(1000, mean = mu_obs[i], sd = sd[i])^2
+            X3 <- rnorm(1000, mean = mu_obs[i], sd = sd[i])^2
             Exy  = mean(abs(Y-X1))
             Exx  = mean(abs(X2-X3))
             death_prediction$CRPS[i] <- -Exy + 0.5 * Exx

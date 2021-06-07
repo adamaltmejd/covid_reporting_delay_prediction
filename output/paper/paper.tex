@@ -92,11 +92,11 @@ Figure~\ref{fig:four_dates} depicts four randomly chosen dates where the model i
 \begin{figure}
     \centering
     \includegraphics[width=0.9\textwidth]{plots/lag_prediction_by_date}
-    \caption{Model accuracy over time for four dates, compared to benchmark}
+    \caption{Model accuracy over time for three randomly chosen dates, compared to the benchmark model}
     \label{fig:four_dates}
 \end{figure}
 
-Figure~\ref{fig:model_metrics} shows model performance compared to the benchmark for three difference performance metrics. All three graphs are based on predictions of reported deaths within 14 days, and show how performance increases as more data has been reported. Each data point is the average of all dates where predictions can be evaluated. SCRPS is a measure of accuracy that rewards precision, it is a proper scoring rule like the continuous probability rank score or the Brier score (see definition in Appendix) \citep{bolin2019scale}. The central plot shows the width of the prediction intervals, and the rightmost one the proportion of PI\'s that cover the true value.
+Figure~\ref{fig:model_metrics} shows model performance compared to the benchmark for three difference performance metrics. All three graphs are based on predictions of reported deaths within 14 days, and show how performance increases as more data has been reported. Each data point is the average of all dates where predictions can be evaluated. CRPS is a measure of accuracy that rewards precision, it is a proper scoring rule like the continuous probability rank score or the Brier score (see definition in Appendix) \citep{bolin2019scale}. The central plot shows the width of the prediction intervals, and the rightmost one the proportion of PI\'s that cover the true value.
 
 Benchmark and model point estimates are similarly close to the truth. The model produces tighter prediction intervals. For 8-5 days of reporting lag (see Figure \ref{fig:model_metrics}), the intervals are too tight. This is likely because the Public Health Agency queries the Swedish death registry for Covid-19 deaths only once or twice a week. Since we do not know the process, it has not been explicitly modeled.
 
