@@ -1,5 +1,5 @@
 ##
-# generate the figures for the article x
+# generate the figures for the article
 #
 # read files:
 # data/processed/deaths_dt_SWE.fst           (data_processing.R)
@@ -20,7 +20,7 @@ library(forcats)
 library(ggplot2)
 library(hrbrthemes)
 library(wesanderson)
-library(extrafont)
+#library(extrafont)
 library(cowplot)
 source(file.path("src", "util", "functions.R"))
 
@@ -209,7 +209,7 @@ for (i in seq_along(dates)) {
                      reported_dead_SWE[date == dates[i]],
                      plot.title = dates[i])
     ggsave2(filename = file.path("output", "paper", "plots", "daily", "SWE", paste0("prediction_", dates[i], ".pdf")),
-           plot = plot, device = cairo_pdf, width = 7, height = 7)
+            plot = plot, device = cairo_pdf, width = 7, height = 7)
 }
 
 dates <- seq(model_UK[, min(date)], model_UK[, max(date)], 1)
@@ -218,7 +218,7 @@ for (i in seq_along(dates)) {
                      reported_dead_UK[date == dates[i]],
                      plot.title = dates[i])
     ggsave2(filename = file.path("output", "paper", "plots", "daily", "UK", paste0("prediction_", dates[i], ".pdf")),
-           plot = plot, device = cairo_pdf, width = 7, height = 7)
+            plot = plot, device = cairo_pdf, width = 7, height = 7)
 }
 
 #
