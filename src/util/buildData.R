@@ -46,8 +46,6 @@ buildData <- function(country, path){
     colnames(detected) <- as.character((res2[,1]$date))
     rownames(detected) <- as.character((res2[,1]$date))
     report_released = detected
-    print(dim(res2))
-    print(dim(res_no_report))
     report_released[,index_NoReport == F] = as.matrix(res_no_report[,2:dim(res_no_report)[2]])
 
 

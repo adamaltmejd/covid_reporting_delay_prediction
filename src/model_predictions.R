@@ -4,7 +4,7 @@ library(data.table)
 max.days.to.report <- 30
 
 # Prepare datasets
-source(file.path("src", "buildData.R"))
+source(file.path("src","util", "buildData.R"))
 buildData("sweden", file.path("data", "processed", "processed_data_sweden.rds"))
 buildData("uk", file.path("data", "processed", "processed_data_uk.rds"))
 

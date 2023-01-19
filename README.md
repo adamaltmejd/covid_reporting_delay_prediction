@@ -2,7 +2,7 @@
 
 To run the analysis:
 
-* Run main.R (can take some time)
+* Run src/0_MASTER_SCRIPT.R (can take some time) 
 
 
 TODO:

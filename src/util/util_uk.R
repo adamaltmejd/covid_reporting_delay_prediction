@@ -1039,7 +1039,8 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
             X3 <- itransform(rnorm(1000, mean = mu_obs[i], sd = sd[i]))
             Exy  = mean(abs(Y-X1))
             Exx  = mean(abs(X2-X3))
-            death_prediction$CRPS[i] <- -Exy + 0.5 * Exx
+            death_prediction$CRPS[i]  <- -Exy + 0.5 * Exx
+            death_prediction$SCRPS[i] <- -0.5* log(Exx+1) -Exy/(Exx+1)
         }
     }
 

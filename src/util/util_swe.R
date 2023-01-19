@@ -849,6 +849,7 @@ swe.prediction <- function(result,
                         ci_upper           =  numeric(),
                         target             = numeric(),
                         CRPS               = numeric(),
+                        SCRPS               = numeric(),
                         zero.report        = numeric())
 
     for(i in 1:length(report.dates)){
@@ -865,6 +866,7 @@ swe.prediction <- function(result,
 
         state = as.Date(colnames(N.est))
         CRPS.i = rep(NA,length(state))
+        SCRPS.i = rep(NA,length(state))
         target.i = rep(NA,length(state))
         if(is.null(target) ==F ){
 
@@ -879,6 +881,7 @@ swe.prediction <- function(result,
                     Exx = mean(abs(X1-X2))
                     target.i[ii] = Y
                     CRPS.i[ii] = -Exy + 0.5 * Exx
+                    SCRPS.i[i] <-  -0.5* log(Exx+2) -Exy/(Exx+2)
                 }
             }
         }
@@ -894,6 +897,7 @@ swe.prediction <- function(result,
             ci_upper           =  N.quantile[,4],
             target  = target.i,
             CRPS = CRPS.i,
+            SCRPS = SCRPS.i,
             zero.report = zero.report
         )
         deaths <- rbind(deaths, deaths.i)
@@ -940,10 +944,10 @@ likelihood_death <- function(x, D, y){
 
 gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_width = 0.95){
 
-    #transform <- function(x){log(pmax(x,1))}
-    #itransform <- function(x){exp(x)}
-    transform <- function(x){x^{1/2}}
-    itransform <- function(x){x^2}
+    transform <- function(x){log(pmax(x,1))}
+    itransform <- function(x){exp(x)}
+    #transform <- function(x){x^{1/2}}
+    #itransform <- function(x){x^2}
 
     if(is.null(theta)){
         theta <- c(0,0,0,0,0)
@@ -1017,6 +1021,7 @@ gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_wid
             Exy  = mean(abs(Y-X1))
             Exx  = mean(abs(X2-X3))
             death_prediction$CRPS[i] <- -Exy + 0.5 * Exx
+            death_prediction$SCRPS[i] <-  -0.5* log(Exx+2) -(Exy+2)/(Exx+2)
         }
     }
 
