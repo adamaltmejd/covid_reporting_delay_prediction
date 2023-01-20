@@ -944,10 +944,10 @@ likelihood_death <- function(x, D, y){
 
 gp.smooth <- function(death_prediction, max.days.to.report, theta = NULL, CI_width = 0.95){
 
-    transform <- function(x){log(pmax(x,1))}
-    itransform <- function(x){exp(x)}
-    #transform <- function(x){x^{1/2}}
-    #itransform <- function(x){x^2}
+    #transform <- function(x){log(pmax(x,1))}
+    #itransform <- function(x){exp(x)}
+    transform <- function(x){x^{1/2}}
+    itransform <- function(x){x^2}
 
     if(is.null(theta)){
         theta <- c(0,0,0,0,0)
