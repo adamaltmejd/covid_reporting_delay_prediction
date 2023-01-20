@@ -2,10 +2,10 @@
 # generate the figures for the article
 #
 # read files:
-# data/processed/deaths_dt_SWE.fst           (data_processing.R)
+# data/processed/deaths_dt_SWE.fst       (data_processing.R)
 # data/processed/model_latest.fst        (Beta_GP_lag_benchmark_build.R)
 # data/processed/constant_benchmark.fst  (constant_benchmark.R)
-# data/processed/model_benchmark.fst.fst (Beta_GP_lag_benchmark_build.R)
+# data/processed/model_benchmark.fst     (Beta_GP_lag_benchmark_build.R)
 #
 # generates files:
 # output/plots/CRPS_over_weekdays.pdf
@@ -21,13 +21,17 @@ library(ggplot2)
 library(hrbrthemes)
 library(wesanderson)
 #library(extrafont)
+library(Cairo)
 library(cowplot)
+set_null_device("cairo")
 source(file.path("src", "util", "functions.R"))
 
 #
 my_palette <- c("#d1ae90", "#046C9A", "#D69C4E", "#ABDDDE", "#000000")
 
-# Plot 1 = Predictions and current stats
+##########
+# PLOT 2: LATEST PREDICTIONS
+
 latest_prediction <- function(deaths_dt, model_predict) {
     # Predict over the last 15 days, plot last two months
     plot_state <- model_predict[, max(state)]
@@ -81,6 +85,9 @@ p <- plot_grid(plot_grid(
 save_plot(filename = file.path("output", "paper", "plots", "latest_prediction.pdf"),
           plot = p, ncol = 2, nrow = 1, base_height = 4, device = cairo_pdf)
 
+##########
+# PREPARE DATA
+
 # Load data
 min_date <- as.Date("2020-10-10")
 model_SWE <- read_fst(file.path("data", "processed", "model_predictions_full_smooth_SWE.fst"), as.data.table = TRUE)
@@ -118,9 +125,8 @@ setkey(benchmark_UK, date, state, days_left)
 setkey(model_SWE, date, state, days_left)
 setkey(model_UK, date, state, days_left)
 
-#
-## PLOT 1: Performance per day, PLOT1=4 random dates ##
-#
+##########
+# PLOT 3: Performance per day for 3 random dates
 
 # Plot a specific day
 day_plot <- function(DT, reported, plot.title) {
@@ -176,16 +182,16 @@ plot_data_UK[, type := factor(type)]
 set.seed(1234)
 example_dates <- sample(seq(model_UK[, min(date)], model_SWE[, max(date)], 1), 3)
 plot_SWE <- day_plot(plot_data_SWE[date %in% example_dates],
-                 reported_dead_SWE[date %in% example_dates],
-                 "")
+                     reported_dead_SWE[date %in% example_dates],
+                     "")
 # ggsave2(filename = file.path("output", "paper", "plots", "lag_prediction_by_date_SWE.pdf"),
 #        plot = plot, device = cairo_pdf, width = 7, height = 7)
 
 set.seed(1234)
 example_dates <- sample(seq(model_UK[, min(date)], model_UK[, max(date)], 1), 3)
 plot_UK <- day_plot(plot_data_UK[date %in% example_dates],
-                 reported_dead_UK[date %in% example_dates],
-                 "")
+                    reported_dead_UK[date %in% example_dates],
+                    "")
 # ggsave2(filename = file.path("output", "paper", "plots", "lag_prediction_by_date_UK.pdf"),
 #        plot = plot, device = cairo_pdf, width = 7, height = 7)
 
@@ -203,7 +209,7 @@ save_plot(filename = file.path("output", "paper", "plots", "lag_prediction_by_da
           plot = p, ncol = 1, nrow = 2, base_height = 5, device = cairo_pdf)
 
 # For verification, plot each date as well
-dates <- seq(model_SWE[, min(date)], model_SWE[, max(date)], 1)
+dates <- seq(model_SWE[, min(date)], model_SWE[, max(date) - 30], 1)
 for (i in seq_along(dates)) {
     plot <- day_plot(plot_data_SWE[date == dates[i]],
                      reported_dead_SWE[date == dates[i]],
@@ -212,7 +218,7 @@ for (i in seq_along(dates)) {
             plot = plot, device = cairo_pdf, width = 7, height = 7)
 }
 
-dates <- seq(model_UK[, min(date)], model_UK[, max(date)], 1)
+dates <- seq(model_UK[, min(date)], model_UK[, max(date) - 30], 1)
 for (i in seq_along(dates)) {
     plot <- day_plot(plot_data_UK[date == dates[i]],
                      reported_dead_UK[date == dates[i]],
@@ -221,9 +227,8 @@ for (i in seq_along(dates)) {
             plot = plot, device = cairo_pdf, width = 7, height = 7)
 }
 
-#
-## PLOT 2: Statistics ##
-#
+###########
+# PLOT 4: MODEL METRICS
 
 plot_data_SWE <- rbindlist(
     list("Benchmark model" =
@@ -304,9 +309,9 @@ p <- plot_grid(plot_grid(
 save_plot(filename = file.path("output", "paper", "plots", "model_metrics.pdf"),
           plot = p, ncol = 1, nrow = 2, base_height = 5, device = cairo_pdf)
 
-#
-## PLOT 3: Performance over time (as more training data becomes availiable) ##
-#
+###########
+#  PLOT A1: Performance over time (as more training data becomes availiable)
+
 # Only include dates for which we have all 30 dates
 states <- fintersect(benchmark_SWE[!is.na(CRPS), .N, state][N == 30, .(state)],
                      model_SWE[!is.na(CRPS), .N, state][N == 30, .(state)])[ , state]
@@ -361,9 +366,9 @@ save_plot(filename = file.path("output", "paper", "plots", "CRPS_over_states.pdf
           plot = p, ncol = 2, nrow = 1, base_width = 5, device = cairo_pdf)
 
 
-#
-## PLOT 4: Performance by day-of-week ##
-#
+###########
+#  PLOT A2:  Performance by day-of-week
+
 # Base results on same dates
 dates <- fintersect(benchmark_SWE[!is.na(CRPS), .(date, state)], model_SWE[!is.na(CRPS), .(date, state)])
 plot_data <- rbindlist(list("Benchmark model" = benchmark_SWE[dates],

@@ -2,10 +2,5 @@
 
 To run the analysis:
 
-* Run src/0_MASTER_SCRIPT.R (can take some time) 
-
-
-TODO:
-
-* Update buildData.R so it works for missing days.
-* Approximation so we can get an fast daily update
+* renv::restore() to install packages.
+* Run src/0_MASTER_SCRIPT.R (can take some time)
