@@ -56,10 +56,7 @@ latest_prediction <- function(deaths_dt, model_predict) {
         scale_x_date(date_breaks = "1 week", date_labels = "%b %d", expand = expansion(add = 0.8)) +
         theme(axis.text.x = element_text(angle = 35, hjust = 1.3, vjust = 1.1)) +
         scale_y_continuous(minor_breaks = seq(0,200,10), breaks = seq(0,200,10), expand = expansion(add = c(0, 5))) +
-        labs(#title = paste0("Reported deaths as of ", deaths_dt[, max(publication_date)], " and model prediction"),
-            #subtitle = "",
-            #caption = "",
-             fill = "",
+        labs(fill = "",
              linetype = "",
              x = "Death date",
              y = "Number of deaths")
@@ -256,6 +253,7 @@ plot_SWE <- ggplot(data = plot_data_SWE, aes(x = days_left, color = type, group 
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     scale_x_reverse(breaks = scales::extended_breaks(), expand = expansion(add = c(1, 1))) +
+    scale_y_continuous(labels = function(x) scales::number(x, style_negative = "minus")) +
     labs(color = "Model",
          x = "Days of lag to predict",
          y = "")
@@ -289,6 +287,7 @@ plot_UK <- ggplot(data = plot_data_UK, aes(x = days_left, color = type, group = 
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     scale_x_reverse(breaks = scales::extended_breaks(), expand = expansion(add = c(1, 1))) +
+    scale_y_continuous(labels = function(x) scales::number(x, style_negative = "minus")) +
     labs(color = "Model",
          x = "Days of lag to predict",
          y = "")
@@ -323,7 +322,7 @@ plot_data <- rbindlist(list(
 
 plot_SWE <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
-    scale_y_continuous(limits = c(-80, 0)) +
+    scale_y_continuous(limits = c(-80, 0), labels = function(x) scales::number(x, style_negative = "minus")) +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     labs(color = "Model",
@@ -343,7 +342,7 @@ plot_data <- rbindlist(list(
 
 plot_UK <- ggplot(data = plot_data, aes(x = state, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
-    scale_y_continuous(limits = c(-80, 0)) +
+    scale_y_continuous(limits = c(-80, 0), labels = function(x) scales::number(x, style_negative = "minus")) +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     labs(color = "Model",
@@ -380,7 +379,7 @@ plot_data[, dayofweek := factor(weekdays(date),
 plot_data <- plot_data[days_left != 0, mean(CRPS), by = .(dayofweek, type)]
 plot_SWE <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
-    scale_y_continuous(limits = c(-25, 0)) +
+    scale_y_continuous(limits = c(-25, 0), labels = function(x) scales::number(x, style_negative = "minus")) +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     labs(color = "Model",
@@ -399,7 +398,7 @@ plot_data[, dayofweek := factor(weekdays(date),
 plot_data <- plot_data[days_left != 0, mean(CRPS), by = .(dayofweek, type)]
 plot_UK <- ggplot(data = plot_data, aes(x = dayofweek, y = V1, color = type, group = type)) +
     geom_line() + geom_point() +
-    scale_y_continuous(limits = c(-25, 0)) +
+    scale_y_continuous(limits = c(-25, 0), labels = function(x) scales::number(x, style_negative = "minus")) +
     set_default_theme() +
     scale_color_manual(values = my_palette) +
     labs(color = "Model",
